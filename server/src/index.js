@@ -92,17 +92,14 @@ app.set("trust proxy", 1);
 
 if (isProdEnv) {
   app.use((req, res, next) => {
-    if (req.path === "/health" || req.path === "/healthz") return next();
-    const proto = String(req.get("x-forwarded-proto") || req.protocol || "http")
+    // Railway terminates TLS at the edge and probes /health over plain HTTP
+    // inside the container — never redirect those internal checks.
+    const proto = String(req.get("x-forwarded-proto") || "")
       .split(",")[0]
       .trim();
-    if (proto !== "https") {
-      const host = String(req.get("x-forwarded-host") || req.get("host") || "fovea.sh")
-        .split(",")[0]
-        .trim();
-      return res.redirect(301, `https://${host}${req.originalUrl}`);
+    if (proto === "https") {
+      res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     }
-    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
     next();
   });
 }
@@ -129,16 +126,11 @@ app.use(
 );
 app.use(express.json({ limit: "8mb" }));
 
-// Liveness endpoint: responds immediately, before any DB/Redis
-// initialization, so Railway's healthcheck doesn't time out while
-// initDb()/migrate() are still running.
+// Liveness endpoint: always 200 so Railway's healthcheck passes while
+// initDb()/migrate() are still running. `ready` reports readiness.
 let ready = false;
 app.get(["/health", "/healthz"], (req, res) => {
-  if (!ready) {
-    res.status(503).json({ ok: false, ready: false });
-  } else {
-    res.status(200).json({ ok: true, ready: true });
-  }
+  res.status(200).json({ ok: true, ready });
 });
 
 const start = async () => {
