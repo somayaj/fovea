@@ -2,6 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (function () {
+        var host = location.hostname;
+        if (
+          location.protocol === "http:" &&
+          host !== "localhost" &&
+          host !== "127.0.0.1"
+        ) {
+          location.replace(
+            "https://" + location.host + location.pathname + location.search + location.hash,
+          );
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fovea — Weekly focus for your work</title>
     <meta
