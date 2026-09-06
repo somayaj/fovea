@@ -42,10 +42,10 @@ export default function FocusHero({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col items-center">
-      <p className="mb-5 max-w-md text-center text-sm leading-relaxed text-stone-500">{why}</p>
+      <p className="mb-5 max-w-md text-center text-sm leading-relaxed text-muted">{why}</p>
 
       {weekTaskCount != null ? (
-        <p className="mb-4 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+        <p className="mb-4 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-muted">
           {formatCount(weekTaskCount)} tasks this week
           {totalNeighbors > 0 ? ` · ${formatCount(totalNeighbors)} nearby` : ""}
         </p>
@@ -66,13 +66,13 @@ export default function FocusHero({
       <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
         <PriorityBadge priority={focus.priority || "p2"} />
         {focusChannel ? (
-          <span className="text-xs font-medium text-stone-500">#{focusChannel}</span>
+          <span className="text-xs font-medium text-muted">#{focusChannel}</span>
         ) : null}
       </div>
 
       {otherTasks.length > BOARD_LIMIT ? (
         <div className="mt-8 w-full">
-          <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+          <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
             More tasks · {loadedCount} of {formatCount(totalNeighbors)}
           </p>
           <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-line/70 bg-surface p-2">
@@ -82,7 +82,7 @@ export default function FocusHero({
                   type="button"
                   onClick={() => onTaskSelect?.(task)}
                   className={cn(
-                    "w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 hover:bg-paper",
+                    "w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-brand hover:bg-paper",
                     selectedTaskId === task.id &&
                       "bg-accent-soft/40 ring-1 ring-accent/35",
                   )}

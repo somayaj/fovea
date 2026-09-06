@@ -1,5 +1,5 @@
-import { IMAGES } from "../lib/images.js";
 import TaskPhoto from "./TaskPhoto.jsx";
+import { IconFocus } from "./icons.jsx";
 import { cn } from "../lib/tw.js";
 import {
   HERO_CENTER,
@@ -24,6 +24,43 @@ export {
 
 function pct({ x, y }) {
   return { left: `${x * 100}%`, top: `${y * 100}%` };
+}
+
+function EmptyPolaroid({ slot, size = "sm" }) {
+  const sizeClass =
+    size === "lg"
+      ? "w-[min(44vw,220px)] sm:w-[230px]"
+      : "w-[72px] sm:w-[84px]";
+
+  return (
+    <div
+      className={cn(
+        "focus-collage-piece focus-collage-empty-piece absolute -translate-x-1/2 -translate-y-1/2",
+        sizeClass,
+      )}
+      style={{
+        ...pct(slot),
+        zIndex: slot.z ?? 2,
+        "--instant-rotate": `${slot.rotate ?? 0}deg`,
+      }}
+    >
+      <div className={cn("instant-photo", size === "lg" && "instant-photo-lg")}>
+        <div
+          className={cn(
+            "instant-photo-well border border-dashed border-line/70",
+            size === "lg" ? "flex aspect-[4/3] items-center justify-center" : "aspect-square",
+          )}
+        >
+          {size === "lg" ? <IconFocus size={32} className="text-accent/35" strokeWidth={1.25} /> : null}
+        </div>
+        {size === "lg" ? (
+          <div className="instant-photo-caption">
+            <span className="instant-photo-label">This week&apos;s focus</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 function buildSatelliteList(linked, related, limit = 12) {
@@ -55,11 +92,13 @@ export default function FocusIllustration({
         style={{ aspectRatio: `${HERO_VIEW_W} / ${HERO_VIEW_H}`, minHeight: "min(70vw, 420px)" }}
       >
         {isEmpty ? (
-          <img
-            src={IMAGES.focusInstant}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          <>
+            <div className="focus-collage-surface absolute inset-0" />
+            {HERO_SLOTS.slice(0, 5).map((slot, i) => (
+              <EmptyPolaroid key={i} slot={slot} />
+            ))}
+            <EmptyPolaroid slot={HERO_CENTER} size="lg" />
+          </>
         ) : (
           <div className="focus-collage-surface absolute inset-0" />
         )}

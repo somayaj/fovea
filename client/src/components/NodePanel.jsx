@@ -103,8 +103,8 @@ export default function NodePanel({
     if (!node || node.type !== "task" || focusBusy) return;
     setFocusBusy(true);
     try {
-      await api.setWeekFocus(node.id, weekOffset);
-      await onWeekFocusChange?.();
+      const data = await api.setWeekFocus(node.id, weekOffset);
+      await onWeekFocusChange?.(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -116,8 +116,8 @@ export default function NodePanel({
     if (focusBusy) return;
     setFocusBusy(true);
     try {
-      await api.clearWeekFocus(weekOffset);
-      await onWeekFocusChange?.();
+      const data = await api.clearWeekFocus(weekOffset);
+      await onWeekFocusChange?.(data);
     } catch (err) {
       console.error(err);
     } finally {

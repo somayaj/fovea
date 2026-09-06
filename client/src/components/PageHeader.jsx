@@ -172,7 +172,7 @@ export function EmptyPanel({ icon, title, description, action }) {
         </div>
       ) : null}
       <p className={tw.label}>{title}</p>
-      {description ? <p className="mt-2 max-w-xs text-sm text-stone-500">{description}</p> : null}
+      {description ? <p className="mt-2 max-w-xs text-sm text-muted">{description}</p> : null}
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );

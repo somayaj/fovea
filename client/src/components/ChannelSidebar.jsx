@@ -7,6 +7,7 @@ import { chrome } from "../lib/chrome.js";
 import { cn, tw } from "../lib/tw.js";
 import {
   IconBrainstorm,
+  IconCalendar,
   IconEdit,
   IconFocus,
   IconList,
@@ -16,6 +17,7 @@ import {
   IconUsers,
 } from "./icons.jsx";
 import SidebarHoverLabel from "./SidebarHoverLabel.jsx";
+import { ROADMAP_ENABLED } from "../lib/features.js";
 
 const VISIBLE_WORKSTREAMS = 10;
 
@@ -31,6 +33,9 @@ const NAV = [
       location.pathname === "/map" && !new URLSearchParams(location.search).get("channel"),
     onNavigate: () => window.dispatchEvent(new CustomEvent("fovea:reset-map")),
   },
+  ...(ROADMAP_ENABLED
+    ? [{ to: "/roadmap", label: "Roadmap", icon: IconCalendar, hint: "12 months" }]
+    : []),
   { to: "/brainstorm", label: "Brainstorm", icon: IconBrainstorm, hint: "Ideas" },
 ];
 

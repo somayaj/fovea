@@ -9,7 +9,9 @@ import Login from "./pages/Login.jsx";
 import MapView from "./pages/MapView.jsx";
 import AdminView from "./pages/AdminView.jsx";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
+import RoadmapView from "./pages/RoadmapView.jsx";
 import WeekView from "./pages/WeekView.jsx";
+import { ROADMAP_ENABLED } from "./lib/features.js";
 
 function ChannelMapRedirect() {
   const { channelId } = useParams();
@@ -23,6 +25,7 @@ function AuthenticatedApp({ me, onLogout }) {
         <Route path="/" element={<WeekView />} />
         <Route path="/admin" element={me.user?.isAdmin ? <AdminView /> : <Navigate to="/" replace />} />
         <Route path="/map" element={<MapView me={me} />} />
+        {ROADMAP_ENABLED ? <Route path="/roadmap" element={<RoadmapView me={me} />} /> : null}
         <Route path="/brainstorm" element={<BrainstormView me={me} />} />
         <Route path="/c/:channelId" element={<ChannelMapRedirect />} />
         <Route path="/channels" element={<Navigate to="/map" replace />} />
