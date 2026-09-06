@@ -120,11 +120,27 @@ const start = async () => {
     redisClient.on("error", (err) => {
       console.error("Redis client error", err);
     });
-    await redisClient.connect();
-    sessionStore = new RedisStore({
-      client: redisClient,
-      prefix: "fovea:sess:",
+
+    const REDIS_CONNECT_TIMEOUT_MS = 10_000;
+    const connectTimeout = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Redis connect() timed out after ${REDIS_CONNECT_TIMEOUT_MS}ms`));
+      }, REDIS_CONNECT_TIMEOUT_MS);
     });
+
+    try {
+      await Promise.race([redisClient.connect(), connectTimeout]);
+      sessionStore = new RedisStore({
+        client: redisClient,
+        prefix: "fovea:sess:",
+      });
+    } catch (err) {
+      console.error(
+        "Failed to connect to Redis within timeout; falling back to in-memory session store (not suitable for production).",
+        err,
+      );
+      redisClient.disconnect?.().catch(() => {});
+    }
   } else {
     console.warn(
       "REDIS_URL not set; falling back to in-memory session store (not suitable for production).",
