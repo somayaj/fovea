@@ -89,6 +89,23 @@ const REDIS_URL = process.env.REDIS_URL || "";
 
 const app = express();
 app.set("trust proxy", 1);
+
+if (isProdEnv) {
+  app.use((req, res, next) => {
+    const proto = String(req.get("x-forwarded-proto") || req.protocol || "http")
+      .split(",")[0]
+      .trim();
+    if (proto !== "https") {
+      const host = String(req.get("x-forwarded-host") || req.get("host") || "fovea.sh")
+        .split(",")[0]
+        .trim();
+      return res.redirect(301, `https://${host}${req.originalUrl}`);
+    }
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+    next();
+  });
+}
+
 app.use(
   cors({
     origin(origin, callback) {
