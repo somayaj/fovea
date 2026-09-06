@@ -139,7 +139,7 @@ const start = async () => {
   });
 
   await initDb();
-  app.listen(PORT, () => {
+  app.listen(PORT, "0.0.0.0", () => {
     console.log(`Fovea API on http://localhost:${PORT} (${isPostgres ? "postgres" : "sqlite"})`);
   });
 };
