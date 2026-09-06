@@ -4,14 +4,32 @@ import { api } from "./api.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import AppShell from "./pages/AppShell.jsx";
 import BrainstormView from "./pages/BrainstormView.jsx";
+import LicensePage from "./pages/LicensePage.jsx";
 import Login from "./pages/Login.jsx";
 import MapView from "./pages/MapView.jsx";
 import AdminView from "./pages/AdminView.jsx";
+import PrivacyPage from "./pages/PrivacyPage.jsx";
 import WeekView from "./pages/WeekView.jsx";
 
 function ChannelMapRedirect() {
   const { channelId } = useParams();
   return <Navigate to={`/map?channel=${channelId}`} replace />;
+}
+
+function AuthenticatedApp({ me, onLogout }) {
+  return (
+    <Routes>
+      <Route element={<AppShell me={me} onLogout={onLogout} />}>
+        <Route path="/" element={<WeekView />} />
+        <Route path="/admin" element={me.user?.isAdmin ? <AdminView /> : <Navigate to="/" replace />} />
+        <Route path="/map" element={<MapView me={me} />} />
+        <Route path="/brainstorm" element={<BrainstormView me={me} />} />
+        <Route path="/c/:channelId" element={<ChannelMapRedirect />} />
+        <Route path="/channels" element={<Navigate to="/map" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  );
 }
 
 export default function App() {
@@ -45,39 +63,27 @@ export default function App() {
     refresh();
   }, []);
 
-  if (!ready) return null;
-
-  if (!me) {
-    return (
-      <ThemeProvider>
-        <Login status={status} authError={authError} onDevLogin={refresh} />
-      </ThemeProvider>
-    );
-  }
+  const logout = async () => {
+    await api.logout();
+    setMe(null);
+  };
 
   return (
     <ThemeProvider>
       <Routes>
-      <Route
-        element={
-          <AppShell
-            me={me}
-            onLogout={async () => {
-              await api.logout();
-              setMe(null);
-            }}
-          />
-        }
-      >
-        <Route path="/" element={<WeekView />} />
-        <Route path="/admin" element={me.user?.isAdmin ? <AdminView /> : <Navigate to="/" replace />} />
-        <Route path="/map" element={<MapView me={me} />} />
-        <Route path="/brainstorm" element={<BrainstormView me={me} />} />
-        <Route path="/c/:channelId" element={<ChannelMapRedirect />} />
-        <Route path="/channels" element={<Navigate to="/map" replace />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/license" element={<LicensePage />} />
+        <Route
+          path="/*"
+          element={
+            !ready ? null : !me ? (
+              <Login status={status} authError={authError} onDevLogin={refresh} />
+            ) : (
+              <AuthenticatedApp me={me} onLogout={logout} />
+            )
+          }
+        />
+      </Routes>
     </ThemeProvider>
   );
 }

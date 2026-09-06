@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "Weekly brain-map project manager — the week has one sharpest point of focus",
+  "license": "MIT",
   "workspaces": [
     "client",
     "server"
