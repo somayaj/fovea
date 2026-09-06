@@ -26,7 +26,7 @@ export const headerChrome = {
   control:
     "inline-flex items-center justify-center gap-1.5 rounded-md border border-header-border bg-header-surface px-2.5 py-1.5 text-xs font-medium text-header-text transition-colors hover:border-header-accent/30 hover:bg-header-hover",
   btnSm:
-    "inline-flex items-center justify-center gap-1.5 rounded-md bg-header-accent px-2.5 py-1.5 text-xs font-semibold text-[var(--color-on-accent,#fff)] transition-colors hover:opacity-90",
+    "inline-flex items-center justify-center gap-1.5 rounded-md bg-header-accent px-2.5 py-1.5 text-xs font-semibold text-header transition-colors hover:opacity-90",
   input:
     "border border-header-border bg-header-surface text-header-text placeholder:text-header-muted focus-within:border-header-accent/40 focus-within:ring-header-accent/10",
 };

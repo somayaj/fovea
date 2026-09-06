@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { tw, cn } from "../lib/tw.js";
 
 export default function MapGuide({ onAddTask, onDismiss }) {
   return (
@@ -8,7 +9,7 @@ export default function MapGuide({ onAddTask, onDismiss }) {
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss getting started"
-          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center text-stone-400 transition-colors hover:text-stone-900"
+          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center text-muted transition-colors hover:text-brand"
         >
           ×
         </button>
@@ -17,20 +18,20 @@ export default function MapGuide({ onAddTask, onDismiss }) {
         </p>
         <div className="mt-2 grid gap-3 text-center sm:grid-cols-3 sm:text-left">
           <div>
-            <span className="text-sm font-semibold text-stone-900">1. Add a task</span>
-            <p className="mt-0.5 text-xs leading-relaxed text-stone-500">
+            <span className="text-sm font-semibold text-brand">1. Add a task</span>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted">
               Jot down what you need to do — we&apos;ll sort it by priority.
             </p>
           </div>
           <div>
-            <span className="text-sm font-semibold text-stone-900">2. See the flow</span>
-            <p className="mt-0.5 text-xs leading-relaxed text-stone-500">
+            <span className="text-sm font-semibold text-brand">2. See the flow</span>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted">
               Your top pick rises to the top; supporting tasks sit below.
             </p>
           </div>
           <div>
-            <span className="text-sm font-semibold text-stone-900">3. Stay focused</span>
-            <p className="mt-0.5 text-xs leading-relaxed text-stone-500">
+            <span className="text-sm font-semibold text-brand">3. Stay focused</span>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted">
               <Link to="/" className="font-medium text-brand hover:underline">
                 Weekly focus
               </Link>
@@ -38,11 +39,11 @@ export default function MapGuide({ onAddTask, onDismiss }) {
             </p>
           </div>
         </div>
-        <div className="mt-3 flex justify-center border-t border-stone-100 pt-3">
+        <div className="mt-3 flex justify-center border-t border-line/80 pt-3">
           <button
             type="button"
             onClick={onAddTask}
-            className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
+            className={cn(tw.btnSm, "shadow-sm")}
           >
             + Add task
           </button>
