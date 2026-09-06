@@ -4,7 +4,6 @@ import { api } from "../api.js";
 import FocusIllustration from "./FocusIllustration.jsx";
 import FocusHero from "./FocusHero.jsx";
 import FocusPageShell from "./FocusPageShell.jsx";
-import FoveaLogo from "./FoveaLogo.jsx";
 import NodePanel from "./NodePanel.jsx";
 import { PageHeader, ActionLink } from "./PageHeader.jsx";
 import { WeekPager, weekEyebrow } from "./WeekPager.jsx";
@@ -98,7 +97,7 @@ export default function WeekDashboard({
           ) : (
             <>
               <IconFocus size={20} className="animate-pulse text-accent/60" />
-              <span className="text-sm text-stone-500">Loading your focus…</span>
+              <span className="text-sm text-muted">Loading your focus…</span>
             </>
           )}
         </div>
@@ -131,40 +130,82 @@ export default function WeekDashboard({
   );
 
   if (!focus) {
+    const hasWeekTasks = (week.weekTaskCount ?? 0) > 0;
+    const isCurrentWeek = weekOffset === 0;
+    const emptyTitle = hasWeekTasks
+      ? (isCurrentWeek ? "Pick a focus" : "No focus pinned")
+      : (isCurrentWeek ? "Nothing due yet" : "Quiet week");
+    const emptyDescription = hasWeekTasks
+      ? (isCurrentWeek
+          ? "Open All tasks and pin one as this week's focus."
+          : "Nothing was pinned that week. Jump back to this week or browse your task map.")
+      : (isCurrentWeek
+          ? "Add a task with a due date this week, or browse your map to schedule something."
+          : "Nothing was scheduled that week. Jump back to this week or browse your map.");
+
     return (
       <FocusPageShell fill className="overflow-y-auto">
         {header}
-        <div className="flex flex-1 items-center justify-center p-6 md:p-10">
-          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-line/70 bg-surface focus-hero-frame">
-            <FocusIllustration className="w-full !border-0 !rounded-none" />
-            <div className="border-t border-line/70 bg-paper p-6 md:p-8">
-              <FoveaLogo size="sm" subtitle="Your week, one clear priority." />
-              <h2 className="mt-4 text-lg font-semibold tracking-tight text-stone-800">No focus yet</h2>
-              <p className="mt-2 max-w-md text-sm leading-relaxed text-stone-500">
-                {weekOffset === 0
-                  ? "No rush — add a few tasks and we'll help you find what matters most."
-                  : "Nothing stood out that week. Try another, or head back to this week."}
+
+        <div className="relative grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_320px]">
+          <div className="flex-1 px-5 py-8 md:px-8 md:py-10">
+            {error ? (
+              <div className="mx-auto mb-6 max-w-lg rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            ) : null}
+
+            <div className={cn("mx-auto flex w-full max-w-3xl flex-col items-center", loading && "pointer-events-none opacity-60")}>
+              <p className="mb-5 max-w-md text-center text-sm leading-relaxed text-muted">
+                {week.reason}
               </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Link
-                  to="/map"
-                  className={cn(tw.btn, "inline-flex items-center gap-2")}
-                >
-                  <IconPlus size={14} />
-                  Add your first task
-                </Link>
-                {weekOffset !== 0 && onWeekChange ? (
-                  <button
-                    type="button"
-                    onClick={() => onWeekChange(0)}
-                    className={tw.btnOutlineSm}
-                  >
-                    This week
-                  </button>
-                ) : null}
+
+              {week.weekTaskCount > 0 ? (
+                <p className="mb-4 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-muted">
+                  {week.weekTaskCount.toLocaleString()} task{week.weekTaskCount === 1 ? "" : "s"} due this week
+                </p>
+              ) : null}
+
+              <div className="focus-hero-frame w-full">
+                <FocusIllustration className="w-full" />
+              </div>
+
+              <div className={cn(tw.card, "mt-8 w-full max-w-md p-6 text-center")}>
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                  <IconFocus size={22} />
+                </div>
+                <p className={tw.label}>{emptyTitle}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{emptyDescription}</p>
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                  <Link to="/map" className={cn(tw.btn, "inline-flex items-center gap-2")}>
+                    <IconPlus size={14} />
+                    {weekOffset === 0 ? "Add a task" : "Browse tasks"}
+                  </Link>
+                  {weekOffset !== 0 && onWeekChange ? (
+                    <button
+                      type="button"
+                      onClick={() => onWeekChange(0)}
+                      className={tw.btnOutlineSm}
+                    >
+                      This week
+                    </button>
+                  ) : (
+                    <Link to="/map" className={cn(tw.btnOutlineSm, "inline-flex items-center gap-1.5")}>
+                      <IconMap size={13} />
+                      All tasks
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           </div>
+
+          <NodePanel
+            node={null}
+            projectId={projectId}
+            channels={week.channels}
+            onClose={() => {}}
+          />
         </div>
       </FocusPageShell>
     );
@@ -205,7 +246,7 @@ export default function WeekDashboard({
 
         {selected ? (
           <div
-            className="fixed inset-0 z-40 bg-stone-900/30 lg:hidden"
+            className="fixed inset-0 z-40 bg-brand-dark/25 lg:hidden"
             onClick={() => setSelectedId(null)}
             aria-hidden="true"
           />

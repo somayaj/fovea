@@ -267,6 +267,21 @@
     filter: drop-shadow(0 3px 10px rgba(60, 40, 20, 0.1));
   }
 
+  .focus-collage-empty-piece {
+    opacity: 0.72;
+  }
+
+  .focus-collage-empty-piece .instant-photo {
+    box-shadow:
+      0 2px 8px color-mix(in srgb, var(--color-brand) 6%, transparent),
+      0 6px 18px color-mix(in srgb, var(--color-brand) 4%, transparent);
+  }
+
+  .focus-collage-empty-piece:has(.instant-photo-lg) {
+    z-index: 20;
+    opacity: 1;
+  }
+
   [data-fovea-neutral="true"] .login-collage-inlay,
   [data-fovea-neutral="true"] .login-hero-focus-img {
     box-shadow:
@@ -1723,6 +1738,495 @@
   font-size: 8px;
   line-height: 1.25;
   -webkit-line-clamp: 2;
+}
+
+/* 12-month roadmap — polaroid columns */
+.roadmap-scroll {
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.roadmap-month-column {
+  min-height: 0;
+}
+
+.roadmap-month-column--current .roadmap-month-header {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-line));
+  background: color-mix(in srgb, var(--color-accent-soft) 40%, #fffdf8);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 8px 20px color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.roadmap-month-column--unscheduled .roadmap-month-header {
+  background: color-mix(in srgb, var(--color-muted) 6%, #fffdf8);
+}
+
+.roadmap-month-column--unscheduled .roadmap-month-label {
+  color: var(--color-muted);
+}
+
+.roadmap-month-header {
+  margin-bottom: 0;
+  border: 1px solid color-mix(in srgb, var(--color-line) 75%, white);
+  background: #fffdf8;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.875rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 6px 16px rgba(42, 42, 40, 0.05);
+}
+
+.roadmap-month-label {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--color-brand);
+}
+
+.roadmap-month-count {
+  margin: 0.2rem 0 0;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.roadmap-month-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 12rem;
+  max-height: calc(100vh - 14rem);
+  margin-top: 0.625rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 55%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 92%, white), color-mix(in srgb, var(--color-paper) 88%, white));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  overflow-y: auto;
+}
+
+.roadmap-month-empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+.roadmap-month-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  align-items: center;
+  margin: 0;
+  padding: 0.15rem 0 0.25rem;
+  list-style: none;
+}
+
+.roadmap-month-item {
+  width: 100%;
+  max-width: 11rem;
+}
+
+.roadmap-polaroid.instant-photo {
+  width: 100%;
+  padding: 5px 5px 14px;
+  background: #fffdf8;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 2px 6px rgba(42, 42, 40, 0.05),
+    0 10px 22px rgba(42, 42, 40, 0.08);
+}
+
+.roadmap-polaroid .instant-photo-well {
+  aspect-ratio: 4 / 3;
+}
+
+.roadmap-polaroid .task-photo-map-img,
+.roadmap-polaroid .task-photo-img {
+  aspect-ratio: 4 / 3;
+}
+
+.roadmap-polaroid .instant-photo-caption {
+  margin-top: 5px;
+  padding: 0 4px;
+}
+
+.roadmap-polaroid .instant-photo-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+}
+
+.roadmap-polaroid .instant-photo-title {
+  font-size: 0.68rem;
+  line-height: 1.3;
+  -webkit-line-clamp: 2;
+}
+
+.roadmap-polaroid .instant-photo-meta {
+  font-size: 0.58rem;
+  line-height: 1.25;
+  margin-top: 2px;
+}
+
+.roadmap-month-overflow {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 0.75rem;
+  padding-top: 0.35rem;
+}
+
+.roadmap-month-overflow-btn {
+  backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+}
+
+/* Year calendar — twelve mini month grids */
+.roadmap-year-months {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: 1rem;
+}
+
+.roadmap-year-month {
+  border: 1px solid color-mix(in srgb, var(--color-line) 70%, white);
+  border-radius: 0.875rem;
+  background: #fffdf8;
+  padding: 0.75rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 6px 16px rgba(42, 42, 40, 0.05);
+}
+
+.roadmap-year-month--current {
+  border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-line));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 8px 20px color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.roadmap-year-month-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.roadmap-year-month-title {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--color-brand);
+  cursor: pointer;
+  text-align: left;
+}
+
+.roadmap-year-month-title:hover {
+  color: var(--color-accent);
+}
+
+.roadmap-year-month-count {
+  border-radius: 999px;
+  background: var(--color-accent);
+  padding: 0.18rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--color-on-accent);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.roadmap-year-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.15rem;
+  margin-bottom: 0.15rem;
+}
+
+.roadmap-year-weekday {
+  text-align: center;
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.roadmap-year-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.15rem;
+}
+
+.roadmap-year-day {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 2.15rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-paper));
+  padding: 0.14rem 0.1rem 0.18rem;
+  font: inherit;
+  color: var(--color-brand);
+  cursor: default;
+}
+
+.roadmap-year-day--pad {
+  background: transparent;
+  border-color: transparent;
+}
+
+.roadmap-year-day--busy {
+  cursor: pointer;
+}
+
+.roadmap-year-day--busy:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.roadmap-year-day:disabled {
+  opacity: 1;
+}
+
+.roadmap-year-day--today {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.roadmap-year-day--active {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  outline-offset: -1px;
+}
+
+.roadmap-year-day--heat-1 {
+  background: color-mix(in srgb, var(--color-accent-soft) 40%, var(--color-surface));
+}
+
+.roadmap-year-day--heat-2 {
+  background: color-mix(in srgb, var(--color-accent-soft) 60%, var(--color-surface));
+}
+
+.roadmap-year-day--heat-3 {
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+}
+
+.roadmap-year-day--heat-4 {
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+}
+
+.roadmap-year-day-number {
+  align-self: flex-start;
+  padding-left: 0.18rem;
+  font-size: 0.54rem;
+  font-weight: 600;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-brand) 75%, var(--color-muted));
+}
+
+.roadmap-year-day--busy .roadmap-year-day-number {
+  font-size: 0.5rem;
+}
+
+.roadmap-year-day-count {
+  display: inline-flex;
+  min-width: 1.15rem;
+  min-height: 1.15rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-accent);
+  padding: 0 0.2rem;
+  font-size: 0.64rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-on-accent);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+.roadmap-calendar-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.roadmap-calendar-summary-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.roadmap-calendar-summary-count {
+  border-radius: 999px;
+  background: var(--color-accent);
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-on-accent);
+  box-shadow: 0 1px 5px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+.roadmap-calendar-shell {
+  border: 1px solid color-mix(in srgb, var(--color-line) 70%, white);
+  border-radius: 1rem;
+  background: #fffdf8;
+  padding: 0.85rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 8px 22px rgba(42, 42, 40, 0.06);
+}
+
+.roadmap-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.3rem;
+  margin-bottom: 0.3rem;
+}
+
+.roadmap-calendar-weekday {
+  padding: 0.25rem 0.35rem;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.roadmap-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+.roadmap-calendar-day {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 4.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 55%, transparent);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-paper));
+  padding: 0.4rem 0.3rem;
+  font: inherit;
+  color: var(--color-brand);
+  cursor: default;
+}
+
+.roadmap-calendar-day--pad {
+  min-height: 0;
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+  cursor: default;
+}
+
+.roadmap-calendar-day--busy {
+  cursor: pointer;
+}
+
+.roadmap-calendar-day:not(.roadmap-calendar-day--pad) {
+  cursor: pointer;
+}
+
+.roadmap-calendar-day:not(.roadmap-calendar-day--pad):hover {
+  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.roadmap-calendar-day--busy:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+.roadmap-calendar-day:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.roadmap-calendar-day--today {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.roadmap-calendar-day--active {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  outline-offset: -1px;
+}
+
+.roadmap-calendar-day--heat-1 {
+  background: color-mix(in srgb, var(--color-accent-soft) 40%, var(--color-surface));
+}
+
+.roadmap-calendar-day--heat-2 {
+  background: color-mix(in srgb, var(--color-accent-soft) 58%, var(--color-surface));
+}
+
+.roadmap-calendar-day--heat-3 {
+  background: color-mix(in srgb, var(--color-accent) 11%, var(--color-surface));
+}
+
+.roadmap-calendar-day--heat-4 {
+  background: color-mix(in srgb, var(--color-accent) 17%, var(--color-surface));
+}
+
+.roadmap-calendar-day-number {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: color-mix(in srgb, var(--color-brand) 80%, var(--color-muted));
+}
+
+.roadmap-calendar-day-count {
+  display: inline-flex;
+  min-width: 2rem;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-accent);
+  padding: 0 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-on-accent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+.roadmap-calendar-day--heat-3 .roadmap-calendar-day-count,
+.roadmap-calendar-day--heat-4 .roadmap-calendar-day-count {
+  min-width: 2.35rem;
+  min-height: 2.35rem;
+  font-size: 1.05rem;
+}
+
+.roadmap-day-panel {
+  background: var(--color-surface);
 }
 
 .priority-board-row {

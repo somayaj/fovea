@@ -90,6 +90,31 @@ export const api = {
     }),
   clearWeekFocus: (offset = 0) =>
     request(`/api/week/focus?offset=${offset}`, { method: "DELETE" }),
+  roadmap: (year, { month, limit = 24, offset = 0 } = {}) => {
+    const params = new URLSearchParams({ year: String(year), limit: String(limit), offset: String(offset) });
+    if (month) params.set("month", month);
+    return request(`/api/roadmap?${params}`);
+  },
+  roadmapYear: (year, { limit = 24 } = {}) => {
+    const params = new URLSearchParams({ year: String(year), limit: String(limit) });
+    return request(`/api/roadmap?${params}`);
+  },
+  roadmapCalendarYear: (year) => {
+    const params = new URLSearchParams({ year: String(year) });
+    return request(`/api/roadmap/calendar?${params}`);
+  },
+  roadmapCalendarMonth: (monthKey, { previewPerDay = 0 } = {}) => {
+    const params = new URLSearchParams({ month: monthKey, previewPerDay: String(previewPerDay) });
+    return request(`/api/roadmap/calendar?${params}`);
+  },
+  roadmapCalendarDay: (dayKey, { limit = 24, offset = 0 } = {}) => {
+    const params = new URLSearchParams({
+      day: dayKey,
+      limit: String(limit),
+      offset: String(offset),
+    });
+    return request(`/api/roadmap/calendar?${params}`);
+  },
   adminUsers: () => request("/api/admin/users"),
   revealAdminUser: (userId) => request(`/api/admin/users/${userId}`),
 };

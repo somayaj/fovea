@@ -14,6 +14,13 @@ import {
 import { channelNameMap, getChannel, listChannelsPaginated } from "./channels.js";
 import { buildWeekViewPaginated } from "./weekView.js";
 import {
+  buildRoadmapBucket,
+  buildRoadmapYear,
+  buildRoadmapCalendarDay,
+  buildRoadmapCalendarMonth,
+  buildRoadmapCalendarYear,
+} from "./roadmapView.js";
+import {
   clearManualWeekFocus,
   clearWeekFocusIfTask,
   setManualWeekFocus,
@@ -629,6 +636,66 @@ router.delete("/week/focus", async (req, res) => {
     channels: await listChannels(project.id, { includeArchived: false }),
     ...view,
   });
+});
+
+router.get("/roadmap", async (req, res) => {
+  const project = await queryOne("SELECT * FROM projects WHERE user_id = ?", [req.user.id]);
+  if (!project) return res.status(404).json({ error: "No project yet" });
+
+  const year = Number.parseInt(req.query.year ?? String(new Date().getFullYear()), 10);
+  const month = req.query.month || req.query.bucket || null;
+  const limit = req.query.limit;
+  const offset = req.query.offset;
+
+  if (month) {
+    const bucket = await buildRoadmapBucket(project.id, {
+      bucket: month,
+      year,
+      limit,
+      offset,
+    });
+    return res.json({ year, bucket });
+  }
+
+  const view = await buildRoadmapYear(project.id, year, { limit });
+  res.json({
+    project,
+    channels: await listChannels(project.id, { includeArchived: false }),
+    ...view,
+  });
+});
+
+router.get("/roadmap/calendar", async (req, res) => {
+  const project = await queryOne("SELECT * FROM projects WHERE user_id = ?", [req.user.id]);
+  if (!project) return res.status(404).json({ error: "No project yet" });
+
+  const day = req.query.day || null;
+  const month = req.query.month || null;
+  const yearParam = req.query.year;
+  const year =
+    yearParam != null && String(yearParam).trim() !== ""
+      ? Number.parseInt(String(yearParam), 10)
+      : null;
+  const limit = req.query.limit;
+  const offset = req.query.offset;
+  const previewPerDay = req.query.previewPerDay;
+
+  if (day) {
+    const bucket = await buildRoadmapCalendarDay(project.id, day, { limit, offset });
+    return res.json({ bucket });
+  }
+
+  if (month) {
+    const view = await buildRoadmapCalendarMonth(project.id, month, { previewPerDay });
+    return res.json({ ...view, channels: await listChannels(project.id, { includeArchived: false }) });
+  }
+
+  if (Number.isFinite(year)) {
+    const view = await buildRoadmapCalendarYear(project.id, year);
+    return res.json(view);
+  }
+
+  return res.status(400).json({ error: "year, month, or day is required" });
 });
 
 export default router;
