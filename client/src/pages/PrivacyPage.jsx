@@ -114,9 +114,7 @@ export default function PrivacyPage() {
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-brand">Retention and deletion</h2>
         <p>
-          We keep your account and workspace data while your account is active. If you want your account and
-          data deleted, contact us at{" "}
-          <a className="text-accent hover:underline" href="mailto:privacy@fovea.sh">privacy@fovea.sh</a>.
+          We keep your account and workspace data while your account is active.
         </p>
       </section>
 
@@ -147,14 +145,6 @@ export default function PrivacyPage() {
         <h2 className="text-base font-semibold text-brand">Changes</h2>
         <p>
           We may update this policy from time to time. The effective date at the top will change when we do.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-base font-semibold text-brand">Contact</h2>
-        <p>
-          Questions about privacy? Email{" "}
-          <a className="text-accent hover:underline" href="mailto:privacy@fovea.sh">privacy@fovea.sh</a>.
         </p>
       </section>
     </LegalLayout>
