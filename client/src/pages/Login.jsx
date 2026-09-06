@@ -40,7 +40,7 @@ export default function Login({ status, authError, onDevLogin }) {
             <h1 className="mt-6 text-[clamp(1.875rem,4.5vw,2.75rem)] font-semibold leading-[1.12] tracking-tight text-brand">
               Focus on the <span className="text-accent">right task</span> this week.
             </h1>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-muted lg:text-base">
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted lg:text-base">
               Your top task front and center — everything due this week stays visible around it.
             </p>
 
