@@ -104,19 +104,28 @@ app.post("/auth/logout", (req, res) => {
 
 app.use("/api", api);
 
+app.get("/health", (_req, res) => {
+  res.json({ ok: true });
+});
+
 const clientDist = path.join(__dirname, "..", "..", "client", "dist");
 app.use(express.static(clientDist));
 app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api") || req.path.startsWith("/auth")) return next();
+  if (req.path.startsWith("/api") || req.path.startsWith("/auth") || req.path === "/health") {
+    return next();
+  }
   res.sendFile(path.join(clientDist, "index.html"), (err) => {
-    if (err) next();
+    if (!err) return;
+    if (!res.headersSent) {
+      res.status(503).json({ error: "Client build is missing" });
+    }
   });
 });
 
 const start = async () => {
   await initDb();
-  app.listen(PORT, () => {
-    console.log(`Fovea API on http://localhost:${PORT} (${isPostgres ? "postgres" : "sqlite"})`);
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Fovea API on 0.0.0.0:${PORT} (${isPostgres ? "postgres" : "sqlite"})`);
   });
 };
 
