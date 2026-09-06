@@ -2,7 +2,7 @@ import LegalLayout from "../components/LegalLayout.jsx";
 
 const MIT_LICENSE = `MIT License
 
-Copyright (c) 2026 Asha Somayajula
+Copyright (c) 2026 Fovea
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
