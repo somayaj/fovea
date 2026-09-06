@@ -253,7 +253,11 @@ async function migrate() {
   );
 
   const { backfillAllChannelTaskCounts } = await import("./taskCounts.js");
-  await backfillAllChannelTaskCounts();
+  // Run in the background so startup/health checks aren't blocked by a
+  // potentially slow scan across all projects/channels.
+  backfillAllChannelTaskCounts().catch((err) => {
+    console.error("backfillAllChannelTaskCounts() failed:", err);
+  });
 }
 
 export function nowIso() {

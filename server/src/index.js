@@ -111,6 +111,14 @@ app.use(
 );
 app.use(express.json({ limit: "8mb" }));
 
+// Liveness endpoint: responds immediately, before any DB/Redis
+// initialization, so Railway's healthcheck doesn't time out while
+// initDb()/migrate() are still running.
+let ready = false;
+app.get(["/health", "/healthz"], (req, res) => {
+  res.status(200).json({ ok: true, ready });
+});
+
 const start = async () => {
   try {
   let sessionStore;
@@ -217,13 +225,9 @@ const start = async () => {
     });
   });
 
-  try {
-    await initDb();
-  } catch (err) {
-    console.error("initDb() failed during startup:", err);
-    throw err;
-  }
-
+  // Start accepting connections (and responding to /health) before
+  // database initialization completes. This is the "liveness" surface;
+  // /health reports readiness separately via the `ready` flag.
   try {
     const server = app.listen(PORT, "0.0.0.0", () => {
       console.log(`Fovea API on http://localhost:${PORT} (${isPostgres ? "postgres" : "sqlite"})`);
@@ -234,6 +238,14 @@ const start = async () => {
     });
   } catch (err) {
     console.error("Failed to start app.listen():", err);
+    throw err;
+  }
+
+  try {
+    await initDb();
+    ready = true;
+  } catch (err) {
+    console.error("initDb() failed during startup:", err);
     throw err;
   }
   } catch (err) {
