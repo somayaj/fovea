@@ -73,7 +73,7 @@ export default function IdeaPanel({ idea, channels, onChange, onPromote, onDelet
           />
         </div>
 
-        <div className="border-t border-stone-200 pt-4">
+        <div className="border-t border-line pt-4">
           <p className={tw.label}>When it&apos;s real work</p>
           <div className="mt-3">
             <label htmlFor="promote-channel" className={cn(tw.label, "mb-1.5 block")}>Workstream</label>

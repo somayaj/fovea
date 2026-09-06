@@ -100,7 +100,7 @@ export default function FocusMindMap({ focus, linked, related, channels, focusCh
   ].slice(0, 8), branchR, branchColors);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm" style={{ backgroundColor: palette.bg }}>
+    <section className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm" style={{ backgroundColor: palette.bg }}>
       <div className="mindmap-canvas relative mx-auto" style={{ maxWidth: VIEW_W }}>
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full"
@@ -142,7 +142,7 @@ export default function FocusMindMap({ focus, linked, related, channels, focusCh
       </div>
 
       {linked.length + related.length === 0 ? (
-        <div className="border-t border-stone-200 px-6 py-8 text-center">
+        <div className="border-t border-line px-6 py-8 text-center">
           <p className="text-base leading-relaxed text-stone-500">
             No connected tasks yet — link a few on the{" "}
             <Link to="/map" className="font-medium text-stone-900 underline underline-offset-2">task map</Link>

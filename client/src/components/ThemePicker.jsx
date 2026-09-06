@@ -40,7 +40,7 @@ export default function ThemePicker({ collapsed = false }) {
       <p className="mb-2 px-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-muted">
         Colors
       </p>
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5">
         {presets.map((preset) => {
           const active = themeId === preset.id;
           return (

@@ -126,7 +126,7 @@ export default function ChannelView({ me }) {
 
   return (
     <div className="mx-auto flex h-full max-w-3xl flex-col">
-      <header className="border-b border-stone-200 bg-white px-8 py-10">
+      <header className="border-b border-line bg-surface px-8 py-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className={tw.label}>Workstream</p>

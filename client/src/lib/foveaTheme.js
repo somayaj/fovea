@@ -25,15 +25,30 @@ export function focusBranchColors(palette = PALETTE) {
   return [...palette.nodes, palette.line, palette.muted];
 }
 
-export function priorityColors() {
+export function priorityColors(palette = PALETTE) {
   return {
-    hub: PALETTE.center,
+    hub: palette.center,
     p0: "#b4533a",
     p1: "#a06d3f",
     p2: "#5c4a3a",
-    p3: "#8a7b6b",
-    idea: PALETTE.muted,
+    p3: palette.muted,
+    idea: palette.muted,
   };
+}
+
+const DEFAULT_PRIORITY_TOKENS = {
+  p0: { bg: "#faf0ec", fg: "#b4533a", border: "#e8cfc4" },
+  p1: { bg: "#f7efe6", fg: "#a06d3f", border: "#e5d5c3" },
+  p2: { bg: "#f3f0ea", fg: "#5c4a3a", border: "#e8dfd4" },
+  p3: { bg: "#f7f5f1", fg: "#8a7b6b", border: "#ebe4d8" },
+};
+
+function applyPriorityTokens(root, priorities = DEFAULT_PRIORITY_TOKENS) {
+  for (const [level, tokens] of Object.entries(priorities)) {
+    root.style.setProperty(`--priority-${level}-bg`, tokens.bg);
+    root.style.setProperty(`--priority-${level}-fg`, tokens.fg);
+    root.style.setProperty(`--priority-${level}-border`, tokens.border);
+  }
 }
 
 export function applyFoveaTheme(themeId = getStoredThemeId()) {
@@ -48,6 +63,7 @@ export function applyFoveaTheme(themeId = getStoredThemeId()) {
   const resolvedId = resolveThemeId(themeId);
 
   root.dataset.foveaTheme = resolvedId;
+  root.dataset.foveaNeutral = preset.neutral ? "true" : "false";
   root.dataset.sidebarDark = sidebar.dark ? "true" : "false";
   root.dataset.headerDark = header.dark ? "true" : "false";
   root.style.setProperty("--color-paper", palette.bg);
@@ -60,9 +76,12 @@ export function applyFoveaTheme(themeId = getStoredThemeId()) {
   root.style.setProperty("--color-on-accent", palette.onAccent);
   root.style.setProperty("--theme-center-glow", palette.centerGlow);
   root.style.setProperty("--color-wall", palette.wall || palette.accentSoft);
+  root.style.setProperty("--color-brand", palette.brand || palette.icon);
+  root.style.setProperty("--color-brand-dark", palette.brandDark || palette.centerDark);
   root.style.setProperty("--color-brand-soft", palette.brandSoft || palette.accentSoft);
   root.style.setProperty("--collage-photo-filter", preset.collage.photoFilter);
   root.style.setProperty("--collage-surface-mix", preset.collage.surfaceMix);
+  applyPriorityTokens(root, preset.priorities);
   root.style.setProperty("--sidebar-bg", sidebar.bg);
   root.style.setProperty("--sidebar-surface", sidebar.surface);
   root.style.setProperty("--sidebar-border", sidebar.border);

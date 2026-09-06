@@ -31,7 +31,7 @@ export function Button({ children, variant = "primary", className = "", ...props
     smOutline: tw.btnOutlineSm,
     ghost: "text-sm font-medium text-stone-600 hover:text-stone-900",
     danger:
-      "inline-flex items-center justify-center rounded-lg border border-red-300 bg-white px-5 py-2.5 text-sm font-medium text-red-700 transition-colors hover:border-red-500 hover:text-red-800",
+      "inline-flex items-center justify-center rounded-lg border border-red-300 bg-surface px-5 py-2.5 text-sm font-medium text-red-700 transition-colors hover:border-red-500 hover:text-red-800",
   };
 
   return (
@@ -43,7 +43,7 @@ export function Button({ children, variant = "primary", className = "", ...props
 
 export function MetaChip({ children, icon }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-stone-50 px-2 py-0.5 text-xs font-medium text-stone-600">
+    <span className="inline-flex items-center gap-1 rounded-md border border-line bg-accent-soft/40 px-2 py-0.5 text-xs font-medium text-stone-600">
       {icon ? <span className="text-stone-400">{icon}</span> : null}
       {children}
     </span>
@@ -52,7 +52,7 @@ export function MetaChip({ children, icon }) {
 
 export function SectionHeader({ label, title, children }) {
   return (
-    <header className="mb-6 border-b border-stone-200/80 pb-5">
+    <header className="mb-6 border-b border-line/80 pb-5">
       {label ? <p className={tw.label}>{label}</p> : null}
       {title ? (
         <h1 className="mt-1 text-lg font-semibold tracking-tight text-stone-900 md:text-xl">{title}</h1>

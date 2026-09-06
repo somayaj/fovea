@@ -830,7 +830,7 @@ function MapCanvas({ me }) {
 
           {!isBoard && !isEmpty && !loading && filterChannel && rollupLayout.laidOut.length === 0 ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center p-6">
-              <div className="max-w-md border border-stone-200 bg-white p-8 text-center">
+              <div className="max-w-md border border-line/70 bg-surface p-8 text-center">
                 <p className={tw.label}>Workstream</p>
                 <h2 className="mt-2 font-display text-2xl font-medium text-stone-900">
                   {activeChannel ? `#${activeChannel.name}` : "Channel"}
@@ -853,7 +853,7 @@ function MapCanvas({ me }) {
                 <button
                   type="button"
                   onClick={() => setTaskPage((p) => Math.max(0, p - 1))}
-                  className={cn(tw.btnOutlineSm, "bg-white shadow-sm")}
+                  className={cn(tw.btnOutlineSm, "shadow-sm")}
                 >
                   Previous tasks
                 </button>
@@ -862,7 +862,7 @@ function MapCanvas({ me }) {
                 <button
                   type="button"
                   onClick={() => setTaskPage((p) => p + 1)}
-                  className={cn(tw.btnOutlineSm, "bg-white shadow-sm")}
+                  className={cn(tw.btnOutlineSm, "shadow-sm")}
                 >
                   More tasks
                 </button>
@@ -876,7 +876,7 @@ function MapCanvas({ me }) {
                 <button
                   type="button"
                   onClick={() => setChannelPage((p) => Math.max(0, p - 1))}
-                  className={cn(tw.btnOutlineSm, "bg-white shadow-sm")}
+                  className={cn(tw.btnOutlineSm, "shadow-sm")}
                 >
                   Previous workstreams
                 </button>
@@ -884,7 +884,7 @@ function MapCanvas({ me }) {
               <button
                 type="button"
                 onClick={() => setChannelPage((p) => p + 1)}
-                className={cn(tw.btnOutlineSm, "bg-white shadow-sm")}
+                className={cn(tw.btnOutlineSm, "shadow-sm")}
               >
                 More workstreams
               </button>

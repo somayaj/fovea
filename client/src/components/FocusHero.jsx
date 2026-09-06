@@ -82,7 +82,7 @@ export default function FocusHero({
                   type="button"
                   onClick={() => onTaskSelect?.(task)}
                   className={cn(
-                    "w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 hover:bg-white",
+                    "w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 hover:bg-paper",
                     selectedTaskId === task.id &&
                       "bg-accent-soft/40 ring-1 ring-accent/35",
                   )}

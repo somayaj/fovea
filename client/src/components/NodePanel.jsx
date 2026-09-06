@@ -290,7 +290,7 @@ export default function NodePanel({
               </div>
             </div>
             {node.recurrence_series_id ? (
-              <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5">
+              <div className="rounded-lg border border-line bg-accent-soft/40 px-3 py-2.5">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
                   Recurring
                 </p>
@@ -386,7 +386,7 @@ export default function NodePanel({
           onClick={() => setImageNotice(null)}
         >
           <div
-            className="w-full max-w-sm rounded-xl border border-line/80 bg-[#fdfbf7] p-5 shadow-xl"
+            className="w-full max-w-sm rounded-xl border border-line/80 bg-surface p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <p className={tw.label}>Photo</p>

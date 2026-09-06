@@ -126,7 +126,7 @@ export default function MapSearch({
           "flex items-center gap-2 rounded-lg border px-3 py-2 focus-within:ring-2",
           dark
             ? cn("focus-within:ring-2", headerChrome.input)
-            : "border-stone-200 bg-white focus-within:border-accent/30 focus-within:ring-accent/10",
+            : "border-line bg-surface focus-within:border-accent/30 focus-within:ring-accent/10",
         )}
       >
         <svg
@@ -177,7 +177,7 @@ export default function MapSearch({
             <div
               data-map-search-menu
               style={menuStyle}
-              className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-lg"
+              className="overflow-hidden rounded-lg border border-line bg-surface shadow-lg"
             >
               {loading ? (
                 <p className="px-3 py-2 text-sm text-stone-500">Searching…</p>
@@ -188,7 +188,7 @@ export default function MapSearch({
                       <button
                         type="button"
                         onClick={() => pick(task)}
-                        className="grid w-full grid-cols-[4.5rem_1fr] items-start gap-3 px-3 py-2.5 text-left hover:bg-stone-50"
+                        className="grid w-full grid-cols-[4.5rem_1fr] items-start gap-3 px-3 py-2.5 text-left hover:bg-accent-soft/40"
                       >
                         <span className={cn(tw.label, "pt-0.5 text-stone-400")}>
                           {typeLabel(task.type || "task")}
