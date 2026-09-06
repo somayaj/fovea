@@ -92,14 +92,23 @@ app.set("trust proxy", 1);
 
 if (isProdEnv) {
   app.use((req, res, next) => {
-    // Railway terminates TLS at the edge and probes /health over plain HTTP
-    // inside the container — never redirect those internal checks.
+    // Skip healthcheck routes — Railway probes /health over plain HTTP
+    if (req.path === "/health" || req.path === "/healthz") return next();
+
     const proto = String(req.get("x-forwarded-proto") || "")
       .split(",")[0]
       .trim();
-    if (proto === "https") {
-      res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+
+    // Redirect non-HTTPS traffic to HTTPS
+    if (proto !== "https") {
+      const host = String(req.get("x-forwarded-host") || req.get("host") || "fovea.sh")
+        .split(",")[0]
+        .trim();
+      return res.redirect(301, `https://${host}${req.originalUrl}`);
     }
+
+    // Set HSTS for HTTPS traffic
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     next();
   });
 }
