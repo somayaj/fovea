@@ -66,7 +66,7 @@ export default function TaskComposer({
     <form
       onSubmit={submit}
       className={cn(
-        "border border-line/80 bg-[#fdfbf7] p-4",
+        "border border-line/80 bg-surface p-4",
         compact ? "" : "shadow-sm",
       )}
     >

@@ -26,7 +26,7 @@ export default function PriorityBoard({
     <div className="h-full overflow-auto px-4 py-4 md:px-6">
       <p className={cn(tw.label, "mb-4")}>Sorted by priority</p>
       {sorted.length === 0 && emptyLabel ? (
-        <p className="py-8 text-center text-sm text-stone-500">{emptyLabel}</p>
+        <p className="py-8 text-center text-sm text-muted">{emptyLabel}</p>
       ) : (
       <ul className="space-y-1.5">
         {sorted.map((node) => {
@@ -56,8 +56,8 @@ export default function PriorityBoard({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="priority-board-title font-medium text-stone-900">{node.title}</p>
-                      <p className="mt-0.5 text-xs text-stone-500">
+                      <p className="priority-board-title font-medium text-brand">{node.title}</p>
+                      <p className="mt-0.5 text-xs text-muted">
                         {typeLabel(node.type)}
                         {channel ? ` · #${channel}` : ""}
                       </p>
@@ -75,7 +75,7 @@ export default function PriorityBoard({
       </ul>
       )}
       {hasMore ? (
-        <div ref={loadMoreRef} className="py-6 text-center text-sm text-stone-500">
+        <div ref={loadMoreRef} className="py-6 text-center text-sm text-muted">
           {loadingMore ? "Loading more tasks…" : ""}
         </div>
       ) : null}

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import FocusPageShell from "../components/FocusPageShell.jsx";
 import { IconUsers } from "../components/icons.jsx";
-import { PageHeader, StatPill } from "../components/PageHeader.jsx";
-import { cn, tw } from "../lib/tw.js";
+import { PageHeader, StatPill, EmptyPanel } from "../components/PageHeader.jsx";
+import { tw, cn } from "../lib/tw.js";
 
 function formatLogin(iso) {
   if (!iso) return "Unknown";
@@ -14,43 +15,49 @@ function formatLogin(iso) {
   });
 }
 
+function isRecent(iso) {
+  if (!iso) return false;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return false;
+  return Date.now() - then < 24 * 60 * 60 * 1000;
+}
+
 function UserRow({ user, onReveal, onHide, revealing }) {
   const revealed = Boolean(user.name || user.email);
 
   return (
-    <tr className="border-t border-line/70">
-      <td className="px-4 py-3 align-middle">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent/12 text-[11px] font-bold text-accent">
-            {revealed && user.avatar ? (
-              <img src={user.avatar} alt="" className="h-full w-full object-cover" />
-            ) : (
-              "••"
-            )}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-stone-900">
-              {revealed ? user.name || "Unnamed" : user.nameMasked}
-            </p>
-            <p className="truncate text-xs text-stone-500">
-              {revealed ? user.email || "No email" : user.emailMasked}
-            </p>
-          </div>
+    <li className="admin-row">
+      <div className="admin-row-user">
+        <div className="admin-avatar">
+          {revealed && user.avatar ? (
+            <img src={user.avatar} alt="" />
+          ) : (
+            <span>{revealed ? (user.name || "?").slice(0, 1) : "•"}</span>
+          )}
         </div>
-      </td>
-      <td className="px-4 py-3 text-xs capitalize text-stone-600">{user.method}</td>
-      <td className="px-4 py-3 text-sm text-stone-800">{formatLogin(user.lastLoginAt)}</td>
-      <td className="px-4 py-3 text-right">
-        <button
-          type="button"
-          disabled={revealing}
-          onClick={() => (revealed ? onHide(user.id) : onReveal(user.id))}
-          className={cn(tw.btnOutlineSm, "disabled:opacity-50")}
-        >
-          {revealing ? "…" : revealed ? "Hide PII" : "Reveal"}
-        </button>
-      </td>
-    </tr>
+        <div className="min-w-0">
+          <p className={revealed ? "admin-name is-open" : "admin-name is-hidden"}>
+            {revealed ? user.name || "Unnamed" : user.nameMasked}
+          </p>
+          <p className={revealed ? "admin-email is-open" : "admin-email is-hidden"}>
+            {revealed ? user.email || "No email" : user.emailMasked}
+          </p>
+        </div>
+      </div>
+      <span className={`admin-method ${user.method}`}>{user.method}</span>
+      <p className="admin-login">
+        <span className={isRecent(user.lastLoginAt) ? "admin-dot is-live" : "admin-dot"} />
+        {formatLogin(user.lastLoginAt)}
+      </p>
+      <button
+        type="button"
+        disabled={revealing}
+        onClick={() => (revealed ? onHide(user.id) : onReveal(user.id))}
+        className={cn(revealed ? tw.btnOutlineSm : tw.btnSm, "admin-reveal justify-self-end disabled:opacity-50")}
+      >
+        {revealing ? "…" : revealed ? "Hide PII" : "Reveal"}
+      </button>
+    </li>
   );
 }
 
@@ -104,53 +111,54 @@ export default function AdminView() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+    <FocusPageShell fill className="overflow-auto">
       <PageHeader
-        icon={<IconUsers size={14} />}
+        icon={<IconUsers size={13} />}
         eyebrow="Admin"
         title="Signed-in users"
-        description="PII stays hidden until you reveal a row. Login time is the most recent sign-in."
+        description="PII stays hidden until you reveal a row. Last login is the most recent sign-in."
+        actions={
+          <StatPill icon={<IconUsers size={16} />} label="Logged in" value={loading ? "…" : String(count)} />
+        }
       />
 
-      <div className="mx-auto w-full max-w-5xl space-y-6 px-5 py-6 md:px-6">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <StatPill icon={<IconUsers size={16} />} label="Users logged in" value={loading ? "…" : String(count)} />
-        </div>
-
+      <div className="mx-auto w-full max-w-3xl px-5 py-8 md:px-8">
         {error ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+          <p className="mb-5 text-center text-sm text-amber-900">{error}</p>
         ) : null}
 
-        <div className={cn(tw.card, "overflow-hidden")}>
-          {loading ? (
-            <p className="px-4 py-8 text-sm text-stone-500">Loading users…</p>
-          ) : users.length === 0 ? (
-            <p className="px-4 py-8 text-sm text-stone-500">No users have logged in yet.</p>
-          ) : (
-            <table className="w-full min-w-[640px] text-left">
-              <thead className="bg-white/60 text-[11px] font-semibold uppercase tracking-wide text-stone-400">
-                <tr>
-                  <th className="px-4 py-3">User</th>
-                  <th className="px-4 py-3">Sign-in</th>
-                  <th className="px-4 py-3">Last login</th>
-                  <th className="px-4 py-3 text-right">PII</th>
-                </tr>
-              </thead>
-              <tbody className="bg-[#fdfbf7]">
-                {users.map((user) => (
-                  <UserRow
-                    key={user.id}
-                    user={user}
-                    revealing={revealingId === user.id}
-                    onReveal={reveal}
-                    onHide={hide}
-                  />
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        {loading ? (
+          <p className="text-sm text-muted">Loading users…</p>
+        ) : users.length === 0 ? (
+          <div className={cn(tw.card, "w-full")}>
+            <EmptyPanel
+              icon={<IconUsers size={22} />}
+              title="No sign-ins yet"
+              description="When people log in, they will show up here."
+            />
+          </div>
+        ) : (
+          <div className={cn(tw.card, "w-full overflow-hidden p-3 pb-5")}>
+            <div className="admin-list-head px-2">
+              <span>User</span>
+              <span>Sign-in</span>
+              <span>Last login</span>
+              <span className="text-right">PII</span>
+            </div>
+            <ul className="admin-list">
+              {users.map((user) => (
+                <UserRow
+                  key={user.id}
+                  user={user}
+                  revealing={revealingId === user.id}
+                  onReveal={reveal}
+                  onHide={hide}
+                />
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
-    </div>
+    </FocusPageShell>
   );
 }

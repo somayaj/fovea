@@ -19,8 +19,9 @@ import FocusOnNode from "../components/FocusOnNode.jsx";
 import IdeaPanel from "../components/IdeaPanel.jsx";
 import MindMapBackdrop from "../components/MindMapBackdrop.jsx";
 import { useChannels } from "../context/ChannelsContext.jsx";
+import FocusPageShell from "../components/FocusPageShell.jsx";
 import { tw, cn } from "../lib/tw.js";
-import { PageHeader, SegmentedControl, EmptyPanel } from "../components/PageHeader.jsx";
+import { PageHeader, EmptyPanel, HeaderButton } from "../components/PageHeader.jsx";
 import { IconBrainstorm, IconPlus } from "../components/icons.jsx";
 
 const edgeTypes = { mindmap: MindMapEdge };
@@ -191,33 +192,34 @@ function BrainstormCanvas({ me }) {
   const isEmpty = !loading && ideas.length === 0;
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[1fr_320px]">
-      <div className="flex min-h-0 min-w-0 flex-col">
-        <PageHeader
-          eyebrow="Brainstorm"
-          icon={<IconBrainstorm size={13} />}
-          title="Ideas"
-          description="A free-form space for rough thoughts. Promote to a task when ready."
-          actions={
-            <button type="button" onClick={addIdea} className={tw.btnSm}>
-              <IconPlus size={13} />
-              Idea
-            </button>
-          }
-        />
+    <FocusPageShell fill className="flex min-h-0 flex-col overflow-hidden">
+      <PageHeader
+        eyebrow="Brainstorm"
+        icon={<IconBrainstorm size={13} />}
+        title="Ideas"
+        description="A free-form space for rough thoughts. Promote to a task when ready."
+        actions={
+          <HeaderButton onClick={addIdea}>
+            <IconPlus size={13} />
+            Idea
+          </HeaderButton>
+        }
+      />
 
+      <div className="relative grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_320px]">
+      <div className="flex min-h-0 min-w-0 flex-col">
         <div className="map-flow-canvas relative min-h-0 flex-1 bg-paper">
           <MindMapBackdrop />
 
           {loading ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 text-sm text-stone-500">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-paper text-sm text-stone-500">
               Loading brainstorm…
             </div>
           ) : null}
 
           {isEmpty ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 p-6">
-              <div className="max-w-sm rounded-xl border border-stone-200 bg-white p-8 shadow-sm">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-paper p-6">
+              <div className="max-w-sm rounded-xl border border-line/70 bg-surface p-8 shadow-sm">
                 <EmptyPanel
                   icon={<IconBrainstorm size={22} />}
                   title="Start brainstorming"
@@ -274,5 +276,6 @@ function BrainstormCanvas({ me }) {
         onClose={() => setSelectedId(null)}
       />
     </div>
+    </FocusPageShell>
   );
 }
