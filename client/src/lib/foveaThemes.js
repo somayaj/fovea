@@ -1,12 +1,12 @@
 /**
  * Focus collage color presets — sampled from focus-collage-reference.jpg.
  *
- * Preview: `?theme=walnut`, `?theme=white`, `?theme=snow`, `?theme=mono`, …
- * Prod default: `walnut`.
+ * Preview: `?theme=walnut`, `?theme=pearl`, `?theme=snow`, `?theme=mono`, …
+ * Prod default: `pearl`.
  */
 
 export const THEME_STORAGE_KEY = "fovea.theme";
-export const DEFAULT_THEME_ID = "walnut";
+export const DEFAULT_THEME_ID = "pearl";
 export const COLLAGE_REFERENCE = "/design/focus-collage-reference.jpg";
 
 const NEUTRAL_PRIORITIES = {
