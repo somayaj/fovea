@@ -35,14 +35,14 @@ export function PageHeader({ icon, eyebrow, title, description, actions, toolbar
               </div>
             ) : null}
             <h1 className={cn("page-header-title", dark && "page-header-title--chrome")}>{title}</h1>
-            {description ? (
-              <p className={cn("mt-1 max-w-2xl text-sm", dark ? headerChrome.muted : "text-muted")}>
-                {description}
-              </p>
-            ) : null}
           </div>
           {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
         </div>
+        {description ? (
+          <p className={cn("mt-2 text-sm leading-relaxed", dark ? headerChrome.muted : "text-muted")}>
+            {description}
+          </p>
+        ) : null}
         {toolbar ? (
           <div className="page-header-toolbar relative z-20 mt-4 overflow-visible">{toolbar}</div>
         ) : null}
