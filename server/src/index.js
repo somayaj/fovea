@@ -38,23 +38,6 @@ function allowDevLogin(req) {
 configurePassport();
 
 const REDIS_URL = process.env.REDIS_URL || "";
-let sessionStore;
-
-if (REDIS_URL) {
-  const redisClient = createClient({ url: REDIS_URL });
-  redisClient.on("error", (err) => {
-    console.error("Redis client error", err);
-  });
-  await redisClient.connect();
-  sessionStore = new RedisStore({
-    client: redisClient,
-    prefix: "fovea:sess:",
-  });
-} else {
-  console.warn(
-    "REDIS_URL not set; falling back to in-memory session store (not suitable for production).",
-  );
-}
 
 const app = express();
 app.set("trust proxy", 1);
@@ -65,77 +48,96 @@ app.use(
   }),
 );
 app.use(express.json({ limit: "8mb" }));
-app.use(
-  session({
-    store: sessionStore,
-    name: "fovea.sid",
-    secret: process.env.SESSION_SECRET || "fovea-dev-secret",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 14 * 24 * 60 * 60 * 1000,
-    },
-  }),
-);
-app.use(passport.initialize());
-app.use(passport.session());
-
-app.get("/auth/status", (req, res) => {
-  res.json({
-    google: googleReady,
-    devLogin: allowDevLogin(req),
-    user: publicUser(req.user),
-  });
-});
-
-if (googleReady) {
-  app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-  app.get(
-    "/auth/google/callback",
-    passport.authenticate("google", { failureRedirect: `${CLIENT_ORIGIN}/login?error=google` }),
-    (_req, res) => {
-      res.redirect(CLIENT_ORIGIN);
-    },
-  );
-}
-
-app.post("/auth/dev", async (req, res) => {
-  if (!allowDevLogin(req)) return res.status(403).json({ error: "Dev login is disabled" });
-  try {
-    const user = await createDevUser();
-    req.login(user, (err) => {
-      if (err) return res.status(500).json({ error: "Could not start session" });
-      res.json({ user: publicUser(user) });
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message || "Could not start session" });
-  }
-});
-
-app.post("/auth/logout", (req, res) => {
-  req.logout(() => {
-    req.session.destroy(() => {
-      res.clearCookie("fovea.sid");
-      res.json({ ok: true });
-    });
-  });
-});
-
-app.use("/api", api);
-
-const clientDist = path.join(__dirname, "..", "..", "client", "dist");
-app.use(express.static(clientDist));
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api") || req.path.startsWith("/auth")) return next();
-  res.sendFile(path.join(clientDist, "index.html"), (err) => {
-    if (err) next();
-  });
-});
 
 const start = async () => {
+  let sessionStore;
+
+  if (REDIS_URL) {
+    const redisClient = createClient({ url: REDIS_URL });
+    redisClient.on("error", (err) => {
+      console.error("Redis client error", err);
+    });
+    await redisClient.connect();
+    sessionStore = new RedisStore({
+      client: redisClient,
+      prefix: "fovea:sess:",
+    });
+  } else {
+    console.warn(
+      "REDIS_URL not set; falling back to in-memory session store (not suitable for production).",
+    );
+  }
+
+  app.use(
+    session({
+      store: sessionStore,
+      name: "fovea.sid",
+      secret: process.env.SESSION_SECRET || "fovea-dev-secret",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false,
+        maxAge: 14 * 24 * 60 * 60 * 1000,
+      },
+    }),
+  );
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  app.get("/auth/status", (req, res) => {
+    res.json({
+      google: googleReady,
+      devLogin: allowDevLogin(req),
+      user: publicUser(req.user),
+    });
+  });
+
+  if (googleReady) {
+    app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+    app.get(
+      "/auth/google/callback",
+      passport.authenticate("google", { failureRedirect: `${CLIENT_ORIGIN}/login?error=google` }),
+      (_req, res) => {
+        res.redirect(CLIENT_ORIGIN);
+      },
+    );
+  }
+
+  app.post("/auth/dev", async (req, res) => {
+    if (!allowDevLogin(req)) return res.status(403).json({ error: "Dev login is disabled" });
+    try {
+      const user = await createDevUser();
+      req.login(user, (err) => {
+        if (err) return res.status(500).json({ error: "Could not start session" });
+        res.json({ user: publicUser(user) });
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message || "Could not start session" });
+    }
+  });
+
+  app.post("/auth/logout", (req, res) => {
+    req.logout(() => {
+      req.session.destroy(() => {
+        res.clearCookie("fovea.sid");
+        res.json({ ok: true });
+      });
+    });
+  });
+
+  app.use("/api", api);
+
+  const clientDist = path.join(__dirname, "..", "..", "client", "dist");
+  app.use(express.static(clientDist));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/auth")) return next();
+    res.sendFile(path.join(clientDist, "index.html"), (err) => {
+      if (err) next();
+    });
+  });
+
   await initDb();
   app.listen(PORT, () => {
     console.log(`Fovea API on http://localhost:${PORT} (${isPostgres ? "postgres" : "sqlite"})`);
