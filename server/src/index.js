@@ -59,6 +59,15 @@ app.use(
 );
 app.use(express.json({ limit: "8mb" }));
 
+app.get("/health", (req, res) => {
+  res.json({ ok: true });
+});
+
+app.get("/startup-check", (req, res) => {
+  console.log("/startup-check called");
+  res.json({ ok: true });
+});
+
 const start = async () => {
   try {
   let sessionStore;
