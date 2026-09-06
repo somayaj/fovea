@@ -70,13 +70,19 @@ export function configurePassport() {
 
   const clientID = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const callbackFromEnv = process.env.GOOGLE_CALLBACK_URL || "";
+  const callbackLooksLocal = /localhost|127\.0\.0\.1/i.test(callbackFromEnv);
+  const callbackURL =
+    callbackFromEnv && !(process.env.NODE_ENV === "production" && callbackLooksLocal)
+      ? callbackFromEnv
+      : "/auth/google/callback";
   if (clientID && clientSecret) {
     passport.use(
       new GoogleStrategy(
         {
           clientID,
           clientSecret,
-          callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:3001/auth/google/callback",
+          callbackURL,
         },
         async (_accessToken, _refreshToken, profile, done) => {
           try {

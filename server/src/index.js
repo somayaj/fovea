@@ -15,13 +15,51 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, "..", "..", ".env") });
 
 const PORT = Number(process.env.PORT) || 3001;
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const LOCAL_CLIENT_ORIGIN = "http://localhost:5173";
 const googleReady = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 const isProdEnv = process.env.NODE_ENV === "production";
 
 function isLocalHost(hostname) {
   const host = String(hostname || "").split(":")[0].toLowerCase();
   return host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host === "::1";
+}
+
+function stripSlash(url) {
+  return String(url || "").replace(/\/$/, "");
+}
+
+function isLocalOrigin(url) {
+  try {
+    return isLocalHost(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
+function configuredClientOrigin() {
+  const raw = stripSlash(process.env.CLIENT_ORIGIN);
+  if (raw && !(isProdEnv && isLocalOrigin(raw))) return raw;
+  const railway = process.env.RAILWAY_PUBLIC_DOMAIN || process.env.RAILWAY_STATIC_URL;
+  if (railway) {
+    const host = stripSlash(railway).replace(/^https?:\/\//, "");
+    return `https://${host}`;
+  }
+  return isProdEnv ? "" : LOCAL_CLIENT_ORIGIN;
+}
+
+function requestOrigin(req) {
+  const proto = String(req.get("x-forwarded-proto") || req.protocol || "http")
+    .split(",")[0]
+    .trim();
+  const host = String(req.get("x-forwarded-host") || req.get("host") || "")
+    .split(",")[0]
+    .trim();
+  if (!host) return configuredClientOrigin() || LOCAL_CLIENT_ORIGIN;
+  return `${proto}://${host}`;
+}
+
+function afterAuthRedirect(req) {
+  return configuredClientOrigin() || requestOrigin(req);
 }
 
 function isLoopbackAddress(addr) {
@@ -53,7 +91,21 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(
   cors({
-    origin: CLIENT_ORIGIN,
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      const configured = configuredClientOrigin();
+      if (configured && origin === configured) return callback(null, true);
+      if (origin === LOCAL_CLIENT_ORIGIN) return callback(null, true);
+      try {
+        const host = new URL(origin).hostname;
+        if (isProdEnv && (host.endsWith(".up.railway.app") || host.endsWith(".railway.app"))) {
+          return callback(null, true);
+        }
+      } catch {
+        // ignore invalid origins
+      }
+      callback(null, false);
+    },
     credentials: true,
   }),
 );
@@ -89,7 +141,7 @@ const start = async () => {
       cookie: {
         httpOnly: true,
         sameSite: "lax",
-        secure: false,
+        secure: isProdEnv,
         maxAge: 14 * 24 * 60 * 60 * 1000,
       },
     }),
@@ -107,13 +159,13 @@ const start = async () => {
 
   if (googleReady) {
     app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-    app.get(
-      "/auth/google/callback",
-      passport.authenticate("google", { failureRedirect: `${CLIENT_ORIGIN}/login?error=google` }),
-      (_req, res) => {
-        res.redirect(CLIENT_ORIGIN);
-      },
-    );
+    app.get("/auth/google/callback", (req, res, next) => {
+      passport.authenticate("google", {
+        failureRedirect: `${afterAuthRedirect(req)}/?error=google`,
+      })(req, res, next);
+    }, (req, res) => {
+      res.redirect(afterAuthRedirect(req));
+    });
   }
 
   app.post("/auth/dev", async (req, res) => {
