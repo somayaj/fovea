@@ -75,7 +75,7 @@ export default function FocusHero({
           <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
             More tasks · {loadedCount} of {formatCount(totalNeighbors)}
           </p>
-          <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-line/70 bg-white/60 p-2">
+          <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-line/70 bg-surface p-2">
             {otherTasks.slice(BOARD_LIMIT).map((task) => (
               <li key={task.id}>
                 <button
@@ -84,7 +84,7 @@ export default function FocusHero({
                   className={cn(
                     "w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 hover:bg-white",
                     selectedTaskId === task.id &&
-                      "bg-white ring-2 ring-accent/55 shadow-sm",
+                      "bg-accent-soft/40 ring-1 ring-accent/35",
                   )}
                 >
                   {task.title}

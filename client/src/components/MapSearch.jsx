@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { api } from "../api.js";
 import { typeLabel } from "../lib/content.js";
+import { usePageChrome } from "../context/PageChromeContext.jsx";
+import { headerChrome } from "../lib/chrome.js";
 import { tw, cn } from "../lib/tw.js";
 
 export default function MapSearch({
@@ -11,6 +13,7 @@ export default function MapSearch({
   filterOnly = false,
   placeholder = "Search tasks…",
 }) {
+  const { dark } = usePageChrome();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -118,9 +121,16 @@ export default function MapSearch({
 
   return (
     <div ref={rootRef} className="relative w-full max-w-sm">
-      <div className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 focus-within:border-accent/30 focus-within:ring-2 focus-within:ring-accent/10">
+      <div
+        className={cn(
+          "flex items-center gap-2 rounded-lg border px-3 py-2 focus-within:ring-2",
+          dark
+            ? cn("focus-within:ring-2", headerChrome.input)
+            : "border-stone-200 bg-white focus-within:border-accent/30 focus-within:ring-accent/10",
+        )}
+      >
         <svg
-          className="h-4 w-4 shrink-0 text-stone-400"
+          className={cn("h-4 w-4 shrink-0", dark ? headerChrome.muted : "text-stone-400")}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -143,13 +153,16 @@ export default function MapSearch({
             if (query.trim().length >= 2) setOpen(true);
           }}
           placeholder={placeholder}
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none"
+          className={cn(
+            "min-w-0 flex-1 border-0 bg-transparent p-0 text-sm focus:outline-none",
+            dark ? "text-header-text placeholder:text-header-muted" : "text-stone-900 placeholder:text-stone-400",
+          )}
         />
         {query ? (
           <button
             type="button"
             onClick={clearQuery}
-            className="shrink-0 rounded p-0.5 text-stone-400 hover:text-stone-600"
+            className={cn("shrink-0 rounded p-0.5", dark ? cn(headerChrome.muted, "hover:text-header-text") : "text-stone-400 hover:text-stone-600")}
             aria-label="Clear search"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">

@@ -1,22 +1,20 @@
-/** Single app palette — instant-photo warm theme. */
-export const PALETTE = {
-  label: "Instant",
-  swatch: "#c4956a",
-  bg: "#f7f3ec",
-  center: "#c4956a",
-  centerDark: "#a67c52",
-  centerGlow: "rgba(196, 149, 106, 0.22)",
-  accentSoft: "#f0ebe3",
-  surface: "#fdfbf7",
-  nodes: ["#5c4a3a", "#786452", "#8b7355", "#3d3228"],
-  line: "#e8dfd4",
-  icon: "#3d3228",
-  muted: "#8a7b6b",
-  onAccent: "#ffffff",
-};
+import {
+  DEFAULT_THEME_ID,
+  THEME_PRESETS,
+  THEME_STORAGE_KEY,
+  getStoredThemeId,
+  getThemePreset,
+  getHeaderTokens,
+  getSidebarTokens,
+  listThemePresets,
+  resolveThemeId,
+} from "./foveaThemes.js";
 
-export function getThemePalette() {
-  return PALETTE;
+/** Active palette — `walnut` by default. */
+export const PALETTE = THEME_PRESETS[DEFAULT_THEME_ID].palette;
+
+export function getThemePalette(themeId) {
+  return getThemePreset(themeId).palette;
 }
 
 export function branchColors(palette = PALETTE) {
@@ -38,12 +36,20 @@ export function priorityColors() {
   };
 }
 
-export function applyFoveaTheme() {
-  const palette = PALETTE;
+export function applyFoveaTheme(themeId = getStoredThemeId()) {
+  const preset = getThemePreset(themeId);
+  const palette = preset.palette;
+  const sidebar = getSidebarTokens(preset);
+  const header = getHeaderTokens(preset);
 
-  if (typeof document === "undefined") return palette;
+  if (typeof document === "undefined") return { preset, palette, sidebar, header };
 
   const root = document.documentElement;
+  const resolvedId = resolveThemeId(themeId);
+
+  root.dataset.foveaTheme = resolvedId;
+  root.dataset.sidebarDark = sidebar.dark ? "true" : "false";
+  root.dataset.headerDark = header.dark ? "true" : "false";
   root.style.setProperty("--color-paper", palette.bg);
   root.style.setProperty("--color-accent", palette.center);
   root.style.setProperty("--color-map-accent", palette.center);
@@ -53,9 +59,39 @@ export function applyFoveaTheme() {
   root.style.setProperty("--color-surface", palette.surface);
   root.style.setProperty("--color-on-accent", palette.onAccent);
   root.style.setProperty("--theme-center-glow", palette.centerGlow);
+  root.style.setProperty("--color-wall", palette.wall || palette.accentSoft);
+  root.style.setProperty("--color-brand-soft", palette.brandSoft || palette.accentSoft);
+  root.style.setProperty("--collage-photo-filter", preset.collage.photoFilter);
+  root.style.setProperty("--collage-surface-mix", preset.collage.surfaceMix);
+  root.style.setProperty("--sidebar-bg", sidebar.bg);
+  root.style.setProperty("--sidebar-surface", sidebar.surface);
+  root.style.setProperty("--sidebar-border", sidebar.border);
+  root.style.setProperty("--sidebar-text", sidebar.text);
+  root.style.setProperty("--sidebar-muted", sidebar.muted);
+  root.style.setProperty("--sidebar-hover", sidebar.hover);
+  root.style.setProperty("--sidebar-accent", sidebar.accent);
+  root.style.setProperty("--header-bg", header.bg);
+  root.style.setProperty("--header-surface", header.surface);
+  root.style.setProperty("--header-border", header.border);
+  root.style.setProperty("--header-text", header.text);
+  root.style.setProperty("--header-muted", header.muted);
+  root.style.setProperty("--header-hover", header.hover);
+  root.style.setProperty("--header-accent", header.accent);
 
-  return palette;
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, resolvedId);
+  } catch {
+    // ignore quota / private mode
+  }
+
+  return { preset, palette, sidebar, header };
 }
+
+export function setFoveaTheme(themeId) {
+  return applyFoveaTheme(themeId);
+}
+
+export { DEFAULT_THEME_ID, THEME_PRESETS, getStoredThemeId, getThemePreset, getHeaderTokens, getSidebarTokens, listThemePresets };
 
 export function workstreamColor(name, index = 0, palette = PALETTE) {
   const colors = branchColors(palette);

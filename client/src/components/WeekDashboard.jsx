@@ -135,7 +135,7 @@ export default function WeekDashboard({
       <FocusPageShell fill className="overflow-y-auto">
         {header}
         <div className="flex flex-1 items-center justify-center p-6 md:p-10">
-          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-line/70 bg-white shadow-lg focus-hero-frame">
+          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-line/70 bg-white focus-hero-frame">
             <FocusIllustration className="w-full !border-0 !rounded-none" />
             <div className="border-t border-line/70 bg-white p-6 md:p-8">
               <FoveaLogo size="sm" subtitle="Your week, one clear priority." />

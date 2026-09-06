@@ -8,7 +8,6 @@ import { Button } from "./ui.jsx";
 import { EmptyPanel } from "./PageHeader.jsx";
 import { IconTrash, IconFocus } from "./icons.jsx";
 import { FoveaMark } from "./FoveaLogo.jsx";
-import FocusAmbient from "./FocusAmbient.jsx";
 import { REPEAT_OPTIONS } from "../lib/recurrence.js";
 import { tw, cn } from "../lib/tw.js";
 
@@ -151,12 +150,12 @@ export default function NodePanel({
 
   const editorBody = node ? (
     <>
-      <div className="flex items-start justify-between gap-3 border-b border-line/60 bg-[#fdfbf7]/40 px-5 py-4 backdrop-blur-sm">
+      <div className="flex items-start justify-between gap-3 border-b border-line/70 bg-paper px-5 py-4">
         <div className="flex min-w-0 gap-3">
           <TypePin type={node.type} size="md" className="shrink-0" />
           <div className="min-w-0">
             <p className={tw.label}>Editing</p>
-            <h2 className="mt-0.5 truncate text-base font-semibold text-stone-900">
+            <h2 className="mt-0.5 truncate text-base font-semibold text-brand">
               {node.title || "Untitled"}
             </h2>
           </div>
@@ -165,7 +164,7 @@ export default function NodePanel({
           type="button"
           onClick={onClose}
           aria-label="Close panel"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted hover:bg-accent-soft/50 hover:text-brand"
         >
           ×
         </button>
@@ -291,7 +290,7 @@ export default function NodePanel({
               </div>
             </div>
             {node.recurrence_series_id ? (
-              <div className="rounded-lg border border-line/70 bg-[#fdfbf7] px-3 py-2.5">
+              <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
                   Recurring
                 </p>
@@ -364,18 +363,16 @@ export default function NodePanel({
 
       {/* Mobile bottom sheet */}
       {node ? (
-        <aside className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-2xl border-t border-line/70 shadow-2xl lg:hidden">
-          <FocusAmbient variant="page" />
-          <div className="relative z-[1] max-h-[85vh] overflow-y-auto">
+        <aside className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-2xl border-t border-line/70 bg-surface shadow-md lg:hidden">
+          <div className="max-h-[85vh] overflow-y-auto">
             {editorBody}
           </div>
         </aside>
       ) : null}
 
       {/* Desktop column — always one grid cell */}
-      <aside className="relative hidden h-full min-h-0 overflow-hidden border-l border-line/70 lg:block">
-        <FocusAmbient variant="page" />
-        <div className="relative z-[1] h-full overflow-y-auto">
+      <aside className="relative hidden h-full min-h-0 overflow-hidden border-l border-line/70 bg-surface lg:block">
+        <div className="h-full overflow-y-auto">
           {editorBody}
         </div>
       </aside>

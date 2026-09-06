@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useChannels } from "../context/ChannelsContext.jsx";
 import { workstreamColor } from "../lib/foveaTheme.js";
+import { chrome } from "../lib/chrome.js";
 import { cn, tw } from "../lib/tw.js";
 import {
   IconBrainstorm,
@@ -33,7 +34,7 @@ const NAV = [
 function SectionLabel({ children, action }) {
   return (
     <div className="mb-2 flex items-center justify-between gap-2 px-2">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">{children}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">{children}</span>
       {action}
     </div>
   );
@@ -54,8 +55,8 @@ function NavItem({ item, location, collapsed }) {
           "group relative flex items-center rounded-lg py-2 text-[13px] font-medium transition-all",
           collapsed ? "justify-center px-1.5" : "gap-2.5 px-2",
           on
-            ? "bg-white text-stone-900 shadow-sm ring-1 ring-stone-200/80"
-            : "text-stone-600 hover:bg-white/70 hover:text-stone-900",
+            ? cn(chrome.navActive, "ring-1 ring-sidebar-border/60")
+            : chrome.navIdle,
         );
       }}
     >
@@ -65,14 +66,14 @@ function NavItem({ item, location, collapsed }) {
           <>
             {on && !collapsed ? (
               <span
-                className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent"
+                className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-sidebar-accent"
                 aria-hidden="true"
               />
             ) : null}
             <span
               className={cn(
                 "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
-                on ? "bg-accent/12 text-accent" : "text-stone-400 group-hover:text-stone-600",
+                on ? chrome.accentBg : cn(chrome.muted, "group-hover:text-sidebar-text"),
               )}
             >
               <Icon size={15} />
@@ -130,13 +131,13 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
 
   if (editing) {
     return (
-      <form onSubmit={saveRename} className="mb-1 space-y-2 rounded-lg border border-stone-200 bg-white p-2 shadow-sm">
+      <form onSubmit={saveRename} className="mb-1 space-y-2 rounded-lg border border-sidebar-border bg-sidebar-surface p-2">
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           autoFocus
           disabled={busy}
-          className="w-full rounded-md border border-stone-200 px-2.5 py-1.5 text-xs focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/10"
+          className="w-full rounded-md border border-sidebar-border bg-sidebar-hover px-2.5 py-1.5 text-xs text-sidebar-text focus:border-sidebar-accent/40 focus:outline-none focus:ring-2 focus:ring-sidebar-accent/10"
         />
         <div className="flex gap-1.5">
           <button
@@ -153,7 +154,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
               setEditing(false);
               setDraft(channel.name);
             }}
-            className="flex-1 rounded-md border border-stone-200 py-1.5 text-[11px] font-medium text-stone-600 hover:bg-stone-50"
+            className="flex-1 rounded-md border border-sidebar-border py-1.5 text-[11px] font-medium text-sidebar-muted hover:bg-sidebar-hover"
           >
             Cancel
           </button>
@@ -164,7 +165,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
 
   if (confirmDelete) {
     return (
-      <div className="mb-1 overflow-hidden rounded-xl border border-line/80 bg-[#fdfbf7] p-3 shadow-sm ring-1 ring-accent/10">
+      <div className="mb-1 overflow-hidden rounded-xl border border-sidebar-border bg-sidebar-surface p-3 ring-1 ring-sidebar-accent/10">
         <div className="flex items-start gap-2.5">
           <span
             className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
@@ -175,11 +176,11 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
           <div className="min-w-0 flex-1">
             {!collapsed ? (
               <>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-accent">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-accent">
                   Remove workstream
                 </p>
-                <p className="mt-1 text-sm font-medium text-stone-900">{channel.name}</p>
-                <p className="mt-1.5 text-[11px] leading-relaxed text-stone-500">
+                <p className="mt-1 text-sm font-medium text-sidebar-text">{channel.name}</p>
+                <p className="mt-1.5 text-[11px] leading-relaxed text-sidebar-muted">
                   {channel.tasks > 0
                     ? `${channel.tasks} task${channel.tasks === 1 ? "" : "s"} in this workstream will be removed.`
                     : "This workstream will be removed."}
@@ -187,8 +188,8 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
               </>
             ) : (
               <>
-                <p className="text-[11px] font-medium text-stone-900">Remove {channel.name}?</p>
-                <p className="mt-1 text-[10px] leading-relaxed text-stone-500">
+                <p className="text-[11px] font-medium text-sidebar-text">Remove {channel.name}?</p>
+                <p className="mt-1 text-[10px] leading-relaxed text-sidebar-muted">
                   {channel.tasks > 0 ? `${channel.tasks} tasks removed.` : "Workstream removed."}
                 </p>
               </>
@@ -208,7 +209,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
             type="button"
             disabled={busy}
             onClick={confirmArchive}
-            className="flex-1 rounded-md border border-red-200/90 bg-[#fdfbf7] px-2.5 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:border-red-300 hover:bg-red-50/60 disabled:opacity-50"
+            className="flex-1 rounded-md border border-red-200/90 bg-sidebar-surface px-2.5 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:border-red-300 hover:bg-red-50/60 disabled:opacity-50"
           >
             {busy ? "Removing…" : "Remove"}
           </button>
@@ -221,7 +222,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
     <div
       className={cn(
         "group mb-0.5 flex items-center gap-0.5 rounded-lg transition-colors",
-        isActive ? "bg-white shadow-sm ring-1 ring-accent/20" : "hover:bg-white/60",
+        isActive ? cn(chrome.navActive, "ring-1 ring-sidebar-border/60") : "hover:bg-sidebar-hover/80",
         collapsed && "justify-center",
       )}
     >
@@ -230,7 +231,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
         className={cn(
           "group/link relative flex min-w-0 items-center gap-2 rounded-lg py-2 text-[13px]",
           collapsed ? "justify-center px-1.5" : "flex-1 px-2",
-          isActive ? "font-medium text-accent" : "text-stone-600",
+          isActive ? cn("font-medium", chrome.accent) : chrome.muted,
         )}
       >
         <span
@@ -246,7 +247,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
               <span
                 className={cn(
                   "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums",
-                  isActive ? "bg-accent/10 text-accent" : "bg-stone-100 text-stone-500",
+                  isActive ? "bg-sidebar-accent/12 text-sidebar-accent" : "bg-sidebar-hover text-sidebar-muted",
                 )}
               >
                 {channel.tasks}
@@ -267,7 +268,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
           type="button"
           aria-label={`Rename ${channel.name}`}
           onClick={() => setEditing(true)}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
         >
           <IconEdit size={13} />
         </button>
@@ -275,7 +276,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
           type="button"
           aria-label={`Delete ${channel.name}`}
           onClick={() => setConfirmDelete(true)}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-stone-400 hover:bg-accent-soft/50 hover:text-stone-700"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
         >
           <IconTrash size={13} />
         </button>
@@ -355,7 +356,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
         </nav>
       </div>
 
-      {!collapsed ? <div className="mx-3 border-t border-stone-200/80" /> : null}
+      {!collapsed ? <div className="mx-3 border-t border-sidebar-border" /> : null}
 
       <div className={cn("flex min-h-0 flex-1 flex-col py-3", collapsed ? "overflow-visible px-1.5" : "px-3")}>
         {!collapsed ? (
@@ -366,7 +367,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
                   type="button"
                   onClick={() => setAdding((v) => !v)}
                   aria-label="Add workstream"
-                  className="flex h-6 w-6 items-center justify-center rounded-md text-stone-400 transition-colors hover:bg-white hover:text-accent"
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-accent"
                 >
                   <IconPlus size={14} />
                 </button>
@@ -378,21 +379,21 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
             <div className="relative mb-2.5">
               <IconSearch
                 size={14}
-                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400"
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sidebar-muted"
               />
               <input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Filter workstreams…"
-                className="w-full rounded-lg border border-stone-200/90 bg-white py-2 pl-8 pr-8 text-xs text-stone-900 shadow-sm placeholder:text-stone-400 focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/10"
+                className="w-full rounded-lg border border-sidebar-border bg-sidebar-surface py-2 pl-8 pr-8 text-xs text-sidebar-text placeholder:text-sidebar-muted focus:border-sidebar-accent/40 focus:outline-none focus:ring-2 focus:ring-sidebar-accent/10"
               />
               {query ? (
                 <button
                   type="button"
                   aria-label="Clear search"
                   onClick={() => setQuery("")}
-                  className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+                  className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
                 >
                   ×
                 </button>
@@ -400,13 +401,13 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
             </div>
 
             {adding ? (
-              <form onSubmit={handleCreate} className="mb-2.5 space-y-2 rounded-lg border border-stone-200 bg-white p-2 shadow-sm">
+              <form onSubmit={handleCreate} className="mb-2.5 space-y-2 rounded-lg border border-sidebar-border bg-sidebar-surface p-2">
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. ship, design, ops"
                   autoFocus
-                  className="w-full rounded-md border border-stone-200 px-2.5 py-1.5 text-xs focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/10"
+                  className="w-full rounded-md border border-sidebar-border bg-sidebar-hover px-2.5 py-1.5 text-xs text-sidebar-text focus:border-sidebar-accent/40 focus:outline-none focus:ring-2 focus:ring-sidebar-accent/10"
                 />
                 <div className="flex gap-1.5">
                   <button type="submit" className="flex-1 rounded-md bg-accent py-1.5 text-[11px] font-medium text-white">
@@ -418,7 +419,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
                       setAdding(false);
                       setName("");
                     }}
-                    className="flex-1 rounded-md border border-stone-200 py-1.5 text-[11px] font-medium text-stone-600 hover:bg-stone-50"
+                    className="flex-1 rounded-md border border-sidebar-border py-1.5 text-[11px] font-medium text-sidebar-muted hover:bg-sidebar-hover"
                   >
                     Cancel
                   </button>
@@ -428,19 +429,19 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5 [-webkit-overflow-scrolling:touch]">
               {loading && channels.length === 0 ? (
-                <p className="px-2 py-6 text-center text-xs text-stone-400">Loading workstreams…</p>
+                <p className="px-2 py-6 text-center text-xs text-sidebar-muted">Loading workstreams…</p>
               ) : null}
 
               {showEmpty && !query ? (
-                <div className="rounded-lg border border-dashed border-stone-200 bg-white/50 px-3 py-5 text-center">
-                  <p className="text-xs font-medium text-stone-600">No workstreams yet</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-stone-400">
+                <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-hover/60 px-3 py-5 text-center">
+                  <p className="text-xs font-medium text-sidebar-text">No workstreams yet</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-sidebar-muted">
                     Group tasks by area — ship, design, ops, etc.
                   </p>
                   <button
                     type="button"
                     onClick={() => setAdding(true)}
-                    className="mt-3 inline-flex items-center gap-1 rounded-md bg-accent/10 px-2.5 py-1.5 text-[11px] font-medium text-accent hover:bg-accent/15"
+                    className="mt-3 inline-flex items-center gap-1 rounded-md bg-sidebar-accent/12 px-2.5 py-1.5 text-[11px] font-medium text-sidebar-accent hover:bg-sidebar-accent/18"
                   >
                     <IconPlus size={12} />
                     Add one
@@ -449,7 +450,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
               ) : null}
 
               {showEmpty && query ? (
-                <p className="px-2 py-6 text-center text-xs text-stone-400">No workstreams match “{query}”</p>
+                <p className="px-2 py-6 text-center text-xs text-sidebar-muted">No workstreams match “{query}”</p>
               ) : null}
 
               <nav className="space-y-0">
@@ -472,7 +473,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
                 type="button"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="mt-2 w-full rounded-lg border border-stone-200 bg-white py-2 text-[11px] font-medium text-stone-600 shadow-sm transition-colors hover:border-stone-300 hover:bg-stone-50 disabled:opacity-50"
+                className="mt-2 w-full rounded-lg border border-sidebar-border bg-sidebar-surface py-2 text-[11px] font-medium text-sidebar-muted transition-colors hover:border-sidebar-accent/30 hover:bg-sidebar-hover disabled:opacity-50"
               >
                 {loadingMore ? "Loading…" : "Load more workstreams"}
               </button>
@@ -480,7 +481,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
           </>
         ) : (
           <>
-            <div className="mx-auto mb-2 h-px w-6 bg-stone-200/80" aria-hidden="true" />
+            <div className="mx-auto mb-2 h-px w-6 bg-sidebar-border" aria-hidden="true" />
             <nav className="min-h-0 flex-1 space-y-1 overflow-visible">
               {channels.slice(0, 8).map((channel, index) => (
                 <WorkstreamRow
@@ -498,7 +499,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
               <button
                 type="button"
                 onClick={onRequestExpand}
-                className="group relative mt-1 w-full rounded-md py-1 text-center text-[10px] font-medium text-stone-400 hover:bg-white/60 hover:text-stone-600"
+                className="group relative mt-1 w-full rounded-md py-1 text-center text-[10px] font-medium text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
                 title="Expand sidebar to see all workstreams"
               >
                 +{channels.length - 8} more

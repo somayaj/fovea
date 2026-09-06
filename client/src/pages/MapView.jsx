@@ -32,7 +32,7 @@ import { MapSelectionContext } from "../context/MapSelectionContext.jsx";
 import { useViewportWidth } from "../hooks/useViewportWidth.js";
 import FocusPageShell from "../components/FocusPageShell.jsx";
 import { tw, cn } from "../lib/tw.js";
-import { PageHeader, SegmentedControl } from "../components/PageHeader.jsx";
+import { PageHeader, SegmentedControl, HeaderButton, HeaderOutlineButton } from "../components/PageHeader.jsx";
 import {
   IconBoard,
   IconChevronLeft,
@@ -624,70 +624,69 @@ function MapCanvas({ me }) {
 
   return (
     <MapSelectionContext.Provider value={selectedId}>
-    <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[1fr_320px]">
-      <div className="flex h-full min-h-0 min-w-0 flex-col">
-        <PageHeader
-          eyebrow={activeChannel ? "Workstream" : "Tasks"}
-          icon={activeChannel ? <IconHash size={13} /> : <IconList size={13} />}
-          title={activeChannel ? activeChannel.name : "All tasks"}
-          description={isBoard ? VIEW_COPY.board : isWeek ? weekHint : mapHint}
-          actions={
-            activeChannel ? (
-              <button type="button" onClick={() => navigate("/map")} className={tw.btnOutlineSm}>
-                <IconChevronLeft size={13} />
-                All workstreams
-              </button>
-            ) : null
-          }
-          toolbar={
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <MapSearch
-                key={viewMode}
-                projectId={projectId}
-                onSelect={handleSearchSelect}
-                filterOnly={isBoard}
-                onQueryChange={handleBoardSearchQuery}
-                placeholder={isBoard ? "Filter tasks…" : "Search tasks…"}
-              />
-              <div className="flex flex-wrap items-center gap-2">
-                <SegmentedControl value={viewMode} onChange={setViewMode} options={VIEW_MODES} />
-                {!isBoard ? (
-                  <button
-                    type="button"
-                    onClick={resetMapView}
-                    className={tw.btnOutlineSm}
-                    title="Show all tasks and reset view (])"
-                  >
-                    <IconLayers size={13} />
-                    Reset view
-                  </button>
-                ) : null}
-                <button type="button" onClick={() => setShowComposer((v) => !v)} className={tw.btnSm}>
-                  <IconPlus size={13} />
-                  Task
-                </button>
-              </div>
-            </div>
-          }
-        />
-
-        {showComposer ? (
-          <div className="border-b border-line/70 bg-accent-soft/40 px-4 py-4 md:px-8">
-            <TaskComposer
+    <FocusPageShell fill className="flex min-h-0 flex-col overflow-hidden">
+      <PageHeader
+        eyebrow={activeChannel ? "Workstream" : "Tasks"}
+        icon={activeChannel ? <IconHash size={13} /> : <IconList size={13} />}
+        title={activeChannel ? activeChannel.name : "All tasks"}
+        description={isBoard ? VIEW_COPY.board : isWeek ? weekHint : mapHint}
+        actions={
+          activeChannel ? (
+            <HeaderOutlineButton onClick={() => navigate("/map")}>
+              <IconChevronLeft size={13} />
+              All workstreams
+            </HeaderOutlineButton>
+          ) : null
+        }
+        toolbar={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <MapSearch
+              key={viewMode}
               projectId={projectId}
-              channels={channels}
-              defaultChannelId={filterChannel || ""}
-              onSubmit={addTask}
-              compact
+              onSelect={handleSearchSelect}
+              filterOnly={isBoard}
+              onQueryChange={handleBoardSearchQuery}
+              placeholder={isBoard ? "Filter tasks…" : "Search tasks…"}
             />
+            <div className="flex flex-wrap items-center gap-2">
+              <SegmentedControl value={viewMode} onChange={setViewMode} options={VIEW_MODES} />
+              {!isBoard ? (
+                <HeaderOutlineButton
+                  onClick={resetMapView}
+                  title="Show all tasks and reset view (])"
+                >
+                  <IconLayers size={13} />
+                  Reset view
+                </HeaderOutlineButton>
+              ) : null}
+              <HeaderButton onClick={() => setShowComposer((v) => !v)}>
+                <IconPlus size={13} />
+                Task
+              </HeaderButton>
+            </div>
           </div>
-        ) : null}
+        }
+      />
 
+      {showComposer ? (
+        <div className="shrink-0 border-b border-line/70 bg-accent-soft/40 px-4 py-4 md:px-8">
+          <TaskComposer
+            projectId={projectId}
+            channels={channels}
+            defaultChannelId={filterChannel || ""}
+            onSubmit={addTask}
+            compact
+          />
+        </div>
+      ) : null}
+
+      <div className="relative grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_320px]">
+      <div className="flex min-h-0 min-w-0 flex-col">
         <div ref={canvasRef} className="map-flow-canvas relative min-h-0 flex-1 bg-paper">
           {!isBoard ? <MindMapBackdrop /> : null}
 
           {loadError ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90 p-6">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-paper p-6">
               <div className="max-w-md rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
                 <h2 className="text-lg font-bold text-red-900">Map failed to load</h2>
                 <p className="mt-2 text-sm text-red-800">{loadError}</p>
@@ -703,22 +702,22 @@ function MapCanvas({ me }) {
           ) : null}
 
           {loading ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 text-sm text-stone-500">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-paper text-sm text-muted">
               Loading your map…
             </div>
           ) : null}
 
           {isEmpty ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center p-6">
-              <div className="max-w-md overflow-hidden rounded-2xl border border-line/70 bg-white shadow-lg">
+              <div className="max-w-md overflow-hidden rounded-2xl border border-line/70 bg-surface shadow-sm">
                 <img
                   src={IMAGES.allTasksInstant}
                   alt="All tasks as scattered instant photos"
                   className="h-48 w-full object-cover"
                 />
                 <div className="p-8 text-center">
-                  <h2 className="text-xl font-semibold text-stone-900">Start your task map</h2>
-                  <p className="mt-2 text-sm leading-relaxed text-stone-500">
+                  <h2 className="text-xl font-semibold text-brand">Start your task map</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
                     Every task is an instant photo — add one and watch your map grow.
                   </p>
                   <div className="mt-6 flex justify-center">
@@ -738,13 +737,13 @@ function MapCanvas({ me }) {
           {isBoard && !isEmpty ? (
             <>
               {boardSearchActive ? (
-                <p className="border-b border-stone-200 bg-stone-50 px-5 py-2 text-xs text-stone-600">
+                <p className="border-b border-line/70 bg-accent-soft/35 px-5 py-2 text-xs text-muted">
                   {boardSearchLoading
                     ? "Searching tasks…"
                     : `${displayBoardNodes.length.toLocaleString()} matching task${displayBoardNodes.length === 1 ? "" : "s"}.`}
                 </p>
               ) : boardTotal > boardNodes.length ? (
-                <p className="border-b border-stone-200 bg-amber-50 px-5 py-2 text-xs text-amber-900">
+                <p className="border-b border-line/70 bg-accent-soft/50 px-5 py-2 text-xs text-brand">
                   Showing {boardNodes.length.toLocaleString()} of {boardTotal.toLocaleString()} tasks by priority.
                 </p>
               ) : null}
@@ -768,9 +767,9 @@ function MapCanvas({ me }) {
 
           {(!isBoard && !isEmpty && !loading && rollupLayout.laidOut.length === 0) ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center p-6">
-              <div className="max-w-md rounded-2xl border border-stone-200 bg-white p-8 text-center shadow-sm">
-                <h2 className="text-lg font-semibold text-stone-900">Couldn&apos;t lay out the map</h2>
-                <p className="mt-2 text-sm text-stone-500">
+              <div className="max-w-md rounded-2xl border border-line/70 bg-surface p-8 text-center shadow-sm">
+                <h2 className="text-lg font-semibold text-brand">Couldn&apos;t lay out the map</h2>
+                <p className="mt-2 text-sm text-muted">
                   Your tasks are here, but the view didn&apos;t render. Try refreshing or switching to Board view.
                 </p>
                 <button
@@ -932,6 +931,7 @@ function MapCanvas({ me }) {
         }}
       />
     </div>
+    </FocusPageShell>
     </MapSelectionContext.Provider>
   );
 }

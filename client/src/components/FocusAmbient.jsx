@@ -24,37 +24,33 @@ function HubRings({ center, line, className }) {
  * @param {"page"|"canvas"} variant — page = full inner pages; canvas = map/brainstorm pane
  */
 export default function FocusAmbient({ variant = "page", className = "" }) {
-  const { palette } = useTheme();
+  const { palette, preset } = useTheme();
   const isCanvas = variant === "canvas";
 
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} aria-hidden="true">
-      <div
-        className="absolute inset-0"
-        style={{
-          background: isCanvas
-            ? `linear-gradient(to bottom, #fdfbf7, ${palette.bg})`
-            : `linear-gradient(165deg, ${palette.bg} 0%, ${palette.accentSoft} 55%, color-mix(in srgb, ${palette.bg} 92%, #e8dfd4) 100%)`,
-        }}
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(ellipse ${isCanvas ? "80% 55%" : "70% 50%"} at 50% ${isCanvas ? "0%" : "12%"}, ${palette.centerGlow}, transparent 68%)`,
-        }}
-      />
-      {!isCanvas ? (
-        <HubRings
-          center={palette.center}
-          line={palette.line}
-          className="absolute left-1/2 top-[6%] h-[min(52vw,420px)] w-[min(52vw,420px)] -translate-x-1/2 opacity-[0.08]"
-        />
+      {isCanvas ? (
+        <div className="absolute inset-0 bg-paper" />
       ) : (
-        <HubRings
-          center={palette.center}
-          line={palette.line}
-          className="absolute left-1/2 top-[8%] h-64 w-64 -translate-x-1/2 opacity-[0.1]"
-        />
+        <>
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(165deg, ${palette.bg} 0%, ${palette.accentSoft} 58%, color-mix(in srgb, ${palette.bg} 86%, ${preset.collage.surfaceMix}) 100%)`,
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `radial-gradient(ellipse 72% 48% at 50% 10%, ${palette.centerGlow}, transparent 70%)`,
+            }}
+          />
+          <HubRings
+            center={palette.center}
+            line={palette.line}
+            className="absolute left-1/2 top-[6%] h-[min(52vw,420px)] w-[min(52vw,420px)] -translate-x-1/2 opacity-[0.07]"
+          />
+        </>
       )}
     </div>
   );

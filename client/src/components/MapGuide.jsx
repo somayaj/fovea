@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export default function MapGuide({ onAddTask, onDismiss }) {
   return (
     <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-10 flex justify-center">
-      <div className="pointer-events-auto relative max-w-2xl rounded-xl border border-stone-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-sm">
+      <div className="pointer-events-auto relative max-w-2xl rounded-xl border border-line/80 bg-surface px-4 py-3">
         <button
           type="button"
           onClick={onDismiss}
