@@ -50,6 +50,7 @@ app.use(
 app.use(express.json({ limit: "8mb" }));
 
 const start = async () => {
+  try {
   let sessionStore;
 
   if (REDIS_URL) {
@@ -138,10 +139,29 @@ const start = async () => {
     });
   });
 
-  await initDb();
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Fovea API on http://localhost:${PORT} (${isPostgres ? "postgres" : "sqlite"})`);
-  });
+  try {
+    await initDb();
+  } catch (err) {
+    console.error("initDb() failed during startup:", err);
+    throw err;
+  }
+
+  try {
+    const server = app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Fovea API on http://localhost:${PORT} (${isPostgres ? "postgres" : "sqlite"})`);
+    });
+    server.on("error", (err) => {
+      console.error("app.listen() emitted an error:", err);
+      process.exit(1);
+    });
+  } catch (err) {
+    console.error("Failed to start app.listen():", err);
+    throw err;
+  }
+  } catch (err) {
+    console.error("Fatal error during server startup (start()):", err);
+    throw err;
+  }
 };
 
 start().catch((err) => {
