@@ -116,11 +116,7 @@ app.use(express.json({ limit: "8mb" }));
 // initDb()/migrate() are still running.
 let ready = false;
 app.get(["/health", "/healthz"], (req, res) => {
-  if (!ready) {
-    res.status(503).json({ ok: false, ready: false });
-  } else {
-    res.status(200).json({ ok: true, ready: true });
-  }
+  res.status(200).json({ ok: true, ready });
 });
 
 const start = async () => {
