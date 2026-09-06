@@ -74,7 +74,16 @@ function requestOrigin(req) {
 }
 
 function afterAuthRedirect(req) {
-  return configuredClientOrigin() || requestOrigin(req);
+  if (isProdEnv) {
+    const host = String(req.get("x-forwarded-host") || req.get("host") || "")
+      .split(",")[0]
+      .trim()
+      .replace(/:\d+$/, "");
+    if (host === "fovea.sh" || host === "www.fovea.sh") {
+      return "https://fovea.sh";
+    }
+  }
+  return ensureHttpsOrigin(configuredClientOrigin() || requestOrigin(req));
 }
 
 function isLoopbackAddress(addr) {
