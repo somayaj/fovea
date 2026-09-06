@@ -10,7 +10,7 @@ import {
   resolveThemeId,
 } from "./foveaThemes.js";
 
-/** Active palette — `walnut` by default. */
+/** Active palette — `pearl` by default. */
 export const PALETTE = THEME_PRESETS[DEFAULT_THEME_ID].palette;
 
 export function getThemePalette(themeId) {
