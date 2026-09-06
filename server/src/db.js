@@ -252,12 +252,6 @@ async function migrate() {
     "CREATE INDEX IF NOT EXISTS idx_nodes_recurrence ON nodes(recurrence_series_id)",
   );
 
-  const { backfillAllChannelTaskCounts } = await import("./taskCounts.js");
-  // Run in the background so startup/health checks aren't blocked by a
-  // potentially slow scan across all projects/channels.
-  backfillAllChannelTaskCounts().catch((err) => {
-    console.error("backfillAllChannelTaskCounts() failed:", err);
-  });
 }
 
 export function nowIso() {
