@@ -2,6 +2,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import session from "express-session";
+import { RedisStore } from "connect-redis";
+import { createClient } from "redis";
 import cors from "cors";
 import passport from "passport";
 import dotenv from "dotenv";
@@ -35,6 +37,25 @@ function allowDevLogin(req) {
 
 configurePassport();
 
+const REDIS_URL = process.env.REDIS_URL || "";
+let sessionStore;
+
+if (REDIS_URL) {
+  const redisClient = createClient({ url: REDIS_URL });
+  redisClient.on("error", (err) => {
+    console.error("Redis client error", err);
+  });
+  await redisClient.connect();
+  sessionStore = new RedisStore({
+    client: redisClient,
+    prefix: "fovea:sess:",
+  });
+} else {
+  console.warn(
+    "REDIS_URL not set; falling back to in-memory session store (not suitable for production).",
+  );
+}
+
 const app = express();
 app.set("trust proxy", 1);
 app.use(
@@ -46,6 +67,7 @@ app.use(
 app.use(express.json({ limit: "8mb" }));
 app.use(
   session({
+    store: sessionStore,
     name: "fovea.sid",
     secret: process.env.SESSION_SECRET || "fovea-dev-secret",
     resave: false,
