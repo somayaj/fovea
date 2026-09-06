@@ -4,6 +4,10 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { execute, nowIso, queryOne } from "./db.js";
 import { ensureStarterProject } from "./seed.js";
 
+async function touchLastLogin(userId) {
+  await execute("UPDATE users SET last_login_at = ? WHERE id = ?", [nowIso(), userId]);
+}
+
 export async function upsertGoogleUser(profile) {
   const googleSub = profile.id;
   const email = profile.emails?.[0]?.value || null;
@@ -18,19 +22,18 @@ export async function upsertGoogleUser(profile) {
       name,
       avatar,
       created_at: nowIso(),
+      last_login_at: nowIso(),
     };
     await execute(
-      "INSERT INTO users (id, google_sub, email, name, avatar, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-      [user.id, user.google_sub, user.email, user.name, user.avatar, user.created_at],
+      "INSERT INTO users (id, google_sub, email, name, avatar, created_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [user.id, user.google_sub, user.email, user.name, user.avatar, user.created_at, user.last_login_at],
     );
     await ensureStarterProject(user.id);
   } else {
-    await execute("UPDATE users SET email = ?, name = ?, avatar = ? WHERE id = ?", [
-      email,
-      name,
-      avatar,
-      user.id,
-    ]);
+    await execute(
+      "UPDATE users SET email = ?, name = ?, avatar = ?, last_login_at = ? WHERE id = ?",
+      [email, name, avatar, nowIso(), user.id],
+    );
     user = await queryOne("SELECT * FROM users WHERE id = ?", [user.id]);
   }
   return user;
@@ -47,12 +50,16 @@ export async function createDevUser() {
       name: "Local",
       avatar: null,
       created_at: nowIso(),
+      last_login_at: nowIso(),
     };
     await execute(
-      "INSERT INTO users (id, google_sub, email, name, avatar, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-      [user.id, user.google_sub, user.email, user.name, user.avatar, user.created_at],
+      "INSERT INTO users (id, google_sub, email, name, avatar, created_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [user.id, user.google_sub, user.email, user.name, user.avatar, user.created_at, user.last_login_at],
     );
     await ensureStarterProject(user.id);
+  } else {
+    await touchLastLogin(user.id);
+    user = await queryOne("SELECT * FROM users WHERE id = ?", [user.id]);
   }
   return user;
 }

@@ -184,7 +184,11 @@ export default function AppShell({ me, onLogout }) {
           )}
         >
           <SidebarBrand collapsed={collapsed} onToggle={toggleCollapsed} />
-          <ChannelSidebar collapsed={collapsed} onRequestExpand={expandSidebar} />
+          <ChannelSidebar
+            collapsed={collapsed}
+            onRequestExpand={expandSidebar}
+            isAdmin={Boolean(user?.isAdmin)}
+          />
           <SidebarUser user={user} onLogout={onLogout} collapsed={collapsed} />
         </aside>
 

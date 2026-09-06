@@ -90,4 +90,6 @@ export const api = {
     }),
   clearWeekFocus: (offset = 0) =>
     request(`/api/week/focus?offset=${offset}`, { method: "DELETE" }),
+  adminUsers: () => request("/api/admin/users"),
+  revealAdminUser: (userId) => request(`/api/admin/users/${userId}`),
 };
