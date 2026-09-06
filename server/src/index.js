@@ -35,6 +35,16 @@ function allowDevLogin(req) {
   return process.env.DEV_LOGIN === "1" || !googleReady;
 }
 
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason);
+  process.exit(1);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+  process.exit(1);
+});
+
 configurePassport();
 
 const REDIS_URL = process.env.REDIS_URL || "";
