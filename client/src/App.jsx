@@ -6,6 +6,7 @@ import AppShell from "./pages/AppShell.jsx";
 import BrainstormView from "./pages/BrainstormView.jsx";
 import Login from "./pages/Login.jsx";
 import MapView from "./pages/MapView.jsx";
+import AdminView from "./pages/AdminView.jsx";
 import WeekView from "./pages/WeekView.jsx";
 
 function ChannelMapRedirect() {
@@ -69,6 +70,7 @@ export default function App() {
         }
       >
         <Route path="/" element={<WeekView />} />
+        <Route path="/admin" element={me.user?.isAdmin ? <AdminView /> : <Navigate to="/" replace />} />
         <Route path="/map" element={<MapView me={me} />} />
         <Route path="/brainstorm" element={<BrainstormView me={me} />} />
         <Route path="/c/:channelId" element={<ChannelMapRedirect />} />

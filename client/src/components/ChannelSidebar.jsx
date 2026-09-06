@@ -11,6 +11,7 @@ import {
   IconPlus,
   IconSearch,
   IconTrash,
+  IconUsers,
 } from "./icons.jsx";
 import SidebarHoverLabel from "./SidebarHoverLabel.jsx";
 
@@ -284,7 +285,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
   );
 }
 
-export default function ChannelSidebar({ collapsed = false, onRequestExpand }) {
+export default function ChannelSidebar({ collapsed = false, onRequestExpand, isAdmin = false }) {
   const {
     channels,
     total,
@@ -343,7 +344,12 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand }) {
       <div className={cn("shrink-0 pb-2 pt-3", collapsed ? "px-1.5" : "px-3")}>
         {!collapsed ? <SectionLabel>Navigate</SectionLabel> : null}
         <nav className="space-y-0.5">
-          {NAV.map((item) => (
+          {[
+            ...NAV,
+            ...(isAdmin
+              ? [{ to: "/admin", label: "Admin", icon: IconUsers, hint: "Signed-in users" }]
+              : []),
+          ].map((item) => (
             <NavItem key={item.label} item={item} location={location} collapsed={collapsed} />
           ))}
         </nav>

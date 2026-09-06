@@ -125,7 +125,8 @@ async function migrate() {
       email TEXT,
       name TEXT,
       avatar TEXT,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      last_login_at TEXT
     )
   `);
   await execute(`
@@ -208,6 +209,7 @@ async function migrate() {
   );
 
   if (isPostgres) {
+    await execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TEXT");
     await execute("ALTER TABLE channels ADD COLUMN IF NOT EXISTS task_count INTEGER NOT NULL DEFAULT 0");
     await execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS week_focus_task_id TEXT");
     await execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS week_focus_week_start TEXT");
@@ -216,6 +218,11 @@ async function migrate() {
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS recurrence_series_id TEXT");
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS occurrence_date TEXT");
   } else {
+    const userCols = await query("PRAGMA table_info(users)");
+    const userNames = new Set(userCols.map((c) => c.name));
+    if (!userNames.has("last_login_at")) {
+      await execute("ALTER TABLE users ADD COLUMN last_login_at TEXT");
+    }
     const channelCols = await query("PRAGMA table_info(channels)");
     const channelNames = new Set(channelCols.map((c) => c.name));
     if (!channelNames.has("task_count")) {
@@ -238,6 +245,8 @@ async function migrate() {
     }
     if (!names.has("occurrence_date")) await execute("ALTER TABLE nodes ADD COLUMN occurrence_date TEXT");
   }
+
+  await execute("UPDATE users SET last_login_at = created_at WHERE last_login_at IS NULL");
 
   await execute(
     "CREATE INDEX IF NOT EXISTS idx_nodes_recurrence ON nodes(recurrence_series_id)",
