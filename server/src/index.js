@@ -92,6 +92,7 @@ app.set("trust proxy", 1);
 
 if (isProdEnv) {
   app.use((req, res, next) => {
+    if (req.path === "/health" || req.path === "/healthz") return next();
     const proto = String(req.get("x-forwarded-proto") || req.protocol || "http")
       .split(",")[0]
       .trim();
