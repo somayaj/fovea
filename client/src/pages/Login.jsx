@@ -3,6 +3,7 @@ import { api } from "../api.js";
 import FoveaLogo from "../components/FoveaLogo.jsx";
 import FocusAmbient from "../components/FocusAmbient.jsx";
 import LoginHeroCollage from "../components/LoginHeroCollage.jsx";
+import LegalFooter from "../components/LegalFooter.jsx";
 import { tw, cn } from "../lib/tw.js";
 
 export default function Login({ status, authError, onDevLogin }) {
@@ -106,9 +107,12 @@ export default function Login({ status, authError, onDevLogin }) {
                 Sign in to open your map, set this week&apos;s focus, and keep every task in view.
               </p>
             </div>
+
+            <LegalFooter className="mt-8" />
           </div>
         </section>
       </div>
+      <LegalFooter className="relative z-[1] border-t border-line/80 px-6 py-4 lg:hidden" />
     </div>
   );
 }
