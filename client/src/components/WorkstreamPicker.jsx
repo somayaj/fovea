@@ -74,7 +74,7 @@ export default function WorkstreamPicker({
       </button>
 
       {open ? (
-        <div className="absolute z-30 mt-1 w-full min-w-[220px] rounded-lg border border-stone-200 bg-white shadow-lg">
+        <div className="absolute z-30 mt-1 w-full min-w-[220px] rounded-lg border border-line bg-surface shadow-lg">
           <div className="border-b border-stone-100 p-2">
             <input
               type="search"
@@ -90,7 +90,7 @@ export default function WorkstreamPicker({
               <li>
                 <button
                   type="button"
-                  className="block w-full px-3 py-2 text-left text-sm text-stone-600 hover:bg-stone-50"
+                  className="block w-full px-3 py-2 text-left text-sm text-stone-600 hover:bg-accent-soft/40"
                   onClick={() => {
                     onChange("");
                     setLabel("");
@@ -112,7 +112,7 @@ export default function WorkstreamPicker({
                 <button
                   type="button"
                   className={[
-                    "block w-full px-3 py-2 text-left text-sm hover:bg-stone-50",
+                    "block w-full px-3 py-2 text-left text-sm hover:bg-accent-soft/40",
                     channel.id === value ? "bg-stone-100 font-medium text-stone-900" : "text-stone-700",
                   ].join(" ")}
                   onClick={() => {

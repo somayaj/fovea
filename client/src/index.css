@@ -258,8 +258,20 @@
     filter: drop-shadow(0 2px 6px rgba(60, 40, 20, 0.08));
   }
 
+  [data-fovea-neutral="true"] .focus-collage-piece,
+  [data-fovea-neutral="true"] .focus-collage-focus {
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.08));
+  }
+
   .focus-collage-focus {
     filter: drop-shadow(0 3px 10px rgba(60, 40, 20, 0.1));
+  }
+
+  [data-fovea-neutral="true"] .login-collage-inlay,
+  [data-fovea-neutral="true"] .login-hero-focus-img {
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.1),
+      0 1px 3px rgba(0, 0, 0, 0.06);
   }
 
   .focus-zone-label {
@@ -450,6 +462,7 @@
     height: 100%;
     object-fit: contain;
     object-position: center;
+    filter: var(--collage-photo-filter, none);
   }
 
   .login-collage-focus-ring {
@@ -507,10 +520,10 @@
     min-width: 68px;
     max-width: 108px;
     padding: 3px 3px 7px;
-    background: #fff;
+    background: var(--color-surface);
     box-shadow:
-      0 2px 10px rgba(60, 40, 20, 0.16),
-      0 1px 3px rgba(60, 40, 20, 0.1);
+      0 2px 10px color-mix(in srgb, var(--color-brand) 12%, transparent),
+      0 1px 3px color-mix(in srgb, var(--color-brand) 8%, transparent);
     transform: translate(-50%, -50%) rotate(var(--inlay-rotate, 0deg));
     pointer-events: none;
   }
@@ -521,6 +534,7 @@
     aspect-ratio: 1 / 1;
     object-fit: cover;
     object-position: center;
+    filter: var(--collage-photo-filter, none);
   }
 
   .login-hero-focus-main {
@@ -569,7 +583,7 @@
     aspect-ratio: 4 / 3;
     overflow: hidden;
     line-height: 0;
-    background: #fff;
+    background: var(--color-accent-soft);
   }
 
   .login-hero-polaroid--focus .instant-photo-caption {
@@ -628,12 +642,12 @@
   }
 
   .instant-photo {
-    background: #fff;
+    background: var(--color-surface);
     padding: 5px 5px 18px;
     width: 100%;
     box-shadow:
-      0 2px 8px rgba(60, 40, 20, 0.1),
-      0 8px 24px rgba(60, 40, 20, 0.08);
+      0 2px 8px color-mix(in srgb, var(--color-brand) 8%, transparent),
+      0 8px 24px color-mix(in srgb, var(--color-brand) 6%, transparent);
     transform: rotate(var(--instant-rotate, 0deg));
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
@@ -641,8 +655,8 @@
   .instant-photo:hover {
     transform: rotate(var(--instant-rotate, 0deg)) scale(1.02);
     box-shadow:
-      0 4px 12px rgba(60, 40, 20, 0.14),
-      0 12px 32px rgba(60, 40, 20, 0.1);
+      0 4px 12px color-mix(in srgb, var(--color-brand) 10%, transparent),
+      0 12px 32px color-mix(in srgb, var(--color-brand) 8%, transparent);
   }
 
   .cursor-grabbing .instant-photo,
@@ -653,17 +667,23 @@
 
   .task-photo-selected.instant-photo {
     box-shadow:
-      0 2px 8px rgba(60, 40, 20, 0.12),
-      0 8px 24px rgba(60, 40, 20, 0.1),
-      inset 0 0 0 3px color-mix(in srgb, var(--color-accent) 80%, #d4a574);
+      0 2px 8px color-mix(in srgb, var(--color-brand) 10%, transparent),
+      0 8px 24px color-mix(in srgb, var(--color-brand) 8%, transparent),
+      inset 0 0 0 3px color-mix(in srgb, var(--color-accent) 80%, var(--color-line));
   }
 
   .sketch-map-polaroid.task-photo-selected.instant-photo {
     box-shadow:
-      0 4px 16px rgba(60, 40, 20, 0.16),
-      0 12px 32px rgba(60, 40, 20, 0.12),
+      0 4px 16px color-mix(in srgb, var(--color-brand) 12%, transparent),
+      0 12px 32px color-mix(in srgb, var(--color-brand) 10%, transparent),
       inset 0 0 0 4px var(--color-accent);
     transform: scale(1.03);
+  }
+
+  .instant-photo .task-photo-img,
+  .instant-photo .task-photo-map-img,
+  .task-image .task-photo-img {
+    filter: var(--collage-photo-filter, none);
   }
 
   .task-photo-img {
@@ -675,7 +695,7 @@
   }
 
   .instant-photo-well {
-    background: #f5f5f4;
+    background: var(--color-accent-soft);
     min-height: 2.5rem;
   }
 
@@ -691,7 +711,7 @@
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #c4956a;
+    color: var(--color-accent);
   }
 
   .instant-photo-title {
@@ -704,7 +724,7 @@
     font-weight: 600;
     line-height: 1.3;
     letter-spacing: 0.01em;
-    color: #3d3228;
+    color: var(--color-brand);
   }
 
   .instant-photo-meta {
@@ -714,7 +734,7 @@
     font-weight: 500;
     line-height: 1.3;
     text-align: center;
-    color: #78716c;
+    color: var(--color-muted);
   }
 
   .instant-photo-lg .instant-photo-caption {
@@ -761,7 +781,7 @@
 
 /* Task map nodes */
 .map-node {
-  @apply relative min-w-[180px] max-w-[240px] rounded-xl border border-stone-200 bg-white px-4 py-3.5 shadow-sm transition-shadow;
+  @apply relative min-w-[180px] max-w-[240px] rounded-xl border border-line bg-surface px-4 py-3.5 shadow-sm transition-shadow;
 }
 
 .map-node:hover {
@@ -777,11 +797,11 @@
 }
 
 .map-node.map-node-linked {
-  @apply border-stone-300;
+  @apply border-line;
 }
 
 .map-node.idea {
-  @apply border-dashed border-stone-300 bg-stone-50/80;
+  @apply border-dashed border-line bg-accent-soft/50;
 }
 
 .map-node .node-accent {
@@ -793,7 +813,7 @@
 }
 
 .node-handle {
-  @apply h-2.5 w-2.5 border-stone-300 bg-white;
+  @apply h-2.5 w-2.5 border-line bg-surface;
 }
 
 .map-canvas {
@@ -850,9 +870,9 @@
 
 .mindmap-hub-inner {
   overflow: hidden;
-  border: 1px solid #e7e5e4;
+  border: 1px solid var(--color-line);
   border-radius: 16px;
-  background: white;
+  background: var(--color-surface);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
   text-align: center;
 }
@@ -940,7 +960,7 @@
   overflow: hidden;
   border-radius: 1rem;
   border: 3px solid var(--color-brand);
-  background: white;
+  background: var(--color-surface);
   padding: 0;
   text-align: center;
   box-shadow:
@@ -1110,9 +1130,9 @@
   position: relative;
   overflow: hidden;
   border-radius: 0.75rem;
-  border: 1px solid #e7e5e4;
+  border: 1px solid var(--color-line);
   border-left-width: 3px;
-  background: white;
+  background: var(--color-surface);
   padding: 0.625rem 0.75rem 0.75rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: box-shadow 0.15s;
@@ -1394,7 +1414,7 @@
   z-index: 2;
   border-radius: 1rem;
   border: 3px solid var(--color-brand);
-  background: white;
+  background: var(--color-surface);
   padding: 1rem 1.25rem 1.125rem;
   text-align: center;
   box-shadow:
@@ -1489,8 +1509,8 @@
 
 .terminal-body {
   border-radius: 0.75rem;
-  border: 1px solid #e7e5e4;
-  background: white;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
   padding: 0.625rem 0.75rem 0.75rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
@@ -1574,16 +1594,16 @@
 
 /* Sketch map — editorial cards */
 .sketch-box {
-  border: 1px solid #e7e5e4;
+  border: 1px solid var(--color-line);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-brand) 4%, transparent);
 }
 
 .sketch-box-channel {
   border-top-width: 3px;
   border-top-style: solid;
-  background: white;
+  background: var(--color-surface);
 }
 
 .sketch-map-polaroid {
@@ -1597,21 +1617,21 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  border: 1px solid #f0ebe3;
+  border: 1px solid var(--color-line);
   overflow: hidden;
-  background: #fff;
+  background: var(--color-surface);
   padding: 5px 5px 7px;
   transform: none;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 4px 14px rgba(60, 40, 20, 0.07);
+    0 1px 2px color-mix(in srgb, var(--color-brand) 4%, transparent),
+    0 4px 14px color-mix(in srgb, var(--color-brand) 6%, transparent);
 }
 
 .sketch-map-polaroid.instant-photo:hover {
   transform: none;
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.05),
-    0 6px 18px rgba(60, 40, 20, 0.09);
+    0 2px 4px color-mix(in srgb, var(--color-brand) 5%, transparent),
+    0 6px 18px color-mix(in srgb, var(--color-brand) 8%, transparent);
 }
 
 .sketch-map-polaroid .instant-photo-well {
@@ -1620,7 +1640,7 @@
   aspect-ratio: 4 / 3;
   flex-shrink: 0;
   overflow: hidden;
-  background: #fff;
+  background: var(--color-accent-soft);
   line-height: 0;
 }
 
@@ -1645,7 +1665,7 @@
   margin-top: 8px;
   padding: 0 4px 2px;
   text-align: center;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .sketch-map-polaroid .instant-photo-title {
@@ -1721,20 +1741,20 @@
   width: 100%;
   align-items: center;
   justify-content: center;
-  background: #f5f5f4;
+  background: var(--color-accent-soft);
 }
 
 .sketch-workstream-card {
-  --ws-accent: #c4956a;
+  --ws-accent: var(--color-accent);
   width: 204px;
   display: flex;
   overflow: hidden;
   border-radius: 12px;
-  background: #fff;
-  border: 1px solid #ebe4da;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
   box-shadow:
-    0 1px 2px rgba(45, 35, 25, 0.05),
-    0 6px 20px rgba(45, 35, 25, 0.07);
+    0 1px 2px color-mix(in srgb, var(--color-brand) 5%, transparent),
+    0 6px 20px color-mix(in srgb, var(--color-brand) 6%, transparent);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
   cursor: pointer;
 }
@@ -1742,14 +1762,14 @@
 .sketch-workstream-card:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 2px 4px rgba(45, 35, 25, 0.06),
-    0 10px 28px rgba(45, 35, 25, 0.1);
+    0 2px 4px color-mix(in srgb, var(--color-brand) 6%, transparent),
+    0 10px 28px color-mix(in srgb, var(--color-brand) 9%, transparent);
 }
 
 .sketch-workstream-card-selected {
   box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--color-accent) 75%, #d4a574),
-    0 6px 20px rgba(45, 35, 25, 0.08);
+    0 0 0 2px color-mix(in srgb, var(--color-accent) 75%, var(--color-line)),
+    0 6px 20px color-mix(in srgb, var(--color-brand) 7%, transparent);
 }
 
 .sketch-workstream-card-bar {
@@ -1765,7 +1785,7 @@
   padding: 14px 14px 13px 12px;
   background:
     radial-gradient(ellipse 90% 80% at 100% 0%, color-mix(in srgb, var(--ws-accent) 14%, transparent), transparent 70%),
-    linear-gradient(180deg, #fffdfb 0%, #faf7f2 100%);
+    linear-gradient(180deg, var(--color-surface) 0%, var(--color-paper) 100%);
 }
 
 .sketch-workstream-watermark {
@@ -1790,12 +1810,12 @@
   z-index: 1;
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid #ebe4da;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  border: 1px solid var(--color-line);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #78716c;
+  color: var(--color-muted);
   backdrop-filter: blur(4px);
 }
 
@@ -1826,7 +1846,7 @@
   font-size: 11px;
   font-weight: 500;
   line-height: 1.35;
-  color: #a8a29e;
+  color: var(--color-muted);
 }
 
 .sketch-map-channel-dot {
@@ -1837,8 +1857,8 @@
 }
 
 .sketch-map-rollup-well {
-  background: linear-gradient(145deg, #fafaf9 0%, #f5f5f4 100%);
-  border: 1px dashed #d6d3d1;
+  background: linear-gradient(145deg, var(--color-surface) 0%, var(--color-accent-soft) 100%);
+  border: 1px dashed var(--color-line);
   border-radius: 2px;
 }
 
@@ -1852,10 +1872,10 @@
 
 .sketch-box-hub {
   border-width: 1px;
-  border-color: #1a1a1a;
+  border-color: var(--color-brand);
   padding: 1rem 1.5rem;
-  background: white;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  background: var(--color-surface);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--color-brand) 4%, transparent);
 }
 
 .sketch-hub-throb {
@@ -1882,8 +1902,8 @@
 }
 
 .sketch-box-week-highlight {
-  border-color: #c45f3e;
-  box-shadow: 0 0 0 2px rgba(196, 95, 62, 0.14);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 14%, transparent);
 }
 
 .sketch-box-dimmed {
@@ -1960,7 +1980,7 @@
 
 .sketch-box-rollup:hover {
   border-color: #78716c;
-  background: white;
+  background: var(--color-surface);
 }
 
 .sketch-box-idea {
@@ -2006,10 +2026,10 @@
   box-sizing: border-box;
   padding: 14px 14px 18px;
   transform: none !important;
-  background: #fff;
+  background: var(--color-surface);
   box-shadow:
-    0 2px 8px rgba(60, 40, 20, 0.1),
-    0 8px 24px rgba(60, 40, 20, 0.08);
+    0 2px 8px color-mix(in srgb, var(--color-brand) 8%, transparent),
+    0 8px 24px color-mix(in srgb, var(--color-brand) 6%, transparent);
 }
 
 .brainstorm-idea-polaroid--text.instant-photo:hover {
@@ -2041,7 +2061,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 5;
   overflow: hidden;
-  color: #1c1917;
+  color: var(--color-brand);
 }
 
 .brainstorm-idea-polaroid--text .instant-photo-meta {
@@ -2051,7 +2071,7 @@
   line-height: 1.45;
   text-align: center;
   text-wrap: balance;
-  color: #57534e;
+  color: var(--color-muted);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
@@ -2084,7 +2104,7 @@
   max-height: none;
   flex-shrink: 0;
   overflow: hidden;
-  background: #fff;
+  background: var(--color-accent-soft);
   line-height: 0;
 }
 
@@ -2243,7 +2263,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: white;
+  background: var(--color-surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
@@ -2271,7 +2291,7 @@
 .type-pin-holder-task {
   border: 1px solid #1a1a1a;
   color: #1a1a1a;
-  background: white;
+  background: var(--color-surface);
 }
 
 .type-pin-holder-idea {

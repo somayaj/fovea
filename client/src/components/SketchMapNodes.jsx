@@ -89,7 +89,7 @@ function TaskCardBox({
       ) : null}
       {recurring ? (
         <span
-          className="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-[11px] font-semibold text-stone-600 shadow-sm"
+          className="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-surface/90 text-[11px] font-semibold text-muted shadow-sm"
           title="Recurring task"
           aria-label="Recurring task"
         >

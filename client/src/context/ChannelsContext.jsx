@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { api } from "../api.js";
 
 const ChannelsContext = createContext(null);
-const PAGE_SIZE = 50;
+const SIDEBAR_LIMIT = 10;
+const SEARCH_LIMIT = 50;
 
 export function ChannelsProvider({ projectId, children }) {
   const [channels, setChannels] = useState([]);
@@ -21,7 +22,8 @@ export function ChannelsProvider({ projectId, children }) {
       if (append) setLoadingMore(true);
       else setLoading(true);
       try {
-        const data = await api.channels(projectId, { q, limit: PAGE_SIZE, offset });
+        const limit = q.trim() ? SEARCH_LIMIT : SIDEBAR_LIMIT;
+        const data = await api.channels(projectId, { q, limit, offset });
         if (id !== requestId.current) return;
         setChannels((prev) => (append ? [...prev, ...data.channels] : data.channels));
         setTotal(data.total);

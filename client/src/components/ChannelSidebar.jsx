@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { api } from "../api.js";
 import { useChannels } from "../context/ChannelsContext.jsx";
 import { workstreamColor } from "../lib/foveaTheme.js";
 import { chrome } from "../lib/chrome.js";
@@ -15,6 +16,8 @@ import {
   IconUsers,
 } from "./icons.jsx";
 import SidebarHoverLabel from "./SidebarHoverLabel.jsx";
+
+const VISIBLE_WORKSTREAMS = 10;
 
 const NAV = [
   { to: "/", end: true, label: "Focus", icon: IconFocus, hint: "This week" },
@@ -33,8 +36,8 @@ const NAV = [
 
 function SectionLabel({ children, action }) {
   return (
-    <div className="mb-2 flex items-center justify-between gap-2 px-2">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">{children}</span>
+    <div className="mb-1.5 flex items-center justify-between gap-2 px-2">
+      <span className="text-[9px] font-semibold uppercase tracking-wider text-sidebar-muted">{children}</span>
       {action}
     </div>
   );
@@ -52,8 +55,8 @@ function NavItem({ item, location, collapsed }) {
       className={({ isActive }) => {
         const on = customActive !== undefined ? customActive : isActive;
         return cn(
-          "group relative flex items-center rounded-lg py-2 text-[13px] font-medium transition-all",
-          collapsed ? "justify-center px-1.5" : "gap-2.5 px-2",
+          "group relative flex items-center rounded-lg py-1.5 text-[12px] font-medium transition-all",
+          collapsed ? "justify-center px-1.5" : "gap-2 px-2",
           on
             ? cn(chrome.navActive, "ring-1 ring-sidebar-border/60")
             : chrome.navIdle,
@@ -72,11 +75,11 @@ function NavItem({ item, location, collapsed }) {
             ) : null}
             <span
               className={cn(
-                "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
+                "flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors",
                 on ? chrome.accentBg : cn(chrome.muted, "group-hover:text-sidebar-text"),
               )}
             >
-              <Icon size={15} />
+              <Icon size={14} />
             </span>
             {!collapsed ? <span className="min-w-0 flex-1 truncate">{item.label}</span> : null}
             {collapsed ? <SidebarHoverLabel label={item.label} meta={item.hint} /> : null}
@@ -229,16 +232,16 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
       <Link
         to={`/map?channel=${channel.id}`}
         className={cn(
-          "group/link relative flex min-w-0 items-center gap-2 rounded-lg py-2 text-[13px]",
+          "group/link relative flex min-w-0 items-center gap-1.5 rounded-lg py-1.5 text-[12px]",
           collapsed ? "justify-center px-1.5" : "flex-1 px-2",
           isActive ? cn("font-medium", chrome.accent) : chrome.muted,
         )}
       >
         <span
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md"
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
           style={{ backgroundColor: `${dot}22` }}
         >
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: dot }} aria-hidden="true" />
+          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: dot }} aria-hidden="true" />
         </span>
         {!collapsed ? (
           <>
@@ -246,7 +249,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
             {channel.tasks > 0 ? (
               <span
                 className={cn(
-                  "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums",
+                  "shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium tabular-nums",
                   isActive ? "bg-sidebar-accent/12 text-sidebar-accent" : "bg-sidebar-hover text-sidebar-muted",
                 )}
               >
@@ -268,17 +271,17 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
           type="button"
           aria-label={`Rename ${channel.name}`}
           onClick={() => setEditing(true)}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
+          className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
         >
-          <IconEdit size={13} />
+          <IconEdit size={12} />
         </button>
         <button
           type="button"
           aria-label={`Delete ${channel.name}`}
           onClick={() => setConfirmDelete(true)}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
+          className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
         >
-          <IconTrash size={13} />
+          <IconTrash size={12} />
         </button>
       </div>
       ) : null}
@@ -307,10 +310,28 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [query, setQuery] = useState(search);
+  const [pinnedChannel, setPinnedChannel] = useState(null);
+  const trimmedQuery = query.trim();
+  const searching = Boolean(trimmedQuery);
 
   useEffect(() => {
     setQuery(search);
   }, [search]);
+
+  useEffect(() => {
+    if (!activeChannelId || searching) {
+      setPinnedChannel(null);
+      return;
+    }
+    if (channels.some((channel) => channel.id === activeChannelId)) {
+      setPinnedChannel(null);
+      return;
+    }
+    api
+      .channel(activeChannelId)
+      .then(({ channel }) => setPinnedChannel(channel))
+      .catch(() => setPinnedChannel(null));
+  }, [activeChannelId, channels, searching]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -340,9 +361,23 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
 
   const showEmpty = !loading && channels.length === 0;
 
+  const visibleChannels = (() => {
+    if (searching) return channels;
+    const active =
+      channels.find((channel) => channel.id === activeChannelId) ||
+      (pinnedChannel?.id === activeChannelId ? pinnedChannel : null);
+    const top = channels.slice(0, VISIBLE_WORKSTREAMS);
+    if (active && !top.some((channel) => channel.id === activeChannelId)) {
+      return [...top.slice(0, VISIBLE_WORKSTREAMS - 1), active];
+    }
+    return top;
+  })();
+
+  const hiddenWorkstreamCount = Math.max(0, total - VISIBLE_WORKSTREAMS);
+
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", collapsed ? "overflow-visible" : "overflow-hidden")}>
-      <div className={cn("shrink-0 pb-2 pt-3", collapsed ? "px-1.5" : "px-3")}>
+      <div className={cn("shrink-0 pb-1.5 pt-2.5", collapsed ? "px-1.5" : "px-3")}>
         {!collapsed ? <SectionLabel>Navigate</SectionLabel> : null}
         <nav className="space-y-0.5">
           {[
@@ -358,7 +393,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
 
       {!collapsed ? <div className="mx-3 border-t border-sidebar-border" /> : null}
 
-      <div className={cn("flex min-h-0 flex-1 flex-col py-3", collapsed ? "overflow-visible px-1.5" : "px-3")}>
+      <div className={cn("flex min-h-0 flex-1 flex-col py-2.5", collapsed ? "overflow-visible px-1.5" : "px-3")}>
         {!collapsed ? (
           <>
             <SectionLabel
@@ -385,8 +420,12 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Filter workstreams…"
-                className="w-full rounded-lg border border-sidebar-border bg-sidebar-surface py-2 pl-8 pr-8 text-xs text-sidebar-text placeholder:text-sidebar-muted focus:border-sidebar-accent/40 focus:outline-none focus:ring-2 focus:ring-sidebar-accent/10"
+                placeholder={
+                  hiddenWorkstreamCount > 0 && !searching
+                    ? `Search ${hiddenWorkstreamCount} more workstreams…`
+                    : "Search workstreams…"
+                }
+                className="w-full rounded-lg border border-sidebar-border bg-sidebar-surface py-1.5 pl-8 pr-8 text-[11px] text-sidebar-text placeholder:text-sidebar-muted focus:border-sidebar-accent/40 focus:outline-none focus:ring-2 focus:ring-sidebar-accent/10"
               />
               {query ? (
                 <button
@@ -454,7 +493,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
               ) : null}
 
               <nav className="space-y-0">
-                {channels.map((channel, index) => (
+                {visibleChannels.map((channel, index) => (
                   <WorkstreamRow
                     key={channel.id}
                     channel={channel}
@@ -468,7 +507,13 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
               </nav>
             </div>
 
-            {hasMore ? (
+            {hiddenWorkstreamCount > 0 && !searching ? (
+              <p className="mt-2 px-1 text-center text-[10px] leading-relaxed text-sidebar-muted">
+                Showing {visibleChannels.length} of {total}. Search for the rest.
+              </p>
+            ) : null}
+
+            {hasMore && searching ? (
               <button
                 type="button"
                 onClick={loadMore}
@@ -483,7 +528,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
           <>
             <div className="mx-auto mb-2 h-px w-6 bg-sidebar-border" aria-hidden="true" />
             <nav className="min-h-0 flex-1 space-y-1 overflow-visible">
-              {channels.slice(0, 8).map((channel, index) => (
+              {channels.slice(0, VISIBLE_WORKSTREAMS).map((channel, index) => (
                 <WorkstreamRow
                   key={channel.id}
                   channel={channel}
@@ -495,15 +540,18 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
                 />
               ))}
             </nav>
-            {channels.length > 8 ? (
+            {channels.length > VISIBLE_WORKSTREAMS ? (
               <button
                 type="button"
                 onClick={onRequestExpand}
                 className="group relative mt-1 w-full rounded-md py-1 text-center text-[10px] font-medium text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
                 title="Expand sidebar to see all workstreams"
               >
-                +{channels.length - 8} more
-                <SidebarHoverLabel label="More workstreams" meta={`+${channels.length - 8}`} />
+                +{Math.max(total, channels.length) - VISIBLE_WORKSTREAMS} more
+                <SidebarHoverLabel
+                  label="More workstreams"
+                  meta={`+${Math.max(total, channels.length) - VISIBLE_WORKSTREAMS}`}
+                />
               </button>
             ) : null}
           </>
