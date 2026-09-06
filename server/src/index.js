@@ -36,9 +36,23 @@ function isLocalOrigin(url) {
   }
 }
 
+function ensureHttpsOrigin(origin) {
+  if (!origin || !isProdEnv) return origin;
+  try {
+    const url = new URL(origin);
+    if (!isLocalHost(url.hostname) && url.protocol === "http:") {
+      url.protocol = "https:";
+      return stripSlash(url.origin);
+    }
+  } catch {
+    // ignore invalid URLs
+  }
+  return origin;
+}
+
 function configuredClientOrigin() {
   const raw = stripSlash(process.env.CLIENT_ORIGIN);
-  if (raw && !(isProdEnv && isLocalOrigin(raw))) return raw;
+  if (raw && !(isProdEnv && isLocalOrigin(raw))) return ensureHttpsOrigin(raw);
   const railway = process.env.RAILWAY_PUBLIC_DOMAIN || process.env.RAILWAY_STATIC_URL;
   if (railway) {
     const host = stripSlash(railway).replace(/^https?:\/\//, "");
@@ -48,13 +62,14 @@ function configuredClientOrigin() {
 }
 
 function requestOrigin(req) {
-  const proto = String(req.get("x-forwarded-proto") || req.protocol || "http")
+  let proto = String(req.get("x-forwarded-proto") || req.protocol || "http")
     .split(",")[0]
     .trim();
   const host = String(req.get("x-forwarded-host") || req.get("host") || "")
     .split(",")[0]
     .trim();
   if (!host) return configuredClientOrigin() || LOCAL_CLIENT_ORIGIN;
+  if (isProdEnv && !isLocalHost(host)) proto = "https";
   return `${proto}://${host}`;
 }
 
