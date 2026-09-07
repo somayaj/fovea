@@ -14,6 +14,10 @@ import WeekView from "./pages/WeekView.jsx";
 import { ROADMAP_ENABLED } from "./lib/features.js";
 import { ensureHttpsOrigin, isLocalHost } from "./lib/ensureHttps.js";
 
+function currentPath() {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
 function ChannelMapRedirect() {
   const { channelId } = useParams();
   return <Navigate to={`/map?channel=${channelId}`} replace />;
@@ -64,6 +68,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (ensureHttpsOrigin(currentPath())) return;
     refresh();
   }, []);
 
