@@ -101,10 +101,18 @@ router.patch("/me/theme", async (req, res) => {
   res.json({ themeId });
 });
 
-router.get("/admin/users", requireAdmin, async (_req, res) => {
+router.get("/admin/users", requireAdmin, async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit) || 25, 1), 100);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
+
+  const totalRow = await queryOne("SELECT COUNT(*) AS count FROM users");
+  const totalUsers = Number(totalRow?.count) || 0;
+
   const users = await query(
-    "SELECT id, email, name, avatar, google_sub, created_at, last_login_at, theme_id FROM users ORDER BY COALESCE(last_login_at, created_at) DESC",
+    "SELECT id, email, name, avatar, google_sub, created_at, last_login_at, theme_id FROM users ORDER BY COALESCE(last_login_at, created_at) DESC LIMIT ? OFFSET ?",
+    [limit, offset],
   );
+
   const taskCounts = await query(
     `SELECT p.user_id, COUNT(n.id) AS task_count
      FROM projects p
@@ -117,8 +125,11 @@ router.get("/admin/users", requireAdmin, async (_req, res) => {
   const totalTasks = taskCounts.reduce((sum, row) => sum + (Number(row.task_count) || 0), 0);
 
   res.json({
-    count: users.length,
+    count: totalUsers,
     totalTasks,
+    limit,
+    offset,
+    hasMore: offset + users.length < totalUsers,
     users: users.map((user) => ({
       ...summarizeUser(user),
       taskCount: countByUser.get(user.id) || 0,

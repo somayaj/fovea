@@ -132,6 +132,12 @@ export const api = {
     const params = new URLSearchParams({ year: String(year) });
     return request(`/api/roadmap/timeline?${params}`);
   },
-  adminUsers: () => request("/api/admin/users"),
+  adminUsers: ({ limit = 25, offset = 0 } = {}) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    });
+    return request(`/api/admin/users?${params}`);
+  },
   revealAdminUser: (userId) => request(`/api/admin/users/${userId}`),
 };

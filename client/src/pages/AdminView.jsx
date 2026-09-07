@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../api.js";
 import FocusPageShell from "../components/FocusPageShell.jsx";
 import { IconList, IconUsers } from "../components/icons.jsx";
 import { PageHeader, StatPill, EmptyPanel } from "../components/PageHeader.jsx";
 import { DEFAULT_THEME_ID, getThemePreset } from "../lib/foveaTheme.js";
 import { tw, cn } from "../lib/tw.js";
+
+const PAGE_SIZE = 25;
 
 function themeDisplay(themeId) {
   const id = themeId || DEFAULT_THEME_ID;
@@ -93,36 +95,43 @@ export default function AdminView() {
   const [count, setCount] = useState(0);
   const [totalTasks, setTotalTasks] = useState(0);
   const [users, setUsers] = useState([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [revealedById, setRevealedById] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [revealingId, setRevealingId] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await api.adminUsers();
-        if (cancelled) return;
-        setCount(data.count || 0);
-        setTotalTasks(data.totalTasks || 0);
-        setUsers(data.users || []);
-      } catch (err) {
-        if (!cancelled) setError(err.message || "Could not load users");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const loadUsers = useCallback(async (nextPage = 0) => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await api.adminUsers({
+        limit: PAGE_SIZE,
+        offset: nextPage * PAGE_SIZE,
+      });
+      setCount(data.count || 0);
+      setTotalTasks(data.totalTasks || 0);
+      setUsers(data.users || []);
+      setHasMore(Boolean(data.hasMore));
+      setPage(nextPage);
+    } catch (err) {
+      setError(err.message || "Could not load users");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadUsers(0);
+  }, [loadUsers]);
 
   const reveal = async (userId) => {
     setRevealingId(userId);
     setError("");
     try {
       const data = await api.revealAdminUser(userId);
-      setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, ...data.user } : user)));
+      setRevealedById((prev) => ({ ...prev, [userId]: data.user }));
     } catch (err) {
       setError(err.message || "Could not reveal user");
     } finally {
@@ -131,14 +140,16 @@ export default function AdminView() {
   };
 
   const hide = (userId) => {
-    setUsers((prev) =>
-      prev.map((user) => {
-        if (user.id !== userId) return user;
-        const { name, email, avatar, ...rest } = user;
-        return rest;
-      }),
-    );
+    setRevealedById((prev) => {
+      const next = { ...prev };
+      delete next[userId];
+      return next;
+    });
   };
+
+  const pageStart = count === 0 ? 0 : page * PAGE_SIZE + 1;
+  const pageEnd = Math.min(count, (page + 1) * PAGE_SIZE);
+  const showPagination = count > PAGE_SIZE;
 
   return (
     <FocusPageShell fill className="overflow-auto">
@@ -181,13 +192,38 @@ export default function AdminView() {
               {users.map((user) => (
                 <UserRow
                   key={user.id}
-                  user={user}
+                  user={{ ...user, ...revealedById[user.id] }}
                   revealing={revealingId === user.id}
                   onReveal={reveal}
                   onHide={hide}
                 />
               ))}
             </ul>
+            {showPagination ? (
+              <div className="admin-pagination">
+                <p className="admin-pagination-meta">
+                  Showing {pageStart.toLocaleString()}–{pageEnd.toLocaleString()} of {count.toLocaleString()}
+                </p>
+                <div className="admin-pagination-actions">
+                  <button
+                    type="button"
+                    disabled={page === 0 || loading}
+                    onClick={() => loadUsers(page - 1)}
+                    className={cn(tw.btnOutlineSm, "disabled:opacity-50")}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!hasMore || loading}
+                    onClick={() => loadUsers(page + 1)}
+                    className={cn(tw.btnOutlineSm, "disabled:opacity-50")}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

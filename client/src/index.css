@@ -3029,6 +3029,27 @@
   color: var(--color-muted);
 }
 
+.admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-line) 80%, white);
+  padding: 0.85rem 0.5rem 0.25rem;
+}
+
+.admin-pagination-meta {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.admin-pagination-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 @media (max-width: 720px) {
   .admin-list-head {
     display: none;
