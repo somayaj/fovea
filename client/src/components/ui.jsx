@@ -1,5 +1,5 @@
 import { tw, cn } from "../lib/tw.js";
-import { priorityBadgeClass, priorityLabel } from "../lib/priority.js";
+import { priorityBadgeClass, priorityLabel, priorityMeta } from "../lib/priority.js";
 
 export function Label({ children, className = "", as = "p" }) {
   const Tag = as;
@@ -15,10 +15,11 @@ export function Card({ children, className = "", as = "div" }) {
   return <Tag className={cn(tw.card, className)}>{children}</Tag>;
 }
 
-export function PriorityBadge({ priority = "p2", className = "", map = false }) {
+export function PriorityBadge({ priority = "p2", className = "", map = false, code = false }) {
+  const meta = priorityMeta(priority);
   return (
     <span className={cn(priorityBadgeClass(priority, { map }), className)}>
-      {priorityLabel(priority)}
+      {code ? meta.code : priorityLabel(priority)}
     </span>
   );
 }

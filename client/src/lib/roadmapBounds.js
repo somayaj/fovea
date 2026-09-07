@@ -31,6 +31,10 @@ export function isCurrentMonth(monthKey) {
 
 export function taskMonthKey(task) {
   if (!task?.due_at) return null;
+  const raw = String(task.due_at);
+  if (raw.length >= 7 && /^\d{4}-\d{2}/.test(raw)) {
+    return raw.slice(0, 7);
+  }
   const date = new Date(task.due_at);
   if (Number.isNaN(date.getTime())) return null;
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
