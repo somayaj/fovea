@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 import { useTheme } from "../context/ThemeContext.jsx";
 import SidebarHoverLabel from "./SidebarHoverLabel.jsx";
 import { cn } from "../lib/tw.js";
@@ -13,7 +12,35 @@ function readThemesOpen() {
   return stored === "1";
 }
 
-function ThemePresetGrid({ presets, themeId, setTheme, className = "" }) {
+function ThemePresetGrid({ presets, themeId, setTheme, className = "", compact = false }) {
+  if (compact) {
+    return (
+      <div className={cn("flex flex-col items-center gap-1.5", className)}>
+        {presets.map((preset) => {
+          const active = themeId === preset.id;
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => setTheme(preset.id)}
+              aria-label={`${preset.label} theme`}
+              aria-pressed={active}
+              className={cn(
+                "group relative flex h-7 w-7 items-center justify-center rounded-full border transition-transform",
+                active
+                  ? "border-sidebar-accent ring-2 ring-sidebar-accent/25"
+                  : "border-sidebar-border hover:scale-105",
+              )}
+              style={{ background: preset.palette.swatch }}
+            >
+              <SidebarHoverLabel label={preset.label} meta={preset.description} />
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className={cn("grid grid-cols-2 gap-1.5", className)}>
       {presets.map((preset) => {
@@ -46,91 +73,10 @@ function ThemePresetGrid({ presets, themeId, setTheme, className = "" }) {
   );
 }
 
-function CollapsedThemeFlyout({ open, anchorRef, onClose, presets, themeId, setTheme }) {
-  const [coords, setCoords] = useState(null);
-
-  const updateCoords = useCallback(() => {
-    const anchor = anchorRef.current;
-    if (!anchor) return;
-    const rect = anchor.getBoundingClientRect();
-    setCoords({
-      top: rect.top + rect.height / 2,
-      left: rect.right + 10,
-      transform: "translateY(-50%)",
-    });
-  }, [anchorRef]);
-
-  useLayoutEffect(() => {
-    if (!open) {
-      setCoords(null);
-      return;
-    }
-    updateCoords();
-    window.addEventListener("scroll", updateCoords, true);
-    window.addEventListener("resize", updateCoords);
-    return () => {
-      window.removeEventListener("scroll", updateCoords, true);
-      window.removeEventListener("resize", updateCoords);
-    };
-  }, [open, updateCoords]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onPointerDown = (event) => {
-      const anchor = anchorRef.current;
-      const panel = document.getElementById("theme-collapsed-flyout");
-      if (anchor?.contains(event.target) || panel?.contains(event.target)) return;
-      onClose();
-    };
-
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open, onClose, anchorRef]);
-
-  if (!open || !coords) return null;
-
-  return createPortal(
-    <div
-      id="theme-collapsed-flyout"
-      role="dialog"
-      aria-label="Choose theme"
-      style={{
-        position: "fixed",
-        top: coords.top,
-        left: coords.left,
-        transform: coords.transform,
-        zIndex: 200,
-      }}
-      className="w-[11.5rem] rounded-xl border border-sidebar-border bg-sidebar-bg p-2 shadow-xl"
-    >
-      <p className="mb-1.5 px-0.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">
-        Themes
-      </p>
-      <ThemePresetGrid
-        presets={presets}
-        themeId={themeId}
-        setTheme={setTheme}
-        className="max-h-52 overflow-y-auto pr-0.5"
-      />
-    </div>,
-    document.body,
-  );
-}
-
 export default function ThemePicker({ collapsed = false }) {
   const { themeId, presets, setTheme } = useTheme();
   const [open, setOpen] = useState(readThemesOpen);
   const activePreset = presets.find((preset) => preset.id === themeId);
-  const collapsedAnchorRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem(THEMES_OPEN_KEY, open ? "1" : "0");
@@ -139,12 +85,10 @@ export default function ThemePicker({ collapsed = false }) {
   if (collapsed) {
     return (
       <div className="shrink-0 border-t border-sidebar-border px-2 py-2">
-        <div ref={collapsedAnchorRef} className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-1">
           <div className="group relative">
             <span
-              className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-full border border-sidebar-accent ring-2 ring-sidebar-accent/25",
-              )}
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-sidebar-accent ring-2 ring-sidebar-accent/25"
               style={{ background: activePreset?.palette.swatch }}
               aria-hidden="true"
             />
@@ -154,20 +98,20 @@ export default function ThemePicker({ collapsed = false }) {
             type="button"
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
-            aria-controls="theme-collapsed-flyout"
             className="flex h-5 w-full items-center justify-center rounded-md text-[10px] font-semibold text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-text"
           >
             {open ? "Hide" : "Themes"}
           </button>
+          {open ? (
+            <ThemePresetGrid
+              presets={presets}
+              themeId={themeId}
+              setTheme={setTheme}
+              compact
+              className="mt-0.5 max-h-36 w-full overflow-y-auto"
+            />
+          ) : null}
         </div>
-        <CollapsedThemeFlyout
-          open={open}
-          anchorRef={collapsedAnchorRef}
-          onClose={() => setOpen(false)}
-          presets={presets}
-          themeId={themeId}
-          setTheme={setTheme}
-        />
       </div>
     );
   }
