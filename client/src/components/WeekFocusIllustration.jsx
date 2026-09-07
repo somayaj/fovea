@@ -9,7 +9,7 @@ export default function WeekFocusIllustration() {
         <span className="week-illustration-badge">#1 focus</span>
         <strong>Ship the thing that matters</strong>
         <div className="week-illustration-chips">
-          <span>P0</span>
+          <span>Critical</span>
           <span>#ship</span>
         </div>
       </div>
