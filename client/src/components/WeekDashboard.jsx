@@ -53,6 +53,10 @@ export default function WeekDashboard({
   onWeekChange,
   onLoadMoreNeighbors,
   onRefresh,
+  recapExpanded = false,
+  recapLoading = false,
+  onExpandRecap,
+  onCollapseRecap,
 }) {
   const [selectedId, setSelectedId] = useState(null);
   const focus = week?.focus;
@@ -160,10 +164,15 @@ export default function WeekDashboard({
               <WeekRecap
                 completedTasks={week.completedTasks}
                 completedCount={week.completedCount}
+                hasMoreCompleted={week.hasMoreCompleted}
+                recapExpanded={recapExpanded}
+                recapLoading={recapLoading}
                 channels={week.channels}
                 weekOffset={weekOffset}
                 selectedId={selectedId}
                 onSelect={(task) => setSelectedId(task.id)}
+                onExpandRecap={onExpandRecap}
+                onCollapseRecap={onCollapseRecap}
               />
 
               <p className="mb-5 max-w-md text-center text-sm leading-relaxed text-muted">
@@ -248,10 +257,15 @@ export default function WeekDashboard({
             <WeekRecap
               completedTasks={week.completedTasks}
               completedCount={week.completedCount}
+              hasMoreCompleted={week.hasMoreCompleted}
+              recapExpanded={recapExpanded}
+              recapLoading={recapLoading}
               channels={week.channels}
               weekOffset={weekOffset}
               selectedId={selectedId}
               onSelect={(task) => setSelectedId(task.id)}
+              onExpandRecap={onExpandRecap}
+              onCollapseRecap={onCollapseRecap}
             />
 
             <FocusHero
