@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { api } from "../api.js";
 import {
   applyFoveaTheme,
   getStoredThemeId,
@@ -16,9 +17,14 @@ export function ThemeProvider({ children }) {
     applyFoveaTheme(themeId);
   }, [themeId]);
 
+  useEffect(() => {
+    api.saveTheme(getStoredThemeId()).catch(() => {});
+  }, []);
+
   const setTheme = useCallback((nextId) => {
     setThemeId(nextId);
     setFoveaTheme(nextId);
+    api.saveTheme(nextId).catch(() => {});
   }, []);
 
   const preset = useMemo(() => getThemePreset(themeId), [themeId]);

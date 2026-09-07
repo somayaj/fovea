@@ -20,6 +20,8 @@ async function request(path, options = {}) {
 export const api = {
   status: () => request("/auth/status"),
   me: () => request("/api/me"),
+  saveTheme: (themeId) =>
+    request("/api/me/theme", { method: "PATCH", body: JSON.stringify({ themeId }) }),
   devLogin: () => request("/auth/dev", { method: "POST" }),
   logout: () => request("/auth/logout", { method: "POST" }),
   map: (projectId) => request(`/api/projects/${projectId}/map`),

@@ -3,7 +3,17 @@ import { api } from "../api.js";
 import FocusPageShell from "../components/FocusPageShell.jsx";
 import { IconList, IconUsers } from "../components/icons.jsx";
 import { PageHeader, StatPill, EmptyPanel } from "../components/PageHeader.jsx";
+import { DEFAULT_THEME_ID, getThemePreset } from "../lib/foveaTheme.js";
 import { tw, cn } from "../lib/tw.js";
+
+function themeDisplay(themeId) {
+  const id = themeId || DEFAULT_THEME_ID;
+  const preset = getThemePreset(id);
+  return {
+    label: preset.label || id,
+    swatch: preset.palette?.swatch || "#cccccc",
+  };
+}
 
 function formatLogin(iso) {
   if (!iso) return "Unknown";
@@ -25,6 +35,7 @@ function isRecent(iso) {
 function UserRow({ user, onReveal, onHide, revealing }) {
   const revealed = Boolean(user.name || user.email);
   const taskCount = user.taskCount ?? 0;
+  const theme = themeDisplay(user.themeId);
 
   return (
     <li className="admin-row">
@@ -54,10 +65,16 @@ function UserRow({ user, onReveal, onHide, revealing }) {
             {formatLogin(user.lastLoginAt)}
           </p>
         </div>
-        <p className="admin-task-count" title="Tasks created">
-          <span className="admin-task-count-value">{taskCount.toLocaleString()}</span>
-          <span className="admin-task-count-label">task{taskCount === 1 ? "" : "s"}</span>
-        </p>
+        <div className="admin-row-stats">
+          <p className="admin-task-count" title="Tasks created">
+            <span className="admin-task-count-value">{taskCount.toLocaleString()}</span>
+            <span className="admin-task-count-label">task{taskCount === 1 ? "" : "s"}</span>
+          </p>
+          <p className="admin-theme-badge" title="Color theme">
+            <span className="admin-theme-swatch" style={{ background: theme.swatch }} aria-hidden="true" />
+            <span className="admin-theme-label">{theme.label}</span>
+          </p>
+        </div>
       </div>
 
       <button
@@ -129,7 +146,7 @@ export default function AdminView() {
         icon={<IconUsers size={13} />}
         eyebrow="Admin"
         title="Users & tasks"
-        description="Each row shows last login and how many tasks that user has created."
+        description="Each row shows last login, task count, and color theme."
         actions={
           <>
             <StatPill icon={<IconUsers size={16} />} label="Logged in" value={loading ? "…" : String(count)} />

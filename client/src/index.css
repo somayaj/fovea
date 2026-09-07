@@ -2963,6 +2963,43 @@
   background: var(--color-accent);
 }
 
+.admin-row-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-theme-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 4.5rem;
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  text-align: center;
+}
+
+.admin-theme-swatch {
+  display: block;
+  height: 0.85rem;
+  width: 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.admin-theme-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-brand);
+  white-space: nowrap;
+}
+
 .admin-task-count {
   display: flex;
   flex-direction: column;
@@ -3008,6 +3045,11 @@
     gap: 0.75rem;
     padding-top: 0.15rem;
     border-top: 1px dashed var(--color-line);
+  }
+
+  .admin-row-stats {
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .admin-login-details {
