@@ -1,6 +1,8 @@
 import { Fragment, useMemo } from "react";
 import { monthKeysForYear, monthLabel, taskMonthKey } from "../lib/roadmapBounds.js";
+import { priorityMeta } from "../lib/priority.js";
 import { workstreamColor } from "../lib/foveaTheme.js";
+import { PriorityBadge } from "./ui.jsx";
 import { cn } from "../lib/tw.js";
 
 function groupTasksByChannel(tasks, channels) {
@@ -43,10 +45,17 @@ function tasksForMonth(tasks, monthKey) {
 
 function formatDueDay(task) {
   if (!task?.due_at) return "";
+  const raw = String(task.due_at);
+  if (raw.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    return String(Number.parseInt(raw.slice(8, 10), 10));
+  }
   const date = new Date(task.due_at);
   if (Number.isNaN(date.getTime())) return "";
   return String(date.getDate());
 }
+
+const TIMELINE_LABEL_WIDTH = "8.5rem";
+const TIMELINE_MONTH_WIDTH = "5.75rem";
 
 export default function RoadmapTimeline({ year, channels = [], tasks = [], selectedId, onSelect }) {
   const monthKeys = useMemo(() => monthKeysForYear(year), [year]);
@@ -71,7 +80,9 @@ export default function RoadmapTimeline({ year, channels = [], tasks = [], selec
       <div className="roadmap-timeline-scroll">
         <div
           className="roadmap-timeline-grid"
-          style={{ gridTemplateColumns: `minmax(7rem, 9rem) repeat(${monthKeys.length}, minmax(5.5rem, 1fr))` }}
+          style={{
+            gridTemplateColumns: `${TIMELINE_LABEL_WIDTH} repeat(${monthKeys.length}, ${TIMELINE_MONTH_WIDTH})`,
+          }}
         >
           <div className="roadmap-timeline-corner" aria-hidden="true" />
           {monthKeys.map((monthKey) => (
@@ -106,22 +117,31 @@ export default function RoadmapTimeline({ year, channels = [], tasks = [], selec
                       <span className="roadmap-timeline-cell-empty" aria-hidden="true" />
                     ) : (
                       <div className="roadmap-timeline-bars">
-                        {monthTasks.map((task) => (
+                        {monthTasks.map((task) => {
+                          const priority = task.priority || "p2";
+                          return (
                           <button
                             key={task.id}
                             type="button"
-                            title={task.title}
+                            title={`${priorityMeta(priority).code} · ${task.title}`}
                             onClick={() => onSelect?.(task)}
                             className={cn(
                               "roadmap-timeline-bar",
-                              `roadmap-timeline-bar--${task.priority || "p2"}`,
+                              `roadmap-timeline-bar--${priority}`,
                               selectedId === task.id && "roadmap-timeline-bar--selected",
                             )}
                           >
+                            <PriorityBadge
+                              priority={priority}
+                              map
+                              code
+                              className="roadmap-timeline-bar-priority"
+                            />
                             <span className="roadmap-timeline-bar-day">{formatDueDay(task)}</span>
                             <span className="roadmap-timeline-bar-title">{task.title}</span>
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
