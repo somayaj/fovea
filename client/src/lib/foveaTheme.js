@@ -6,6 +6,7 @@ import {
   getThemePreset,
   getHeaderTokens,
   getSidebarTokens,
+  getThemePriorities,
   listThemePresets,
   resolveThemeId,
 } from "./foveaThemes.js";
@@ -81,7 +82,7 @@ export function applyFoveaTheme(themeId = getStoredThemeId()) {
   root.style.setProperty("--color-brand-soft", palette.brandSoft || palette.accentSoft);
   root.style.setProperty("--collage-photo-filter", preset.collage.photoFilter);
   root.style.setProperty("--collage-surface-mix", preset.collage.surfaceMix);
-  applyPriorityTokens(root, preset.priorities);
+  applyPriorityTokens(root, getThemePriorities(preset));
   root.style.setProperty("--sidebar-bg", sidebar.bg);
   root.style.setProperty("--sidebar-surface", sidebar.surface);
   root.style.setProperty("--sidebar-border", sidebar.border);
@@ -110,7 +111,7 @@ export function setFoveaTheme(themeId) {
   return applyFoveaTheme(themeId);
 }
 
-export { DEFAULT_THEME_ID, THEME_PRESETS, getStoredThemeId, getThemePreset, getHeaderTokens, getSidebarTokens, listThemePresets };
+export { DEFAULT_THEME_ID, THEME_PRESETS, getStoredThemeId, getThemePreset, getHeaderTokens, getSidebarTokens, getThemePriorities, listThemePresets };
 
 export function workstreamColor(name, index = 0, palette = PALETTE) {
   const colors = branchColors(palette);

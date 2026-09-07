@@ -912,6 +912,40 @@ export function getHeaderTokens(preset) {
   return { dark: Boolean(sidebar.dark), ...sidebar };
 }
 
+/** Priority badge/bar tokens from palette when a preset omits `priorities`. */
+export function derivePrioritiesFromPalette(palette) {
+  const [n0, n1, n2] = palette.nodes || [];
+  const surface = palette.surface || palette.bg;
+  const wall = palette.wall || palette.accentSoft;
+
+  return {
+    p0: {
+      bg: palette.accentSoft,
+      fg: n0 || palette.centerDark,
+      border: palette.center,
+    },
+    p1: {
+      bg: wall,
+      fg: n1 || palette.center,
+      border: palette.line,
+    },
+    p2: {
+      bg: surface,
+      fg: n2 || palette.icon,
+      border: palette.line,
+    },
+    p3: {
+      bg: palette.bg,
+      fg: palette.muted,
+      border: palette.line,
+    },
+  };
+}
+
+export function getThemePriorities(preset) {
+  return preset.priorities ?? derivePrioritiesFromPalette(preset.palette);
+}
+
 export function resolveThemeId(candidate) {
   if (candidate && THEME_PRESETS[candidate]) return candidate;
   if (candidate === "dark-sage") return "sage";

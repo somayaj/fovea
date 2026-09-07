@@ -3226,7 +3226,7 @@
   min-width: 0;
   border: 1px solid color-mix(in srgb, var(--color-line) 75%, white);
   border-radius: 0.45rem;
-  background: #fffdf8;
+  background: var(--color-surface);
   padding: 0.2rem 0.3rem;
   text-align: left;
   font-size: 0.68rem;
@@ -3248,9 +3248,49 @@
   border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-line));
 }
 
+.roadmap-timeline-bar--p0:hover {
+  border-color: color-mix(in srgb, var(--priority-p0-fg) 42%, var(--priority-p0-border));
+}
+
+.roadmap-timeline-bar--p1:hover {
+  border-color: color-mix(in srgb, var(--priority-p1-fg) 42%, var(--priority-p1-border));
+}
+
+.roadmap-timeline-bar--p2:hover {
+  border-color: color-mix(in srgb, var(--priority-p2-fg) 42%, var(--priority-p2-border));
+}
+
+.roadmap-timeline-bar--p3:hover {
+  border-color: color-mix(in srgb, var(--priority-p3-fg) 42%, var(--priority-p3-border));
+}
+
 .roadmap-timeline-bar--selected {
   border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-line));
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+.roadmap-timeline-bar--p0.roadmap-timeline-bar--selected {
+  border-color: var(--priority-p0-fg);
+  background: color-mix(in srgb, var(--priority-p0-bg) 82%, var(--color-surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--priority-p0-fg) 24%, transparent);
+}
+
+.roadmap-timeline-bar--p1.roadmap-timeline-bar--selected {
+  border-color: var(--priority-p1-fg);
+  background: color-mix(in srgb, var(--priority-p1-bg) 82%, var(--color-surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--priority-p1-fg) 24%, transparent);
+}
+
+.roadmap-timeline-bar--p2.roadmap-timeline-bar--selected {
+  border-color: var(--priority-p2-fg);
+  background: color-mix(in srgb, var(--priority-p2-bg) 82%, var(--color-surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--priority-p2-fg) 24%, transparent);
+}
+
+.roadmap-timeline-bar--p3.roadmap-timeline-bar--selected {
+  border-color: var(--priority-p3-fg);
+  background: color-mix(in srgb, var(--priority-p3-bg) 82%, var(--color-surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--priority-p3-fg) 24%, transparent);
 }
 
 .roadmap-timeline-bar-day {
@@ -3269,22 +3309,42 @@
 
 .roadmap-timeline-bar--p0 {
   border-color: var(--priority-p0-border);
-  background: color-mix(in srgb, var(--priority-p0-bg) 72%, #fffdf8);
+  background: color-mix(in srgb, var(--priority-p0-bg) 68%, var(--color-surface));
+  color: var(--priority-p0-fg);
 }
 
 .roadmap-timeline-bar--p1 {
   border-color: var(--priority-p1-border);
-  background: color-mix(in srgb, var(--priority-p1-bg) 72%, #fffdf8);
+  background: color-mix(in srgb, var(--priority-p1-bg) 68%, var(--color-surface));
+  color: var(--priority-p1-fg);
 }
 
 .roadmap-timeline-bar--p2 {
   border-color: var(--priority-p2-border);
-  background: color-mix(in srgb, var(--priority-p2-bg) 72%, #fffdf8);
+  background: color-mix(in srgb, var(--priority-p2-bg) 68%, var(--color-surface));
+  color: var(--priority-p2-fg);
 }
 
 .roadmap-timeline-bar--p3 {
   border-color: var(--priority-p3-border);
-  background: color-mix(in srgb, var(--priority-p3-bg) 72%, #fffdf8);
+  background: color-mix(in srgb, var(--priority-p3-bg) 68%, var(--color-surface));
+  color: var(--priority-p3-fg);
+}
+
+.roadmap-timeline-bar--p0 .roadmap-timeline-bar-day {
+  color: var(--priority-p0-fg);
+}
+
+.roadmap-timeline-bar--p1 .roadmap-timeline-bar-day {
+  color: var(--priority-p1-fg);
+}
+
+.roadmap-timeline-bar--p2 .roadmap-timeline-bar-day {
+  color: var(--priority-p2-fg);
+}
+
+.roadmap-timeline-bar--p3 .roadmap-timeline-bar-day {
+  color: var(--priority-p3-fg);
 }
 
 .roadmap-timeline-empty {
