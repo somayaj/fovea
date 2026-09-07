@@ -3,6 +3,7 @@ import { Router } from "express";
 import { execute, nowIso, query, queryOne, slugify, withTransaction } from "./db.js";
 import { requireAuth } from "./auth.js";
 import { isAdminUser, requireAdmin, revealUser, summarizeUser } from "./admin.js";
+import { normalizeThemeId } from "./themes.js";
 import {
   buildMapView,
   isUnsortedChannelFilter,
@@ -79,14 +80,22 @@ router.get("/me", async (req, res) => {
       name: req.user.name,
       avatar: req.user.avatar,
       isAdmin: isAdminUser(req.user),
+      themeId: req.user.theme_id || null,
     },
     project,
   });
 });
 
+router.patch("/me/theme", async (req, res) => {
+  const themeId = normalizeThemeId(req.body?.themeId);
+  if (!themeId) return res.status(400).json({ error: "Invalid theme" });
+  await execute("UPDATE users SET theme_id = ? WHERE id = ?", [themeId, req.user.id]);
+  res.json({ themeId });
+});
+
 router.get("/admin/users", requireAdmin, async (_req, res) => {
   const users = await query(
-    "SELECT id, email, name, avatar, google_sub, created_at, last_login_at FROM users ORDER BY COALESCE(last_login_at, created_at) DESC",
+    "SELECT id, email, name, avatar, google_sub, created_at, last_login_at, theme_id FROM users ORDER BY COALESCE(last_login_at, created_at) DESC",
   );
   const taskCounts = await query(
     `SELECT p.user_id, COUNT(n.id) AS task_count
@@ -105,13 +114,14 @@ router.get("/admin/users", requireAdmin, async (_req, res) => {
     users: users.map((user) => ({
       ...summarizeUser(user),
       taskCount: countByUser.get(user.id) || 0,
+      themeId: user.theme_id || null,
     })),
   });
 });
 
 router.get("/admin/users/:id", requireAdmin, async (req, res) => {
   const user = await queryOne(
-    "SELECT id, email, name, avatar, google_sub, created_at, last_login_at FROM users WHERE id = ?",
+    "SELECT id, email, name, avatar, google_sub, created_at, last_login_at, theme_id FROM users WHERE id = ?",
     [req.params.id],
   );
   if (!user) return res.status(404).json({ error: "User not found" });

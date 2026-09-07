@@ -44,6 +44,7 @@ export function summarizeUser(user) {
     lastLoginAt: user.last_login_at || user.created_at,
     createdAt: user.created_at,
     method: user.google_sub === "dev-local" ? "local" : "google",
+    themeId: user.theme_id || null,
   };
 }
 

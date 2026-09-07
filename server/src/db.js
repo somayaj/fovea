@@ -217,11 +217,15 @@ async function migrate() {
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS category TEXT");
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS recurrence_series_id TEXT");
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS occurrence_date TEXT");
+    await execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_id TEXT");
   } else {
     const userCols = await query("PRAGMA table_info(users)");
     const userNames = new Set(userCols.map((c) => c.name));
     if (!userNames.has("last_login_at")) {
       await execute("ALTER TABLE users ADD COLUMN last_login_at TEXT");
+    }
+    if (!userNames.has("theme_id")) {
+      await execute("ALTER TABLE users ADD COLUMN theme_id TEXT");
     }
     const channelCols = await query("PRAGMA table_info(channels)");
     const channelNames = new Set(channelCols.map((c) => c.name));
