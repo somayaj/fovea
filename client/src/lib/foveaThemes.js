@@ -2,11 +2,11 @@
  * Focus collage color presets — sampled from focus-collage-reference.jpg.
  *
  * Preview: `?theme=walnut`, `?theme=pearl`, `?theme=snow`, `?theme=mono`, …
- * Prod default: `graphite`.
+ * Prod default: `ember`.
  */
 
 export const THEME_STORAGE_KEY = "fovea.theme";
-export const DEFAULT_THEME_ID = "graphite";
+export const DEFAULT_THEME_ID = "ember";
 export const COLLAGE_REFERENCE = "/design/focus-collage-reference.jpg";
 
 const NEUTRAL_PRIORITIES = {
@@ -14,6 +14,13 @@ const NEUTRAL_PRIORITIES = {
   p1: { bg: "#ececec", fg: "#525252", border: "#d4d4d4" },
   p2: { bg: "#e8e8e8", fg: "#666666", border: "#d4d4d4" },
   p3: { bg: "#f5f5f5", fg: "#737373", border: "#e5e5e5" },
+};
+
+const WARM_NEUTRAL_PRIORITIES = {
+  p0: { bg: "#f0ebe4", fg: "#4a433c", border: "#d4ccc2" },
+  p1: { bg: "#ece6de", fg: "#5c544c", border: "#d0c8be" },
+  p2: { bg: "#e8e2da", fg: "#6b635a", border: "#ccc4ba" },
+  p3: { bg: "#f5f0ea", fg: "#7a7268", border: "#ddd6cc" },
 };
 
 const LIGHT_WHITE_PRIORITIES = {
@@ -769,6 +776,59 @@ export const THEME_PRESETS = {
     priorities: NEUTRAL_PRIORITIES,
   },
 
+  /** Warm graphite — charcoal brown chrome, taupe paper, soft contrast */
+  ember: {
+    id: "ember",
+    label: "Ember",
+    description: "Warm charcoal chrome, taupe paper, graphite contrast with a soft glow.",
+    neutral: true,
+    reference: COLLAGE_REFERENCE,
+    palette: {
+      label: "Ember",
+      swatch: "#4a433c",
+      bg: "#f0ebe4",
+      center: "#4a433c",
+      centerDark: "#332e28",
+      centerGlow: "rgba(74, 67, 60, 0.14)",
+      accentSoft: "#e8e2da",
+      surface: "#f5f1eb",
+      nodes: ["#1f1c18", "#2a2622", "#4a433c", "#141210"],
+      line: "#d4ccc2",
+      icon: "#2a2622",
+      muted: "#7a7268",
+      onAccent: "#ffffff",
+      wall: "#ddd6cc",
+      brandSoft: "#e8e2da",
+      brand: "#2a2622",
+      brandDark: "#1f1c18",
+    },
+    collage: {
+      photoFilter: "grayscale(0.45) saturate(0.55) brightness(1.03) sepia(0.08)",
+      surfaceMix: "#ddd6cc",
+    },
+    sidebar: {
+      dark: true,
+      bg: "#2a2622",
+      surface: "#332e28",
+      border: "#453f38",
+      text: "#f0ebe4",
+      muted: "#a89e92",
+      hover: "#3a3530",
+      accent: "#c4b8a8",
+    },
+    header: {
+      dark: true,
+      bg: "#1f1c18",
+      surface: "#2a2622",
+      border: "#3a3530",
+      text: "#f0ebe4",
+      muted: "#a89e92",
+      hover: "#332e28",
+      accent: "#c4b8a8",
+    },
+    priorities: WARM_NEUTRAL_PRIORITIES,
+  },
+
   /** Pure black & white — no color, maximum contrast */
   mono: {
     id: "mono",
@@ -864,6 +924,7 @@ export function resolveThemeId(candidate) {
   if (candidate === "mono" || candidate === "monochrome" || candidate === "bw" || candidate === "blackwhite") {
     return "mono";
   }
+  if (candidate === "warm-graphite" || candidate === "warmgraphite") return "ember";
   if (
     candidate === "polaroid" ||
     candidate === "honey" ||
