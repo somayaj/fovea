@@ -202,6 +202,13 @@ const start = async () => {
     );
   }
 
+  const SESSION_COOKIE_OPTIONS = {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isProdEnv,
+    path: "/",
+  };
+
   app.use(
     session({
       store: sessionStore,
@@ -210,9 +217,7 @@ const start = async () => {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProdEnv,
+        ...SESSION_COOKIE_OPTIONS,
         maxAge: 14 * 24 * 60 * 60 * 1000,
       },
     }),
@@ -255,7 +260,7 @@ const start = async () => {
   app.post("/auth/logout", (req, res) => {
     req.logout(() => {
       req.session.destroy(() => {
-        res.clearCookie("fovea.sid");
+        res.clearCookie("fovea.sid", SESSION_COOKIE_OPTIONS);
         res.json({ ok: true });
       });
     });

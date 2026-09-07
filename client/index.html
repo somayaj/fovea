@@ -13,6 +13,11 @@
           location.replace(
             "https://" + location.host + location.pathname + location.search + location.hash,
           );
+        } else if (host !== "localhost" && host !== "127.0.0.1") {
+          var meta = document.createElement("meta");
+          meta.httpEquiv = "Content-Security-Policy";
+          meta.content = "upgrade-insecure-requests";
+          document.head.appendChild(meta);
         }
       })();
     </script>

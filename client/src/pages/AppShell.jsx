@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import ChannelSidebar from "../components/ChannelSidebar.jsx";
 import ThemePicker from "../components/ThemePicker.jsx";
 import { ChannelsProvider } from "../context/ChannelsContext.jsx";
+import { FocusWeekProvider } from "../context/FocusWeekContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import FoveaLogo, { FoveaMark } from "../components/FoveaLogo.jsx";
 import SidebarHoverLabel from "../components/SidebarHoverLabel.jsx";
@@ -193,6 +194,7 @@ export default function AppShell({ me, onLogout }) {
 
   return (
     <ChannelsProvider projectId={me.project?.id}>
+      <FocusWeekProvider>
       <div className={cn("flex h-full flex-col bg-paper lg:grid lg:grid-rows-1", gridClass, darkChrome && "app-chrome-frame")}>
         {navOpen ? (
           <button
@@ -256,6 +258,7 @@ export default function AppShell({ me, onLogout }) {
           </main>
         </div>
       </div>
+      </FocusWeekProvider>
     </ChannelsProvider>
   );
 }

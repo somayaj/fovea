@@ -2831,7 +2831,7 @@
 .admin-list-head,
 .admin-row {
   display: grid;
-  grid-template-columns: minmax(12rem, 1.6fr) 6.5rem minmax(10rem, 1fr) 7.5rem;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 1rem;
 }
@@ -2865,6 +2865,20 @@
   min-width: 0;
   align-items: center;
   gap: 0.75rem;
+}
+
+.admin-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.admin-login-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-width: 10rem;
 }
 
 .admin-avatar {
@@ -2949,6 +2963,35 @@
   background: var(--color-accent);
 }
 
+.admin-task-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.5rem;
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  background: var(--color-accent-soft);
+  text-align: center;
+}
+
+.admin-task-count-value {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--color-brand);
+}
+
+.admin-task-count-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
 @media (max-width: 720px) {
   .admin-list-head {
     display: none;
@@ -2956,15 +2999,30 @@
 
   .admin-row {
     grid-template-columns: 1fr auto;
-    gap: 0.55rem 0.75rem;
+    gap: 0.75rem;
   }
 
-  .admin-row-user {
+  .admin-row-meta {
     grid-column: 1 / -1;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.15rem;
+    border-top: 1px dashed var(--color-line);
+  }
+
+  .admin-login-details {
+    align-items: flex-start;
+    min-width: 0;
+  }
+
+  .admin-login {
+    white-space: normal;
   }
 
   .admin-reveal {
-    justify-self: start;
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
   }
 }
 
