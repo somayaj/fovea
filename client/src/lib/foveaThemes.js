@@ -30,6 +30,14 @@ const LIGHT_WHITE_PRIORITIES = {
   p3: { bg: "#fcfcfc", fg: "#8a8a8a", border: "#f0f0f0" },
 };
 
+/** Fixed priority colors — same on every theme. */
+export const SEMANTIC_PRIORITIES = {
+  p0: { bg: "#fef2f2", fg: "#dc2626", border: "#fca5a5" },
+  p1: { bg: "#fff7ed", fg: "#ea580c", border: "#fdba74" },
+  p2: { bg: "#f5f5f4", fg: "#57534e", border: "#d6d3d1" },
+  p3: { bg: "#fafaf9", fg: "#a8a29e", border: "#e7e5e4" },
+};
+
 /** @typedef {{
  *   id: string;
  *   label: string;
@@ -912,38 +920,8 @@ export function getHeaderTokens(preset) {
   return { dark: Boolean(sidebar.dark), ...sidebar };
 }
 
-/** Priority badge/bar tokens from palette when a preset omits `priorities`. */
-export function derivePrioritiesFromPalette(palette) {
-  const [n0, n1, n2] = palette.nodes || [];
-  const surface = palette.surface || palette.bg;
-  const wall = palette.wall || palette.accentSoft;
-
-  return {
-    p0: {
-      bg: palette.accentSoft,
-      fg: n0 || palette.centerDark,
-      border: palette.center,
-    },
-    p1: {
-      bg: wall,
-      fg: n1 || palette.center,
-      border: palette.line,
-    },
-    p2: {
-      bg: surface,
-      fg: n2 || palette.icon,
-      border: palette.line,
-    },
-    p3: {
-      bg: palette.bg,
-      fg: palette.muted,
-      border: palette.line,
-    },
-  };
-}
-
-export function getThemePriorities(preset) {
-  return preset.priorities ?? derivePrioritiesFromPalette(preset.palette);
+export function getThemePriorities() {
+  return SEMANTIC_PRIORITIES;
 }
 
 export function resolveThemeId(candidate) {
