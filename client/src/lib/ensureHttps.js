@@ -7,7 +7,7 @@ export function isLocalHost(hostname) {
 export function ensureHttpsOrigin(path = "/") {
   if (typeof window === "undefined") return false;
   if (window.location.protocol !== "http:" || isLocalHost(window.location.hostname)) return false;
-  const target = `https://${window.location.host}${path}`;
-  window.location.replace(target);
+  const safePath = path.startsWith("/") ? path : `/${path}`;
+  window.location.replace(`https://${window.location.host}${safePath}`);
   return true;
 }

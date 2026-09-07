@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { execute, nowIso, queryOne } from "./db.js";
+import { googleCallbackUrl } from "./appOrigin.js";
 import { ensureStarterProject } from "./seed.js";
 
 async function touchLastLogin(userId) {
@@ -77,12 +77,7 @@ export function configurePassport() {
 
   const clientID = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const callbackFromEnv = process.env.GOOGLE_CALLBACK_URL || "";
-  const callbackLooksLocal = /localhost|127\.0\.0\.1/i.test(callbackFromEnv);
-  const callbackURL =
-    callbackFromEnv && !(process.env.NODE_ENV === "production" && callbackLooksLocal)
-      ? callbackFromEnv
-      : "/auth/google/callback";
+  const callbackURL = googleCallbackUrl();
   if (clientID && clientSecret) {
     passport.use(
       new GoogleStrategy(
