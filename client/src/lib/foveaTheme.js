@@ -9,6 +9,7 @@ import {
   getThemePriorities,
   listThemePresets,
   resolveThemeId,
+  SEMANTIC_PRIORITIES,
 } from "./foveaThemes.js";
 
 /** Active palette — `ember` by default. */
@@ -29,20 +30,15 @@ export function focusBranchColors(palette = PALETTE) {
 export function priorityColors(palette = PALETTE) {
   return {
     hub: palette.center,
-    p0: "#b4533a",
-    p1: "#a06d3f",
-    p2: "#5c4a3a",
-    p3: palette.muted,
+    p0: SEMANTIC_PRIORITIES.p0.fg,
+    p1: SEMANTIC_PRIORITIES.p1.fg,
+    p2: SEMANTIC_PRIORITIES.p2.fg,
+    p3: SEMANTIC_PRIORITIES.p3.fg,
     idea: palette.muted,
   };
 }
 
-const DEFAULT_PRIORITY_TOKENS = {
-  p0: { bg: "#faf0ec", fg: "#b4533a", border: "#e8cfc4" },
-  p1: { bg: "#f7efe6", fg: "#a06d3f", border: "#e5d5c3" },
-  p2: { bg: "#f3f0ea", fg: "#5c4a3a", border: "#e8dfd4" },
-  p3: { bg: "#f7f5f1", fg: "#8a7b6b", border: "#ebe4d8" },
-};
+const DEFAULT_PRIORITY_TOKENS = SEMANTIC_PRIORITIES;
 
 function applyPriorityTokens(root, priorities = DEFAULT_PRIORITY_TOKENS) {
   for (const [level, tokens] of Object.entries(priorities)) {
@@ -82,7 +78,7 @@ export function applyFoveaTheme(themeId = getStoredThemeId()) {
   root.style.setProperty("--color-brand-soft", palette.brandSoft || palette.accentSoft);
   root.style.setProperty("--collage-photo-filter", preset.collage.photoFilter);
   root.style.setProperty("--collage-surface-mix", preset.collage.surfaceMix);
-  applyPriorityTokens(root, getThemePriorities(preset));
+  applyPriorityTokens(root, getThemePriorities());
   root.style.setProperty("--sidebar-bg", sidebar.bg);
   root.style.setProperty("--sidebar-surface", sidebar.surface);
   root.style.setProperty("--sidebar-border", sidebar.border);
@@ -111,7 +107,7 @@ export function setFoveaTheme(themeId) {
   return applyFoveaTheme(themeId);
 }
 
-export { DEFAULT_THEME_ID, THEME_PRESETS, getStoredThemeId, getThemePreset, getHeaderTokens, getSidebarTokens, getThemePriorities, listThemePresets };
+export { DEFAULT_THEME_ID, THEME_PRESETS, getStoredThemeId, getThemePreset, getHeaderTokens, getSidebarTokens, getThemePriorities, listThemePresets, SEMANTIC_PRIORITIES };
 
 export function workstreamColor(name, index = 0, palette = PALETTE) {
   const colors = branchColors(palette);
