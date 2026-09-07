@@ -1,6 +1,9 @@
 import TaskPhoto from "./TaskPhoto.jsx";
-import { cn } from "../lib/tw.js";
+import { priorityLabel } from "../lib/priority.js";
+import { tw, cn } from "./ui.jsx";
 import { IconCheck } from "./icons.jsx";
+
+const RECAP_DEFAULT_LIMIT = 24;
 
 function channelName(channels, id) {
   return channels?.find((channel) => channel.id === id)?.name;
@@ -16,12 +19,18 @@ function formatCompletedWhen(iso) {
 export default function WeekRecap({
   completedTasks = [],
   completedCount = 0,
+  hasMoreCompleted = false,
+  recapExpanded = false,
+  recapLoading = false,
   channels = [],
   weekOffset = 0,
   onSelect,
   selectedId,
+  onExpandRecap,
+  onCollapseRecap,
 }) {
   const isCurrentWeek = weekOffset === 0;
+  const hiddenCount = Math.max(0, completedCount - completedTasks.length);
 
   if (!completedCount) {
     if (!isCurrentWeek) return null;
@@ -43,8 +52,13 @@ export default function WeekRecap({
   }
 
   const title = isCurrentWeek
-    ? `You completed ${completedCount} task${completedCount === 1 ? "" : "s"} this week`
-    : `${completedCount} task${completedCount === 1 ? "" : "s"} completed that week`;
+    ? `You completed ${completedCount.toLocaleString()} task${completedCount === 1 ? "" : "s"} this week`
+    : `${completedCount.toLocaleString()} task${completedCount === 1 ? "" : "s"} completed that week`;
+
+  const showingLabel =
+    completedTasks.length < completedCount
+      ? `Showing ${completedTasks.length.toLocaleString()} of ${completedCount.toLocaleString()}`
+      : null;
 
   return (
     <section className="week-recap mx-auto mb-6 w-full max-w-3xl" aria-label="Weekly recap">
@@ -56,6 +70,7 @@ export default function WeekRecap({
           <p className="week-recap-title">{title}</p>
           <p className="week-recap-subtitle">
             {isCurrentWeek ? "Nice work — here's what you shipped." : "A look back at what got done."}
+            {showingLabel ? ` · ${showingLabel}` : ""}
           </p>
         </div>
       </div>
@@ -73,7 +88,7 @@ export default function WeekRecap({
                 channelName={channel}
                 size="sm"
                 rotate={(index % 3) - 1}
-                label={task.priority ? task.priority.toUpperCase() : undefined}
+                label={task.priority ? priorityLabel(task.priority) : undefined}
                 meta={meta || undefined}
                 selected={selectedId === task.id}
                 onClick={() => onSelect?.(task)}
@@ -84,6 +99,31 @@ export default function WeekRecap({
           );
         })}
       </ul>
+
+      {hasMoreCompleted || recapExpanded ? (
+        <div className="week-recap-actions">
+          {hasMoreCompleted ? (
+            <button
+              type="button"
+              disabled={recapLoading}
+              onClick={onExpandRecap}
+              className={cn(tw.btnOutlineSm, "disabled:opacity-50")}
+            >
+              {recapLoading ? "Loading…" : `+${hiddenCount.toLocaleString()} more this week`}
+            </button>
+          ) : null}
+          {recapExpanded && completedTasks.length > RECAP_DEFAULT_LIMIT ? (
+            <button
+              type="button"
+              disabled={recapLoading}
+              onClick={onCollapseRecap}
+              className={cn(tw.btnOutlineSm, "disabled:opacity-50")}
+            >
+              Show less
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

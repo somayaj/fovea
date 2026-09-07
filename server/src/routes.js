@@ -626,11 +626,15 @@ router.get("/week", async (req, res) => {
   const weekOffset = Number.parseInt(req.query.offset ?? "0", 10) || 0;
   const neighborLimit = req.query.neighborLimit;
   const neighborOffset = req.query.neighborOffset;
+  const completedLimit = req.query.completedLimit;
+  const completedOffset = req.query.completedOffset;
 
   const raw = await buildWeekViewPaginated(project.id, {
     weekOffset,
     neighborLimit,
     neighborOffset,
+    completedLimit,
+    completedOffset,
   });
 
   res.json({

@@ -6,6 +6,8 @@ import FocusPageShell from "../components/FocusPageShell.jsx";
 import { IconFocus } from "../components/icons.jsx";
 
 const NEIGHBOR_PAGE = 12;
+const RECAP_DEFAULT_LIMIT = 24;
+const RECAP_EXPANDED_LIMIT = 100;
 
 function parseWeekOffset(searchParams) {
   return Number.parseInt(searchParams.get("week") ?? "0", 10) || 0;
@@ -18,9 +20,11 @@ export default function WeekView() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [recapLimit, setRecapLimit] = useState(RECAP_DEFAULT_LIMIT);
+  const [recapLoading, setRecapLoading] = useState(false);
   const requestRef = useRef(0);
 
-  const loadWeek = useCallback(async (offset, { append = false, neighborOffset = 0 } = {}) => {
+  const loadWeek = useCallback(async (offset, { append = false, neighborOffset = 0, completedLimit = RECAP_DEFAULT_LIMIT } = {}) => {
     const requestId = ++requestRef.current;
     if (!append) setLoading(true);
     else setLoadingMore(true);
@@ -29,6 +33,8 @@ export default function WeekView() {
       const data = await api.week(offset, {
         neighborLimit: NEIGHBOR_PAGE,
         neighborOffset,
+        completedLimit,
+        completedOffset: 0,
       });
       if (requestId !== requestRef.current) return;
       setWeek((prev) => {
@@ -55,7 +61,8 @@ export default function WeekView() {
   }, []);
 
   useEffect(() => {
-    loadWeek(weekOffset).catch(console.error);
+    setRecapLimit(RECAP_DEFAULT_LIMIT);
+    loadWeek(weekOffset, { completedLimit: RECAP_DEFAULT_LIMIT }).catch(console.error);
   }, [loadWeek, weekOffset]);
 
   const handleWeekChange = (nextOffset) => {
@@ -72,7 +79,30 @@ export default function WeekView() {
     loadWeek(weekOffset, { append: true, neighborOffset: nextOffset }).catch(console.error);
   };
 
-  const refreshWeek = useCallback(() => loadWeek(weekOffset), [loadWeek, weekOffset]);
+  const refreshWeek = useCallback(
+    () => loadWeek(weekOffset, { completedLimit: recapLimit }),
+    [loadWeek, weekOffset, recapLimit],
+  );
+
+  const handleExpandRecap = async () => {
+    setRecapLoading(true);
+    setRecapLimit(RECAP_EXPANDED_LIMIT);
+    try {
+      await loadWeek(weekOffset, { completedLimit: RECAP_EXPANDED_LIMIT });
+    } finally {
+      setRecapLoading(false);
+    }
+  };
+
+  const handleCollapseRecap = async () => {
+    setRecapLoading(true);
+    setRecapLimit(RECAP_DEFAULT_LIMIT);
+    try {
+      await loadWeek(weekOffset, { completedLimit: RECAP_DEFAULT_LIMIT });
+    } finally {
+      setRecapLoading(false);
+    }
+  };
 
   if (loading && !week) {
     return (
@@ -95,6 +125,10 @@ export default function WeekView() {
       onWeekChange={handleWeekChange}
       onLoadMoreNeighbors={handleLoadMoreNeighbors}
       onRefresh={refreshWeek}
+      recapExpanded={recapLimit > RECAP_DEFAULT_LIMIT}
+      recapLoading={recapLoading}
+      onExpandRecap={handleExpandRecap}
+      onCollapseRecap={handleCollapseRecap}
     />
   );
 }

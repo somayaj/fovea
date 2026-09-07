@@ -3156,6 +3156,13 @@
   width: 100%;
 }
 
+.week-recap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
 /* Roadmap — timeline */
 .roadmap-timeline-shell {
   width: 100%;

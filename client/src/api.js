@@ -88,11 +88,13 @@ export const api = {
   deleteRecurrence: (seriesId) => request(`/api/recurrence/${seriesId}`, { method: "DELETE" }),
   createEdge: (body) => request("/api/edges", { method: "POST", body: JSON.stringify(body) }),
   deleteEdge: (edgeId) => request(`/api/edges/${edgeId}`, { method: "DELETE" }),
-  week: (offset = 0, { neighborLimit = 12, neighborOffset = 0 } = {}) => {
+  week: (offset = 0, { neighborLimit = 12, neighborOffset = 0, completedLimit = 24, completedOffset = 0 } = {}) => {
     const params = new URLSearchParams({
       offset: String(offset),
       neighborLimit: String(neighborLimit),
       neighborOffset: String(neighborOffset),
+      completedLimit: String(completedLimit),
+      completedOffset: String(completedOffset),
     });
     return request(`/api/week?${params}`);
   },
