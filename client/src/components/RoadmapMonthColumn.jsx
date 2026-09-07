@@ -1,5 +1,6 @@
 import TaskPhoto from "./TaskPhoto.jsx";
 import { isCurrentMonth, monthLabel, monthTitle } from "../lib/roadmapBounds.js";
+import { priorityLabel } from "../lib/priority.js";
 import { hiddenTaskCount } from "../lib/roadmapTasks.js";
 import { cn, tw } from "../lib/tw.js";
 
@@ -65,7 +66,7 @@ export default function RoadmapMonthColumn({
                     channelName={channel}
                     size="sm"
                     rotate={(index % 3) - 1}
-                    label={task.priority ? task.priority.toUpperCase() : undefined}
+                    label={task.priority ? priorityLabel(task.priority) : undefined}
                     meta={meta || undefined}
                     selected={selectedId === task.id}
                     onClick={() => onSelect(task)}

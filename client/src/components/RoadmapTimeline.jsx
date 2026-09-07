@@ -142,14 +142,13 @@ export default function RoadmapTimeline({ year, channels = [], tasks = [], selec
                             <PriorityBadge
                               priority={priority}
                               map
-                              code
                               className="roadmap-timeline-bar-priority"
                             />
                             <span className="roadmap-timeline-bar-day">{formatDueDay(task)}</span>
                             <span className="roadmap-timeline-bar-title">{task.title}</span>
                             <SidebarHoverLabel
                               label={task.title}
-                              meta={priorityMeta(priority).code}
+                              meta={priorityMeta(priority).label}
                               placement="top"
                               wrap
                             />

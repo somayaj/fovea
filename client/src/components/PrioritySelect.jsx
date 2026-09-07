@@ -6,7 +6,7 @@ export default function PrioritySelect({
   onChange,
   id,
   className = "",
-  showCode = true,
+  showCode = false,
   "aria-label": ariaLabel = "Priority",
 }) {
   return (

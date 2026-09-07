@@ -282,7 +282,7 @@ function MapCanvas({ me }) {
 
   const weekHint = weekFocusId
     ? `${weekHighlightIds.size} task${weekHighlightIds.size === 1 ? "" : "s"} highlighted for this week's focus.`
-    : "No week focus yet — add a P0/P1 task or something due this week.";
+    : "No week focus yet — add a critical or high-priority task, or something due this week.";
 
   const taskMatchesBoardScope = useCallback(
     (task) =>
