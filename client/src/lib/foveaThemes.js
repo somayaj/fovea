@@ -34,7 +34,7 @@ const LIGHT_WHITE_PRIORITIES = {
 export const SEMANTIC_PRIORITIES = {
   p0: { bg: "#fef2f2", fg: "#dc2626", border: "#fca5a5" },
   p1: { bg: "#fff7ed", fg: "#ea580c", border: "#fdba74" },
-  p2: { bg: "#f5f5f4", fg: "#57534e", border: "#d6d3d1" },
+  p2: { bg: "#eff6ff", fg: "#1d4ed8", border: "#bfdbfe" },
   p3: { bg: "#fafaf9", fg: "#a8a29e", border: "#e7e5e4" },
 };
 
