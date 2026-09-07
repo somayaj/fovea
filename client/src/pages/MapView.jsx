@@ -366,7 +366,7 @@ function MapCanvas({ me }) {
 
   const rollupLayout = useMemo(() => {
     if (isBoard) return { laidOut: [] };
-    const sourceNodes = scopedTreeNodes.length ? scopedTreeNodes : treeNodes;
+    const sourceNodes = filterChannel ? scopedTreeNodes : treeNodes;
     if (!sourceNodes.length && !layoutChannels.length) return { laidOut: [] };
     const layoutWidth = canvasWidth || viewportWidth;
     const laidOut = treeLayout(null, sourceNodes, Math.max(layoutWidth / 2, MAP_COLUMN_WIDTH), 60, {
@@ -422,6 +422,7 @@ function MapCanvas({ me }) {
     async ({ append = false } = {}) => {
       if (!projectId) return;
       if (append) setBoardLoadingMore(true);
+      else setBoardNodes([]);
       try {
         const offset = append ? boardNodes.length : 0;
         const data = await api.tasks(projectId, {
@@ -493,6 +494,7 @@ function MapCanvas({ me }) {
       setTaskPage(0);
     }
     if (filterChannel) {
+      setLoading(true);
       if (!boardViewPreserveRef.current && !weekViewPreserveRef.current) {
         setViewMode("map");
       }
@@ -783,7 +785,7 @@ function MapCanvas({ me }) {
             </div>
           ) : null}
 
-          {(!isBoard && !isEmpty && rollupLayout.laidOut.length > 0) ? (
+          {(!isBoard && !isEmpty && !loading && rollupLayout.laidOut.length > 0) ? (
             <ReactFlow
               key={filterChannel || "all"}
               nodes={nodes}
