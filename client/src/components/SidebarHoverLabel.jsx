@@ -2,8 +2,14 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createPortal } from "react-dom";
 import { cn } from "../lib/tw.js";
 
-/** Flyout label to the right of collapsed sidebar icons — portaled so it isn't clipped. */
-export default function SidebarHoverLabel({ label, meta, show = true }) {
+/** Flyout label — portaled so it isn't clipped by overflow containers. */
+export default function SidebarHoverLabel({
+  label,
+  meta,
+  show = true,
+  placement = "right",
+  wrap = false,
+}) {
   const anchorRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState(null);
@@ -12,11 +18,20 @@ export default function SidebarHoverLabel({ label, meta, show = true }) {
     const host = anchorRef.current?.parentElement;
     if (!host) return;
     const rect = host.getBoundingClientRect();
+    if (placement === "top") {
+      setCoords({
+        top: rect.top - 8,
+        left: rect.left + rect.width / 2,
+        transform: "translate(-50%, -100%)",
+      });
+      return;
+    }
     setCoords({
       top: rect.top + rect.height / 2,
       left: rect.right + 10,
+      transform: "translateY(-50%)",
     });
-  }, []);
+  }, [placement]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -68,11 +83,12 @@ export default function SidebarHoverLabel({ label, meta, show = true }) {
                 position: "fixed",
                 top: coords.top,
                 left: coords.left,
-                transform: "translateY(-50%)",
+                transform: coords.transform,
                 zIndex: 200,
               }}
               className={cn(
-                "pointer-events-none whitespace-nowrap rounded-lg border border-stone-700/20 bg-stone-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg",
+                "pointer-events-none rounded-lg border border-stone-700/20 bg-stone-900 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg",
+                wrap ? "max-w-[16rem] whitespace-normal text-left" : "whitespace-nowrap",
               )}
             >
               {label}

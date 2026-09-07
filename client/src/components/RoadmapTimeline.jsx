@@ -132,10 +132,9 @@ export default function RoadmapTimeline({ year, channels = [], tasks = [], selec
                           <button
                             key={task.id}
                             type="button"
-                            title={`${priorityMeta(priority).code} · ${task.title}`}
                             onClick={() => onSelect?.(task)}
                             className={cn(
-                              "roadmap-timeline-bar",
+                              "roadmap-timeline-bar group/bartip relative",
                               `roadmap-timeline-bar--${priority}`,
                               selectedId === task.id && "roadmap-timeline-bar--selected",
                             )}
@@ -148,6 +147,12 @@ export default function RoadmapTimeline({ year, channels = [], tasks = [], selec
                             />
                             <span className="roadmap-timeline-bar-day">{formatDueDay(task)}</span>
                             <span className="roadmap-timeline-bar-title">{task.title}</span>
+                            <SidebarHoverLabel
+                              label={task.title}
+                              meta={priorityMeta(priority).code}
+                              placement="top"
+                              wrap
+                            />
                           </button>
                           );
                         })}
