@@ -2,7 +2,6 @@ import { Fragment, useMemo } from "react";
 import { monthKeysForYear, monthLabel, taskMonthKey } from "../lib/roadmapBounds.js";
 import { priorityMeta } from "../lib/priority.js";
 import { workstreamColor } from "../lib/foveaTheme.js";
-import { PriorityBadge } from "./ui.jsx";
 import SidebarHoverLabel from "./SidebarHoverLabel.jsx";
 import { cn } from "../lib/tw.js";
 
@@ -56,7 +55,7 @@ function formatDueDay(task) {
 }
 
 const TIMELINE_LABEL_WIDTH = "8.5rem";
-const TIMELINE_MONTH_WIDTH = "5.75rem";
+const TIMELINE_MONTH_WIDTH = "7.25rem";
 
 export default function RoadmapTimeline({ year, channels = [], tasks = [], selectedId, onSelect }) {
   const monthKeys = useMemo(() => monthKeysForYear(year), [year]);
@@ -78,6 +77,13 @@ export default function RoadmapTimeline({ year, channels = [], tasks = [], selec
 
   return (
     <div className="roadmap-timeline-shell">
+      <div className="roadmap-timeline-legend" aria-hidden="true">
+        {["p0", "p1", "p2", "p3"].map((level) => (
+          <span key={level} className={`roadmap-timeline-legend-item roadmap-timeline-legend-item--${level}`}>
+            {priorityMeta(level).label}
+          </span>
+        ))}
+      </div>
       <div className="roadmap-timeline-scroll">
         <div
           className="roadmap-timeline-grid"
@@ -132,6 +138,7 @@ export default function RoadmapTimeline({ year, channels = [], tasks = [], selec
                           <button
                             key={task.id}
                             type="button"
+                            aria-label={`${priorityMeta(priority).label} · ${formatDueDay(task)} · ${task.title}`}
                             onClick={() => onSelect?.(task)}
                             className={cn(
                               "roadmap-timeline-bar group/bartip relative",
@@ -139,16 +146,11 @@ export default function RoadmapTimeline({ year, channels = [], tasks = [], selec
                               selectedId === task.id && "roadmap-timeline-bar--selected",
                             )}
                           >
-                            <PriorityBadge
-                              priority={priority}
-                              map
-                              className="roadmap-timeline-bar-priority"
-                            />
                             <span className="roadmap-timeline-bar-day">{formatDueDay(task)}</span>
                             <span className="roadmap-timeline-bar-title">{task.title}</span>
                             <SidebarHoverLabel
                               label={task.title}
-                              meta={priorityMeta(priority).label}
+                              meta={`${priorityMeta(priority).label} · due ${formatDueDay(task)}`}
                               placement="top"
                               wrap
                             />
