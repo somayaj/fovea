@@ -3,6 +3,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { googleCallbackUrl } from "./appOrigin.js";
 import { ensureStarterProject } from "./seed.js";
+import { queryOne, execute, nowIso } from "./db.js";
 
 async function touchLastLogin(userId) {
   await execute("UPDATE users SET last_login_at = ? WHERE id = ?", [nowIso(), userId]);
