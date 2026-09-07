@@ -13,7 +13,18 @@ export function ChannelsProvider({ projectId, children }) {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [channelsVersion, setChannelsVersion] = useState(0);
+  const [archivedChannels, setArchivedChannels] = useState([]);
   const requestId = useRef(0);
+
+  const fetchArchived = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const data = await api.channels(projectId, { archived: true, limit: 50 });
+      setArchivedChannels(data.channels || []);
+    } catch {
+      setArchivedChannels([]);
+    }
+  }, [projectId]);
 
   const fetchPage = useCallback(
     async ({ q = "", offset = 0, append = false } = {}) => {
@@ -41,7 +52,8 @@ export function ChannelsProvider({ projectId, children }) {
 
   useEffect(() => {
     fetchPage({ q: "", offset: 0, append: false }).catch(console.error);
-  }, [fetchPage]);
+    fetchArchived().catch(console.error);
+  }, [fetchPage, fetchArchived]);
 
   const searchChannels = useCallback(
     (q) => {
@@ -87,13 +99,37 @@ export function ChannelsProvider({ projectId, children }) {
       setTotal((t) => Math.max(0, t - 1));
       setChannelsVersion((v) => v + 1);
       await fetchPage({ q: search, offset: 0, append: false });
+      await fetchArchived();
     },
-    [fetchPage, search],
+    [fetchArchived, fetchPage, search],
+  );
+
+  const deleteChannel = useCallback(
+    async (channelId) => {
+      await api.deleteChannel(channelId);
+      setChannels((prev) => prev.filter((c) => c.id !== channelId));
+      setTotal((t) => Math.max(0, t - 1));
+      setChannelsVersion((v) => v + 1);
+      await fetchPage({ q: search, offset: 0, append: false });
+      await fetchArchived();
+    },
+    [fetchArchived, fetchPage, search],
+  );
+
+  const restoreChannel = useCallback(
+    async (channelId) => {
+      await api.restoreChannel(channelId);
+      setChannelsVersion((v) => v + 1);
+      await fetchPage({ q: search, offset: 0, append: false });
+      await fetchArchived();
+    },
+    [fetchArchived, fetchPage, search],
   );
 
   const value = useMemo(
     () => ({
       channels,
+      archivedChannels,
       total,
       hasMore,
       search,
@@ -106,9 +142,12 @@ export function ChannelsProvider({ projectId, children }) {
       createChannel,
       updateChannel,
       archiveChannel,
+      deleteChannel,
+      restoreChannel,
     }),
     [
       channels,
+      archivedChannels,
       total,
       hasMore,
       search,
@@ -121,6 +160,8 @@ export function ChannelsProvider({ projectId, children }) {
       createChannel,
       updateChannel,
       archiveChannel,
+      deleteChannel,
+      restoreChannel,
     ],
   );
 

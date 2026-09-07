@@ -50,11 +50,12 @@ export const api = {
       method: "PUT",
       body: JSON.stringify({ nodes }),
     }),
-  channels: (projectId, { q, limit = 50, offset = 0 } = {}) => {
+  channels: (projectId, { q, limit = 50, offset = 0, archived = false } = {}) => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     params.set("limit", String(limit));
     params.set("offset", String(offset));
+    if (archived) params.set("archived", "1");
     return request(`/api/projects/${projectId}/channels?${params}`);
   },
   channel: (channelId) => request(`/api/channels/${channelId}`),
@@ -68,7 +69,17 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
-  archiveChannel: (channelId) => request(`/api/channels/${channelId}`, { method: "DELETE" }),
+  archiveChannel: (channelId) =>
+    request(`/api/channels/${channelId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ archived: true }),
+    }),
+  restoreChannel: (channelId) =>
+    request(`/api/channels/${channelId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ archived: false }),
+    }),
+  deleteChannel: (channelId) => request(`/api/channels/${channelId}`, { method: "DELETE" }),
   createNode: (body) => request("/api/nodes", { method: "POST", body: JSON.stringify(body) }),
   patchNode: (nodeId, body) =>
     request(`/api/nodes/${nodeId}`, { method: "PATCH", body: JSON.stringify(body) }),
@@ -116,6 +127,10 @@ export const api = {
       offset: String(offset),
     });
     return request(`/api/roadmap/calendar?${params}`);
+  },
+  roadmapTimeline: (year) => {
+    const params = new URLSearchParams({ year: String(year) });
+    return request(`/api/roadmap/timeline?${params}`);
   },
   adminUsers: () => request("/api/admin/users"),
   revealAdminUser: (userId) => request(`/api/admin/users/${userId}`),

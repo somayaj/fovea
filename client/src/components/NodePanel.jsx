@@ -6,7 +6,7 @@ import WorkstreamPicker from "./WorkstreamPicker.jsx";
 import PrioritySelect from "./PrioritySelect.jsx";
 import { Button } from "./ui.jsx";
 import { EmptyPanel } from "./PageHeader.jsx";
-import { IconTrash, IconFocus } from "./icons.jsx";
+import { IconTrash, IconFocus, IconCheck } from "./icons.jsx";
 import { FoveaMark } from "./FoveaLogo.jsx";
 import { REPEAT_OPTIONS } from "../lib/recurrence.js";
 import { tw, cn } from "../lib/tw.js";
@@ -98,6 +98,12 @@ export default function NodePanel({
   };
 
   const isWeekFocus = Boolean(node?.type === "task" && weekFocusId && node.id === weekFocusId);
+  const isCompleted = Boolean(node?.completed_at);
+
+  const handleToggleComplete = () => {
+    if (!node || node.type !== "task") return;
+    flush({ completed: !isCompleted });
+  };
 
   const handleSetWeekFocus = async () => {
     if (!node || node.type !== "task" || focusBusy) return;
@@ -312,6 +318,20 @@ export default function NodePanel({
               </div>
             ) : null}
             <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleToggleComplete}
+                className={cn(
+                  tw.btnSm,
+                  "w-full justify-center gap-1.5",
+                  isCompleted
+                    ? "border border-line bg-paper text-brand hover:bg-accent-soft/40"
+                    : "bg-emerald-700 text-white hover:bg-emerald-800",
+                )}
+              >
+                <IconCheck size={13} />
+                {isCompleted ? "Mark incomplete" : "Mark complete"}
+              </button>
               {isWeekFocus && weekFocusPinned ? (
                 <button
                   type="button"

@@ -4,6 +4,7 @@ import FocusPageShell from "../components/FocusPageShell.jsx";
 import NodePanel from "../components/NodePanel.jsx";
 import RoadmapCalendar from "../components/RoadmapCalendar.jsx";
 import RoadmapDayPanel from "../components/RoadmapDayPanel.jsx";
+import RoadmapTimeline from "../components/RoadmapTimeline.jsx";
 import RoadmapYearCalendar from "../components/RoadmapYearCalendar.jsx";
 import { MonthPager } from "../components/MonthPager.jsx";
 import { PageHeader, SegmentedControl } from "../components/PageHeader.jsx";
@@ -19,12 +20,13 @@ import {
 import { displayYear } from "../lib/roadmapBounds.js";
 import { mergeBucketPage } from "../lib/roadmapTasks.js";
 import { weekOffsetForDueAt } from "../lib/weekBounds.js";
-import { IconCalendar, IconLayers } from "../components/icons.jsx";
+import { IconCalendar, IconLayers, IconTimeline } from "../components/icons.jsx";
 import { cn } from "../lib/tw.js";
 
 const VIEW_MODES = [
   { id: "year", label: "Year", icon: <IconCalendar size={13} /> },
   { id: "month", label: "Month", icon: <IconLayers size={13} /> },
+  { id: "timeline", label: "Timeline", icon: <IconTimeline size={13} /> },
 ];
 
 export default function RoadmapView({ me }) {
@@ -42,6 +44,7 @@ export default function RoadmapView({ me }) {
   const [week, setWeek] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dayLoading, setDayLoading] = useState(false);
+  const [timeline, setTimeline] = useState({ channels: [], tasks: [] });
   const [error, setError] = useState("");
 
   const year = displayYear(yearOffset);
@@ -95,6 +98,22 @@ export default function RoadmapView({ me }) {
     }
   }, [projectId, calendarParts.monthKey]);
 
+  const loadTimeline = useCallback(async () => {
+    if (!projectId) return;
+    setLoading(true);
+    setError("");
+    setActiveDay(null);
+    setDayBucket(null);
+    try {
+      const data = await api.roadmapTimeline(year);
+      setTimeline({ channels: data.channels || [], tasks: data.tasks || [] });
+    } catch (err) {
+      setError(err.message || "Could not load timeline");
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, year]);
+
   const loadDay = async (dayKey, { append = false } = {}) => {
     if (!projectId || !dayKey) return;
     setDayLoading(true);
@@ -122,17 +141,21 @@ export default function RoadmapView({ me }) {
   useEffect(() => {
     if (viewMode === "year") {
       loadYear().catch(console.error);
-    } else {
+    } else if (viewMode === "month") {
       loadCalendarMonth().catch(console.error);
+    } else {
+      loadTimeline().catch(console.error);
     }
-  }, [viewMode, loadYear, loadCalendarMonth]);
+  }, [viewMode, loadYear, loadCalendarMonth, loadTimeline]);
 
   const refresh = async () => {
     await loadWeek();
     if (viewMode === "year") {
       await loadYear();
-    } else {
+    } else if (viewMode === "month") {
       await loadCalendarMonth();
+    } else {
+      await loadTimeline();
     }
     if (activeDay) await loadDay(activeDay);
   };
@@ -164,13 +187,17 @@ export default function RoadmapView({ me }) {
       description={
         viewMode === "month"
           ? "Month calendar — counts per day. Click a busy day to open its task list."
-          : "Year at a glance — twelve mini calendars with heatmap density. Click a day or zoom into a month."
+          : viewMode === "timeline"
+            ? "Workstreams across the year — each bar is a task on its due date."
+            : "Year at a glance — twelve mini calendars with heatmap density. Click a day or zoom into a month."
       }
       toolbar={
         <div className="flex flex-wrap items-center gap-3">
           <SegmentedControl value={viewMode} onChange={setViewMode} options={VIEW_MODES} />
           {viewMode === "month" ? (
             <MonthPager monthOffset={monthOffset} onChange={setMonthOffset} loading={loading} />
+          ) : viewMode === "timeline" ? (
+            <YearPager yearOffset={yearOffset} onChange={setYearOffset} loading={loading} />
           ) : (
             <YearPager yearOffset={yearOffset} onChange={setYearOffset} loading={loading} />
           )}
@@ -207,6 +234,14 @@ export default function RoadmapView({ me }) {
                   calendarMonth={calendarMonth}
                   activeDay={activeDay}
                   onOpenDay={(dayKey) => loadDay(dayKey).catch(console.error)}
+                />
+              ) : viewMode === "timeline" ? (
+                <RoadmapTimeline
+                  year={year}
+                  channels={timeline.channels}
+                  tasks={timeline.tasks}
+                  selectedId={selected?.id}
+                  onSelect={setSelected}
                 />
               ) : (
                 <RoadmapYearCalendar

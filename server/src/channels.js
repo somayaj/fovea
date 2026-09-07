@@ -3,10 +3,12 @@ import { query, queryOne } from "./db.js";
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
-function channelWhere(projectId, { q = "", includeArchived = false } = {}) {
+function channelWhere(projectId, { q = "", includeArchived = false, archivedOnly = false } = {}) {
   const params = [projectId];
   let sql = "WHERE c.project_id = ?";
-  if (!includeArchived) {
+  if (archivedOnly) {
+    sql += " AND c.archived = 1";
+  } else if (!includeArchived) {
     sql += " AND c.archived = 0";
   }
   if (q) {
@@ -27,11 +29,11 @@ export async function countChannels(projectId, options = {}) {
 
 export async function listChannelsPaginated(
   projectId,
-  { q = "", limit = DEFAULT_LIMIT, offset = 0, includeArchived = false } = {},
+  { q = "", limit = DEFAULT_LIMIT, offset = 0, includeArchived = false, archivedOnly = false } = {},
 ) {
   const safeLimit = Math.min(Math.max(Number(limit) || DEFAULT_LIMIT, 1), MAX_LIMIT);
   const safeOffset = Math.max(Number(offset) || 0, 0);
-  const { sql, params } = channelWhere(projectId, { q, includeArchived });
+  const { sql, params } = channelWhere(projectId, { q, includeArchived, archivedOnly });
 
   const channels = await query(
     `SELECT c.id, c.project_id, c.name, c.slug, c.archived, c.created_at, c.task_count AS tasks
@@ -42,7 +44,7 @@ export async function listChannelsPaginated(
     [...params, safeLimit, safeOffset],
   );
 
-  const total = await countChannels(projectId, { q, includeArchived });
+  const total = await countChannels(projectId, { q, includeArchived, archivedOnly });
 
   return {
     channels: channels.map((c) => ({

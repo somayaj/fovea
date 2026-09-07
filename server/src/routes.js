@@ -13,6 +13,11 @@ import {
   taskRankInChannel,
 } from "./mapView.js";
 import { channelNameMap, getChannel, listChannelsPaginated } from "./channels.js";
+import {
+  archiveChannelWithTasks,
+  deleteChannelWithTasks,
+  restoreChannelWithTasks,
+} from "./channelArchive.js";
 import { buildWeekViewPaginated } from "./weekView.js";
 import {
   buildRoadmapBucket,
@@ -20,6 +25,7 @@ import {
   buildRoadmapCalendarDay,
   buildRoadmapCalendarMonth,
   buildRoadmapCalendarYear,
+  buildRoadmapTimeline,
 } from "./roadmapView.js";
 import {
   clearManualWeekFocus,
@@ -37,7 +43,9 @@ import {
   onTaskCreated,
   onTaskDeleted,
   onTaskUpdated,
+  onTaskCompletionChanged,
 } from "./taskCounts.js";
+import { ACTIVE_TASK_AND, ACTIVE_NODE_AND } from "./taskFilters.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -168,14 +176,14 @@ router.get("/projects/:id/ideas", async (req, res) => {
   if (!project) return res.status(404).json({ error: "Project not found" });
   const ideas = await query(
     `SELECT id, project_id, type, title, notes, x, y, channel_id, created_at
-     FROM nodes WHERE project_id = ? AND type = 'idea' ORDER BY created_at`,
+     FROM nodes WHERE project_id = ? AND type = 'idea' ${ACTIVE_NODE_AND} ORDER BY created_at`,
     [project.id],
   );
   const edges = await query(
     `SELECT e.id, e.project_id, e.source_id, e.target_id
      FROM edges e
-     JOIN nodes s ON s.id = e.source_id AND s.type = 'idea'
-     JOIN nodes t ON t.id = e.target_id AND t.type = 'idea'
+     JOIN nodes s ON s.id = e.source_id AND s.type = 'idea' AND (s.archived IS NULL OR s.archived = 0)
+     JOIN nodes t ON t.id = e.target_id AND t.type = 'idea' AND (t.archived IS NULL OR t.archived = 0)
      WHERE e.project_id = ?`,
     [project.id],
   );
@@ -236,13 +244,13 @@ router.get("/projects/:id/tasks", async (req, res) => {
   }
   const nodes = await query(
     `SELECT ${MAP_TASK_COLUMNS}, notes FROM nodes
-     WHERE project_id = ? AND type = 'task' ${channelSql}
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} ${channelSql}
      ORDER BY CASE priority WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' THEN 2 WHEN 'p3' THEN 3 ELSE 9 END, created_at
      LIMIT ? OFFSET ?`,
     [...params, limit, offset],
   );
   const total = await queryOne(
-    `SELECT COUNT(*) AS count FROM nodes WHERE project_id = ? AND type = 'task' ${channelSql}`,
+    `SELECT COUNT(*) AS count FROM nodes WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} ${channelSql}`,
     params,
   );
   res.json({
@@ -268,9 +276,9 @@ router.get("/projects/:id/search", async (req, res) => {
   const compactLike = `%${q.replace(/,/g, "")}%`;
   const prefix = `${q}%`;
   const nodes = await query(
-    `SELECT id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at
+    `SELECT id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at, completed_at
      FROM nodes
-     WHERE project_id = ? AND type = 'task'
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
        AND (
          LOWER(title) LIKE LOWER(?)
          OR REPLACE(LOWER(title), ',', '') LIKE LOWER(?)
@@ -325,7 +333,8 @@ router.get("/projects/:id/channels", async (req, res) => {
   const q = String(req.query.q || "").trim();
   const limit = req.query.limit;
   const offset = req.query.offset;
-  const result = await listChannelsPaginated(project.id, { q, limit, offset });
+  const archivedOnly = req.query.archived === "1";
+  const result = await listChannelsPaginated(project.id, { q, limit, offset, archivedOnly });
   res.json(result);
 });
 
@@ -363,16 +372,26 @@ router.patch("/channels/:channelId", async (req, res) => {
   if (!channel) return res.status(404).json({ error: "Channel not found" });
   const project = await userProject(req.user.id, channel.project_id);
   if (!project) return res.status(404).json({ error: "Channel not found" });
+
+  if (req.body?.archived != null) {
+    const wantArchived = Boolean(req.body.archived);
+    if (wantArchived && !channel.archived) {
+      await archiveChannelWithTasks(project.id, channel.id);
+    } else if (!wantArchived && channel.archived) {
+      await restoreChannelWithTasks(project.id, channel.id);
+    }
+    const full = await getChannel(project.id, channel.id);
+    return res.json({ channel: full });
+  }
+
   const name = req.body?.name != null ? String(req.body.name).trim() : channel.name;
   if (!name) return res.status(400).json({ error: "Channel name is required" });
-  const archived = req.body?.archived == null ? channel.archived : req.body.archived ? 1 : 0;
-  await execute("UPDATE channels SET name = ?, slug = ?, archived = ? WHERE id = ?", [
+  await execute("UPDATE channels SET name = ?, slug = ? WHERE id = ?", [
     name,
     slugify(name),
-    archived,
     channel.id,
   ]);
-  res.json({ channel: await queryOne("SELECT * FROM channels WHERE id = ?", [channel.id]) });
+  res.json({ channel: await getChannel(project.id, channel.id) });
 });
 
 router.delete("/channels/:channelId", async (req, res) => {
@@ -381,27 +400,7 @@ router.delete("/channels/:channelId", async (req, res) => {
   const project = await userProject(req.user.id, channel.project_id);
   if (!project) return res.status(404).json({ error: "Channel not found" });
 
-  const nodes = await query("SELECT * FROM nodes WHERE channel_id = ?", [channel.id]);
-  const nodeIds = nodes.map((n) => n.id);
-
-  await withTransaction(async (tx) => {
-    if (nodeIds.length > 0) {
-      const placeholders = nodeIds.map(() => "?").join(",");
-      await tx.execute(
-        `DELETE FROM edges WHERE source_id IN (${placeholders}) OR target_id IN (${placeholders})`,
-        [...nodeIds, ...nodeIds],
-      );
-      for (const node of nodes) {
-        await tx.execute("DELETE FROM nodes WHERE id = ?", [node.id]);
-      }
-    }
-    await tx.execute("DELETE FROM channels WHERE id = ?", [channel.id]);
-  });
-
-  for (const node of nodes) {
-    await clearWeekFocusIfTask(project.id, node.id);
-  }
-
+  await deleteChannelWithTasks(project.id, channel.id);
   res.json({ ok: true });
 });
 
@@ -512,11 +511,14 @@ router.patch("/nodes/:nodeId", async (req, res) => {
   if (req.body?.channelId !== undefined) next.channel_id = req.body.channelId || null;
   if (req.body?.imageUrl !== undefined) next.image_url = req.body.imageUrl?.trim() || null;
   if (req.body?.category !== undefined) next.category = req.body.category?.trim() || null;
+  if (req.body?.completed !== undefined) {
+    next.completed_at = req.body.completed ? nowIso() : null;
+  }
   if (next.type === "task" && !next.priority) next.priority = "p2";
 
   await execute(
     `UPDATE nodes SET title = ?, notes = ?, x = ?, y = ?, type = ?,
-      channel_id = ?, priority = ?, estimate_hours = ?, due_at = ?, image_url = ?, category = ?
+      channel_id = ?, priority = ?, estimate_hours = ?, due_at = ?, image_url = ?, category = ?, completed_at = ?
      WHERE id = ?`,
     [
       next.title,
@@ -530,10 +532,15 @@ router.patch("/nodes/:nodeId", async (req, res) => {
       next.due_at,
       next.image_url,
       next.category,
+      next.completed_at ?? null,
       next.id,
     ],
   );
   await onTaskUpdated(node, next);
+  await onTaskCompletionChanged(node, next);
+  if (next.completed_at && !node.completed_at) {
+    await clearWeekFocusIfTask(project.id, next.id);
+  }
   res.json({ node: await queryOne("SELECT * FROM nodes WHERE id = ?", [next.id]) });
 });
 
@@ -633,7 +640,7 @@ router.put("/week/focus", async (req, res) => {
   const startIso = weekStartIso(weekOffset);
 
   const task = await queryOne(
-    "SELECT * FROM nodes WHERE id = ? AND project_id = ? AND type = 'task'",
+    `SELECT * FROM nodes WHERE id = ? AND project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}`,
     [taskId, project.id],
   );
   if (!task) return res.status(404).json({ error: "Task not found" });
@@ -721,6 +728,19 @@ router.get("/roadmap/calendar", async (req, res) => {
   }
 
   return res.status(400).json({ error: "year, month, or day is required" });
+});
+
+router.get("/roadmap/timeline", async (req, res) => {
+  const project = await queryOne("SELECT * FROM projects WHERE user_id = ?", [req.user.id]);
+  if (!project) return res.status(404).json({ error: "No project yet" });
+
+  const year = Number.parseInt(req.query.year ?? String(new Date().getFullYear()), 10);
+  const view = await buildRoadmapTimeline(project.id, year);
+  res.json({
+    project,
+    channels: view.channels,
+    ...view,
+  });
 });
 
 export default router;
