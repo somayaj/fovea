@@ -8,6 +8,7 @@ const THEMES_EXPANDED_OPEN_KEY = "fovea.sidebar.themes.open";
 const THEMES_COLLAPSED_OPEN_KEY = "fovea.sidebar.themes.collapsed.open";
 const FLYOUT_WIDTH = 208;
 const FLYOUT_MARGIN = 12;
+const FLYOUT_HEADER_HEIGHT = 41;
 
 function readStoredOpen(key) {
   if (typeof window === "undefined") return false;
@@ -134,12 +135,15 @@ function CollapsedThemeFlyout({ open, anchorRef, onClose, presets, themeId, setT
         color: "var(--sidebar-text)",
         borderColor: "var(--sidebar-border)",
       }}
-      className="box-border overflow-hidden rounded-xl border shadow-2xl"
+      className="box-border flex flex-col overflow-hidden rounded-xl border shadow-2xl"
     >
-      <div className="border-b border-sidebar-border px-3 py-2">
+      <div className="shrink-0 border-b border-sidebar-border px-3 py-2">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">Themes</p>
       </div>
-      <div className="overflow-y-auto p-2">
+      <div
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2"
+        style={{ maxHeight: Math.max(0, coords.maxHeight - FLYOUT_HEADER_HEIGHT) }}
+      >
         <ThemePresetGrid presets={presets} themeId={themeId} setTheme={setTheme} />
       </div>
     </div>,
