@@ -5,6 +5,7 @@ import FocusIllustration from "./FocusIllustration.jsx";
 import FocusHero from "./FocusHero.jsx";
 import FocusPageShell from "./FocusPageShell.jsx";
 import NodePanel from "./NodePanel.jsx";
+import WeekRecap from "./WeekRecap.jsx";
 import { PageHeader, ActionLink } from "./PageHeader.jsx";
 import { WeekPager, weekEyebrow } from "./WeekPager.jsx";
 import { taskPhotoRole } from "../lib/taskPhoto.js";
@@ -62,8 +63,8 @@ export default function WeekDashboard({
   const projectId = week?.project?.id;
 
   const allTasks = useMemo(
-    () => [focus, ...neighbors].filter(Boolean),
-    [focus, neighbors],
+    () => [focus, ...neighbors, ...(week?.completedTasks || [])].filter(Boolean),
+    [focus, neighbors, week?.completedTasks],
   );
   const selected = allTasks.find((t) => t.id === selectedId) || null;
   const selectedPhotoRole = useMemo(
@@ -166,6 +167,17 @@ export default function WeekDashboard({
                 </p>
               ) : null}
 
+              {week.completedCount > 0 ? (
+                <WeekRecap
+                  completedTasks={week.completedTasks}
+                  completedCount={week.completedCount}
+                  channels={week.channels}
+                  weekOffset={weekOffset}
+                  selectedId={selectedId}
+                  onSelect={(task) => setSelectedId(task.id)}
+                />
+              ) : null}
+
               <div className="focus-hero-frame w-full">
                 <FocusIllustration className="w-full" />
               </div>
@@ -200,11 +212,22 @@ export default function WeekDashboard({
             </div>
           </div>
 
+          {selected ? (
+            <div
+              className="fixed inset-0 z-40 bg-brand-dark/25 lg:hidden"
+              onClick={() => setSelectedId(null)}
+              aria-hidden="true"
+            />
+          ) : null}
+
           <NodePanel
-            node={null}
+            node={selected}
             projectId={projectId}
             channels={week.channels}
-            onClose={() => {}}
+            weekOffset={weekOffset}
+            onChange={patchSelected}
+            onDelete={deleteSelected}
+            onClose={() => setSelectedId(null)}
           />
         </div>
       </FocusPageShell>
@@ -240,6 +263,15 @@ export default function WeekDashboard({
               onLoadMoreNeighbors={onLoadMoreNeighbors}
               selectedTaskId={selectedId}
               onTaskSelect={(task) => setSelectedId(task.id)}
+            />
+
+            <WeekRecap
+              completedTasks={week.completedTasks}
+              completedCount={week.completedCount}
+              channels={week.channels}
+              weekOffset={weekOffset}
+              selectedId={selectedId}
+              onSelect={(task) => setSelectedId(task.id)}
             />
           </div>
         </div>

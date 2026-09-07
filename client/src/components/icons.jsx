@@ -230,3 +230,31 @@ export function IconTrash(props) {
     </Icon>
   );
 }
+
+export function IconArchive(props) {
+  return (
+    <Icon {...defaults} {...props}>
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8" />
+      <path d="M10 12h4" />
+    </Icon>
+  );
+}
+
+export function IconCheck(props) {
+  return (
+    <Icon {...defaults} {...props}>
+      <path d="M20 6L9 17l-5-5" />
+    </Icon>
+  );
+}
+
+export function IconTimeline(props) {
+  return (
+    <Icon {...defaults} {...props}>
+      <path d="M3 6h18M3 12h12M3 18h8" />
+      <circle cx="19" cy="12" r="2" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="18" r="2" fill="currentColor" stroke="none" />
+    </Icon>
+  );
+}

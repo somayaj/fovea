@@ -7,6 +7,8 @@ import {
   weekBounds,
 } from "./week.js";
 import { getManualWeekFocus, weekStartIso } from "./weekFocus.js";
+import { ACTIVE_TASK_AND } from "./taskFilters.js";
+import { MAP_TASK_COLUMNS } from "./mapView.js";
 
 async function listChannels(projectId, { includeArchived = false } = {}) {
   const sql = includeArchived
@@ -50,7 +52,7 @@ async function pickFocus(projectId, weekStartIso, startDate, endDate) {
 
   const inWeek = await queryOne(
     `SELECT * FROM nodes
-     WHERE project_id = ? AND type = 'task' AND ${weekFilter.sql}
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND ${weekFilter.sql}
      ORDER BY ${PRIORITY_ORDER}, due_at, estimate_hours, title
      LIMIT 1`,
     [projectId, ...weekFilter.params],
@@ -64,7 +66,7 @@ async function countWeekTasks(projectId, startDate, endDate) {
   const weekFilter = weekCandidateSql(startDate, endDate);
   const row = await queryOne(
     `SELECT COUNT(*) AS count FROM nodes
-     WHERE project_id = ? AND type = 'task' AND ${weekFilter.sql}`,
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND ${weekFilter.sql}`,
     [projectId, ...weekFilter.params],
   );
   return Number(row?.count) || 0;
@@ -75,7 +77,7 @@ async function countNeighbors(projectId, focus, startDate, endDate) {
   const weekFilter = weekCandidateSql(startDate, endDate);
   const row = await queryOne(
     `SELECT COUNT(*) AS count FROM nodes
-     WHERE project_id = ? AND type = 'task' AND id != ?
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ?
        AND ${weekFilter.sql}`,
     [projectId, focus.id, ...weekFilter.params],
   );
@@ -96,7 +98,7 @@ async function fetchNeighbors(projectId, focus, startDate, endDate, limit, offse
      LEFT JOIN edges e ON e.project_id = ? AND (
        (e.source_id = ? AND e.target_id = n.id) OR (e.target_id = ? AND e.source_id = n.id)
      )
-     WHERE n.project_id = ? AND n.type = 'task' AND n.id != ?
+     WHERE n.project_id = ? AND n.type = 'task' ${ACTIVE_TASK_AND} AND n.id != ?
        AND ${weekFilter.sql}
      ORDER BY
        CASE WHEN e.id IS NOT NULL THEN 0
@@ -118,6 +120,28 @@ async function fetchNeighbors(projectId, focus, startDate, endDate, limit, offse
     ],
   );
   return rows.map(({ neighbor_kind, ...node }) => ({ ...node, neighborKind: neighbor_kind }));
+}
+
+async function fetchCompletedInWeek(projectId, startDate, endDate) {
+  return query(
+    `SELECT ${MAP_TASK_COLUMNS} FROM nodes
+     WHERE project_id = ? AND type = 'task'
+       AND completed_at IS NOT NULL AND completed_at != ''
+       AND substr(completed_at, 1, 10) >= ? AND substr(completed_at, 1, 10) < ?
+     ORDER BY completed_at DESC, title`,
+    [projectId, startDate, endDate],
+  );
+}
+
+async function countCompletedInWeek(projectId, startDate, endDate) {
+  const row = await queryOne(
+    `SELECT COUNT(*) AS count FROM nodes
+     WHERE project_id = ? AND type = 'task'
+       AND completed_at IS NOT NULL AND completed_at != ''
+       AND substr(completed_at, 1, 10) >= ? AND substr(completed_at, 1, 10) < ?`,
+    [projectId, startDate, endDate],
+  );
+  return Number(row?.count) || 0;
 }
 
 async function fetchEdges(projectId, nodeIds) {
@@ -171,6 +195,8 @@ export async function buildWeekViewPaginated(projectId, { weekOffset = 0, neighb
 
   const channels = await listChannels(projectId, { includeArchived: false });
   const weekTaskCount = await countWeekTasks(projectId, startDate, endDate);
+  const completedCount = await countCompletedInWeek(projectId, startDate, endDate);
+  const completedTasks = await fetchCompletedInWeek(projectId, startDate, endDate);
   const { focus, usedFallback, pinned } = await pickFocus(projectId, startIso, startDate, endDate);
 
   if (!focus) {
@@ -186,6 +212,8 @@ export async function buildWeekViewPaginated(projectId, { weekOffset = 0, neighb
       neighborOffset: offset,
       weekTaskCount,
       taskCount: weekTaskCount,
+      completedCount,
+      completedTasks,
       nodes: [],
       edges: [],
       fallback: false,
@@ -220,6 +248,8 @@ export async function buildWeekViewPaginated(projectId, { weekOffset = 0, neighb
     neighborOffset: offset,
     weekTaskCount,
     taskCount: weekTaskCount,
+    completedCount,
+    completedTasks,
     nodes,
     edges,
     fallback: false,

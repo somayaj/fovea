@@ -15,6 +15,7 @@ import {
   IconPlus,
   IconSearch,
   IconTrash,
+  IconArchive,
   IconUsers,
 } from "./icons.jsx";
 import SidebarHoverLabel from "./SidebarHoverLabel.jsx";
@@ -103,9 +104,10 @@ function NavItem({ item, location, collapsed }) {
   );
 }
 
-function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapsed }) {
+function WorkstreamRow({ channel, index, isActive, onRename, onArchive, onDelete, collapsed }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(channel.name);
+  const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const dot = workstreamColor(channel.name, index);
@@ -133,10 +135,22 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
     }
   };
 
-  const confirmArchive = async () => {
+  const runArchive = async () => {
     setBusy(true);
     try {
       await onArchive(channel.id);
+      setConfirmArchive(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runDelete = async () => {
+    setBusy(true);
+    try {
+      await onDelete(channel.id);
       setConfirmDelete(false);
     } catch (err) {
       console.error(err);
@@ -179,7 +193,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
     );
   }
 
-  if (confirmDelete) {
+  if (confirmArchive) {
     return (
       <div className="mb-1 overflow-hidden rounded-xl border border-sidebar-border bg-sidebar-surface p-3 ring-1 ring-sidebar-accent/10">
         <div className="flex items-start gap-2.5">
@@ -193,20 +207,75 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
             {!collapsed ? (
               <>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-accent">
-                  Remove workstream
+                  Archive workstream
                 </p>
                 <p className="mt-1 text-sm font-medium text-sidebar-text">{channel.name}</p>
                 <p className="mt-1.5 text-[11px] leading-relaxed text-sidebar-muted">
                   {channel.tasks > 0
-                    ? `${channel.tasks} task${channel.tasks === 1 ? "" : "s"} in this workstream will be removed.`
-                    : "This workstream will be removed."}
+                    ? `${channel.tasks} task${channel.tasks === 1 ? "" : "s"} will be archived with this workstream. You can restore them later.`
+                    : "This workstream will be hidden until you restore it."}
                 </p>
               </>
             ) : (
               <>
-                <p className="text-[11px] font-medium text-sidebar-text">Remove {channel.name}?</p>
+                <p className="text-[11px] font-medium text-sidebar-text">Archive {channel.name}?</p>
                 <p className="mt-1 text-[10px] leading-relaxed text-sidebar-muted">
-                  {channel.tasks > 0 ? `${channel.tasks} tasks removed.` : "Workstream removed."}
+                  {channel.tasks > 0 ? `${channel.tasks} tasks archived.` : "Hidden until restored."}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setConfirmArchive(false)}
+            className={cn(tw.btnOutlineSm, "flex-1")}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={runArchive}
+            className="flex-1 rounded-md border border-sidebar-border bg-sidebar-surface px-2.5 py-1.5 text-xs font-semibold text-sidebar-text transition-colors hover:bg-sidebar-hover disabled:opacity-50"
+          >
+            {busy ? "Archiving…" : "Archive"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (confirmDelete) {
+    return (
+      <div className="mb-1 overflow-hidden rounded-xl border border-sidebar-border bg-sidebar-surface p-3 ring-1 ring-red-200/60">
+        <div className="flex items-start gap-2.5">
+          <span
+            className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+            style={{ backgroundColor: `${dot}22` }}
+          >
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: dot }} aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            {!collapsed ? (
+              <>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-red-700">
+                  Delete workstream
+                </p>
+                <p className="mt-1 text-sm font-medium text-sidebar-text">{channel.name}</p>
+                <p className="mt-1.5 text-[11px] leading-relaxed text-sidebar-muted">
+                  {channel.tasks > 0
+                    ? `${channel.tasks} task${channel.tasks === 1 ? "" : "s"} will be permanently deleted. This cannot be undone.`
+                    : "This workstream will be permanently deleted."}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-[11px] font-medium text-sidebar-text">Delete {channel.name}?</p>
+                <p className="mt-1 text-[10px] leading-relaxed text-sidebar-muted">
+                  {channel.tasks > 0 ? `${channel.tasks} tasks deleted forever.` : "Permanent."}
                 </p>
               </>
             )}
@@ -219,15 +288,15 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
             onClick={() => setConfirmDelete(false)}
             className={cn(tw.btnOutlineSm, "flex-1")}
           >
-            Keep
+            Cancel
           </button>
           <button
             type="button"
             disabled={busy}
-            onClick={confirmArchive}
+            onClick={runDelete}
             className="flex-1 rounded-md border border-red-200/90 bg-sidebar-surface px-2.5 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:border-red-300 hover:bg-red-50/60 disabled:opacity-50"
           >
-            {busy ? "Removing…" : "Remove"}
+            {busy ? "Deleting…" : "Delete"}
           </button>
         </div>
       </div>
@@ -290,9 +359,17 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
         </button>
         <button
           type="button"
+          aria-label={`Archive ${channel.name}`}
+          onClick={() => setConfirmArchive(true)}
+          className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
+        >
+          <IconArchive size={12} />
+        </button>
+        <button
+          type="button"
           aria-label={`Delete ${channel.name}`}
           onClick={() => setConfirmDelete(true)}
-          className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
+          className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-red-700"
         >
           <IconTrash size={12} />
         </button>
@@ -305,6 +382,7 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, collapse
 export default function ChannelSidebar({ collapsed = false, onRequestExpand, isAdmin = false }) {
   const {
     channels,
+    archivedChannels,
     total,
     hasMore,
     search,
@@ -313,6 +391,8 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
     createChannel,
     updateChannel,
     archiveChannel,
+    deleteChannel,
+    restoreChannel,
     searchChannels,
     loadMore,
   } = useChannels();
@@ -325,6 +405,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
   const [name, setName] = useState("");
   const [query, setQuery] = useState(search);
   const [pinnedChannel, setPinnedChannel] = useState(null);
+  const [archivedOpen, setArchivedOpen] = useState(false);
   const trimmedQuery = query.trim();
   const searching = Boolean(trimmedQuery);
 
@@ -371,6 +452,17 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
     if (activeChannelId === channelId) {
       navigate("/map", { replace: true });
     }
+  };
+
+  const handleDelete = async (channelId) => {
+    await deleteChannel(channelId);
+    if (activeChannelId === channelId) {
+      navigate("/map", { replace: true });
+    }
+  };
+
+  const handleRestore = async (channelId) => {
+    await restoreChannel(channelId);
   };
 
   const showEmpty = !loading && channels.length === 0;
@@ -520,6 +612,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
                     isActive={activeChannelId === channel.id}
                     onRename={handleRename}
                     onArchive={handleArchive}
+                    onDelete={handleDelete}
                     collapsed={false}
                   />
                 ))}
@@ -542,6 +635,38 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
                 {loadingMore ? "Loading…" : "Load more workstreams"}
               </button>
             ) : null}
+
+            {archivedChannels.length > 0 ? (
+              <div className="mt-3 border-t border-sidebar-border pt-2">
+                <button
+                  type="button"
+                  onClick={() => setArchivedOpen((open) => !open)}
+                  className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
+                >
+                  <span>Archived · {archivedChannels.length}</span>
+                  <span aria-hidden="true">{archivedOpen ? "−" : "+"}</span>
+                </button>
+                {archivedOpen ? (
+                  <ul className="mt-1 space-y-1">
+                    {archivedChannels.map((channel) => (
+                      <li
+                        key={channel.id}
+                        className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-[11px] text-sidebar-muted"
+                      >
+                        <span className="min-w-0 truncate">{channel.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRestore(channel.id)}
+                          className="shrink-0 rounded-md border border-sidebar-border px-2 py-0.5 text-[10px] font-medium text-sidebar-text hover:bg-sidebar-hover"
+                        >
+                          Restore
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
           </>
         ) : (
           <>
@@ -555,6 +680,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
                   isActive={activeChannelId === channel.id}
                   onRename={handleRename}
                   onArchive={handleArchive}
+                  onDelete={handleDelete}
                   collapsed
                 />
               ))}

@@ -1,6 +1,7 @@
 import { query, queryOne } from "./db.js";
 import { countChannels, getChannel, listChannelsPaginated } from "./channels.js";
 import { countUnsortedTasks } from "./taskCounts.js";
+import { ACTIVE_TASK_AND, ACTIVE_NODE_AND } from "./taskFilters.js";
 
 export const MAX_BRANCHES = 6;
 export const MAX_LEAVES = 4;
@@ -15,7 +16,7 @@ const PRIORITY_RANK_PARAM = `CASE ? WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' 
 
 /** Columns needed for map cards — avoids loading notes blobs at scale. */
 export const MAP_TASK_COLUMNS =
-  "id, project_id, type, title, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, recurrence_series_id, created_at";
+  "id, project_id, type, title, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, recurrence_series_id, created_at, completed_at";
 
 /** 0-based rank of a task within its workstream (priority, then created_at). */
 export async function taskRankInChannel(projectId, task) {
@@ -26,7 +27,7 @@ export async function taskRankInChannel(projectId, task) {
     : [projectId, priority, priority, task.created_at];
   const row = await queryOne(
     `SELECT COUNT(*) AS rank FROM nodes
-     WHERE project_id = ? AND type = 'task' ${channelSql}
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} ${channelSql}
      AND (
        (${PRIORITY_ORDER}) < (${PRIORITY_RANK_PARAM})
        OR ((${PRIORITY_ORDER}) = (${PRIORITY_RANK_PARAM}) AND created_at < ?)
@@ -91,7 +92,7 @@ function scopeFilter(scope, filterChannel) {
 async function countTasks(projectId, scope, filterChannel) {
   const { sql, params } = scopeFilter(scope, filterChannel);
   const row = await queryOne(
-    `SELECT COUNT(*) AS count FROM nodes WHERE project_id = ? AND type = 'task' ${sql}`,
+    `SELECT COUNT(*) AS count FROM nodes WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} ${sql}`,
     [projectId, ...params],
   );
   return Number(row?.count) || 0;
@@ -102,7 +103,7 @@ async function fetchTopTasksForChannel(projectId, channelId, limit) {
   const params = channelId ? [projectId, channelId, limit] : [projectId, limit];
   return query(
     `SELECT ${MAP_TASK_COLUMNS} FROM nodes
-     WHERE project_id = ? AND type = 'task' ${channelSql}
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} ${channelSql}
      ORDER BY ${PRIORITY_ORDER}, created_at
      LIMIT ?`,
     params,
@@ -114,7 +115,7 @@ async function pickCenterId(projectId, scope, filterChannel, weekFocusId) {
 
   if (weekFocusId) {
     const focus = await queryOne(
-      `SELECT id FROM nodes WHERE project_id = ? AND id = ? AND type = 'task' ${sql}`,
+      `SELECT id FROM nodes WHERE project_id = ? AND id = ? AND type = 'task' ${ACTIVE_TASK_AND} ${sql}`,
       [projectId, weekFocusId, ...params],
     );
     if (focus) return focus.id;
@@ -122,7 +123,7 @@ async function pickCenterId(projectId, scope, filterChannel, weekFocusId) {
 
   const top = await queryOne(
     `SELECT id FROM nodes
-     WHERE project_id = ? AND type = 'task' ${sql}
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} ${sql}
      ORDER BY ${PRIORITY_ORDER}, created_at
      LIMIT 1`,
     [projectId, ...params],
@@ -152,7 +153,7 @@ async function buildChannelScopeTree(projectId, centerId, scope, channels) {
 
   const totalRow = await queryOne(
     `SELECT COUNT(*) AS count FROM nodes
-     WHERE project_id = ? AND type = 'task' AND id != ? ${channelFilter.sql}`,
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${channelFilter.sql}`,
     [projectId, centerId, ...channelFilter.params],
   );
   const total = Number(totalRow?.count) || 0;
@@ -161,7 +162,7 @@ async function buildChannelScopeTree(projectId, centerId, scope, channels) {
 
   const branches = await query(
     `SELECT * FROM nodes
-     WHERE project_id = ? AND type = 'task' AND id != ? ${channelFilter.sql}
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${channelFilter.sql}
      ORDER BY ${PRIORITY_ORDER}, created_at
      LIMIT ?`,
     [projectId, centerId, ...channelFilter.params, limit],
@@ -169,7 +170,7 @@ async function buildChannelScopeTree(projectId, centerId, scope, channels) {
 
   const ideas = await query(
     `SELECT * FROM nodes
-     WHERE project_id = ? AND type = 'idea' AND id != ? ${channelFilter.sql}
+     WHERE project_id = ? AND type = 'idea' ${ACTIVE_NODE_AND} AND id != ? ${channelFilter.sql}
      ORDER BY created_at`,
     [projectId, centerId, ...channelFilter.params],
   );
@@ -215,7 +216,7 @@ async function buildChannelScopeTree(projectId, centerId, scope, channels) {
 async function fetchIdeaCounts(projectId) {
   const rows = await query(
     `SELECT COALESCE(channel_id, '__none__') AS ck, COUNT(*) AS count
-     FROM nodes WHERE project_id = ? AND type = 'idea'
+     FROM nodes WHERE project_id = ? AND type = 'idea' ${ACTIVE_NODE_AND}
      GROUP BY COALESCE(channel_id, '__none__')`,
     [projectId],
   );
@@ -366,7 +367,7 @@ async function attachOverviewChildren(
     const total = summary.groupSize || 0;
     const tasks = await query(
       `SELECT ${MAP_TASK_COLUMNS} FROM nodes
-       WHERE project_id = ? AND type = 'task' ${channelFilter.sql}
+       WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} ${channelFilter.sql}
        ORDER BY ${PRIORITY_ORDER}, created_at
        LIMIT ? OFFSET ?`,
       [projectId, ...channelFilter.params, taskPageSize, offset],
@@ -447,7 +448,7 @@ async function buildRootScopeTree(projectId, centerId, scope, channels, filterCh
   const leaders = await query(
     `WITH scoped AS (
        SELECT * FROM nodes
-       WHERE project_id = ? AND type = 'task' AND id != ? ${sql}
+       WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${sql}
      ),
      ranked AS (
        SELECT *,
@@ -467,7 +468,7 @@ async function buildRootScopeTree(projectId, centerId, scope, channels, filterCh
   const groupCountRow = await queryOne(
     `WITH scoped AS (
        SELECT COALESCE(channel_id, '__none__') AS ck FROM nodes
-       WHERE project_id = ? AND type = 'task' AND id != ? ${sql}
+       WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${sql}
      )
      SELECT COUNT(DISTINCT ck) AS count FROM scoped`,
     [projectId, centerId, ...params],
@@ -495,7 +496,7 @@ async function buildRootScopeTree(projectId, centerId, scope, channels, filterCh
     const leaves = await query(
       `WITH scoped AS (
          SELECT * FROM nodes
-         WHERE project_id = ? AND type = 'task' AND id != ? ${sql}
+         WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${sql}
        ),
        ranked AS (
          SELECT *,
@@ -558,7 +559,7 @@ async function placeIdeas(treeNodes, projectId, centerId, scope) {
 
   const ideas = await query(
     `SELECT * FROM nodes
-     WHERE project_id = ? AND type = 'idea' AND id != ?
+     WHERE project_id = ? AND type = 'idea' ${ACTIVE_NODE_AND} AND id != ?
      ORDER BY created_at`,
     [projectId, centerId],
   );

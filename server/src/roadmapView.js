@@ -1,5 +1,6 @@
 import { query, queryOne } from "./db.js";
 import { MAP_TASK_COLUMNS } from "./mapView.js";
+import { ACTIVE_TASK_AND } from "./taskFilters.js";
 
 export const ROADMAP_DEFAULT_LIMIT = 24;
 export const ROADMAP_MAX_LIMIT = 48;
@@ -50,7 +51,7 @@ export function monthKeysForYear(year) {
 async function countMonthTasks(projectId, monthKey) {
   const row = await queryOne(
     `SELECT COUNT(*) AS count FROM nodes
-     WHERE project_id = ? AND type = 'task'
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
        AND due_at IS NOT NULL AND ${DUE_MONTH_EXPR} = ?`,
     [projectId, monthKey],
   );
@@ -60,7 +61,7 @@ async function countMonthTasks(projectId, monthKey) {
 async function fetchMonthTasks(projectId, monthKey, limit, offset) {
   return query(
     `SELECT ${MAP_TASK_COLUMNS} FROM nodes
-     WHERE project_id = ? AND type = 'task'
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
        AND due_at IS NOT NULL AND ${DUE_MONTH_EXPR} = ?
      ORDER BY ${PRIORITY_ORDER}, due_at, title
      LIMIT ? OFFSET ?`,
@@ -71,7 +72,7 @@ async function fetchMonthTasks(projectId, monthKey, limit, offset) {
 async function countUnscheduledTasks(projectId) {
   const row = await queryOne(
     `SELECT COUNT(*) AS count FROM nodes
-     WHERE project_id = ? AND type = 'task' AND (due_at IS NULL OR due_at = '')`,
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND (due_at IS NULL OR due_at = '')`,
     [projectId],
   );
   return Number(row?.count) || 0;
@@ -80,7 +81,7 @@ async function countUnscheduledTasks(projectId) {
 async function fetchUnscheduledTasks(projectId, limit, offset) {
   return query(
     `SELECT ${MAP_TASK_COLUMNS} FROM nodes
-     WHERE project_id = ? AND type = 'task' AND (due_at IS NULL OR due_at = '')
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND (due_at IS NULL OR due_at = '')
      ORDER BY ${PRIORITY_ORDER}, created_at, title
      LIMIT ? OFFSET ?`,
     [projectId, limit, offset],
@@ -165,7 +166,7 @@ async function fetchDayCounts(projectId, { year, monthKey }) {
   const rows = await query(
     `SELECT ${DUE_DAY_EXPR} AS day, COUNT(*) AS count
      FROM nodes
-     WHERE project_id = ? AND type = 'task'
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
        AND due_at IS NOT NULL AND ${filter}
      GROUP BY ${DUE_DAY_EXPR}
      ORDER BY day`,
@@ -187,7 +188,7 @@ async function fetchDayPreviewTasks(projectId, monthKey, previewPerDay) {
            ORDER BY ${PRIORITY_ORDER}, due_at, title
          ) AS rn
        FROM nodes
-       WHERE project_id = ? AND type = 'task'
+       WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
          AND due_at IS NOT NULL AND ${DUE_MONTH_EXPR} = ?
      ) ranked
      WHERE rn <= ?
@@ -264,13 +265,13 @@ export async function buildRoadmapCalendarDay(
   const pageOffset = parseOffset(offset);
   const total = await queryOne(
     `SELECT COUNT(*) AS count FROM nodes
-     WHERE project_id = ? AND type = 'task'
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
        AND due_at IS NOT NULL AND ${DUE_DAY_EXPR} = ?`,
     [projectId, dayKey],
   );
   const tasks = await query(
     `SELECT ${MAP_TASK_COLUMNS} FROM nodes
-     WHERE project_id = ? AND type = 'task'
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
        AND due_at IS NOT NULL AND ${DUE_DAY_EXPR} = ?
      ORDER BY ${PRIORITY_ORDER}, due_at, title
      LIMIT ? OFFSET ?`,
@@ -286,4 +287,22 @@ export async function buildRoadmapCalendarDay(
     offset: pageOffset,
     hasMore: pageOffset + tasks.length < count,
   };
+}
+
+/** Flat task list for the timeline view — active tasks due in a calendar year. */
+export async function buildRoadmapTimeline(projectId, year) {
+  const { startIso, endIso } = yearBounds(year);
+  const tasks = await query(
+    `SELECT ${MAP_TASK_COLUMNS} FROM nodes
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
+       AND due_at IS NOT NULL AND due_at != ''
+       AND due_at >= ? AND due_at < ?
+     ORDER BY channel_id, ${PRIORITY_ORDER}, due_at, title`,
+    [projectId, startIso, endIso],
+  );
+  const channels = await query(
+    `SELECT id, name FROM channels WHERE project_id = ? AND archived = 0 ORDER BY name`,
+    [projectId],
+  );
+  return { year, channels, tasks };
 }

@@ -135,6 +135,17 @@ export default function ChannelsView({ me }) {
                     >
                       Archive
                     </button>
+                    <button
+                      className="btn secondary small danger"
+                      type="button"
+                      onClick={async () => {
+                        if (!window.confirm(`Delete "${channel.name}" and all its tasks permanently?`)) return;
+                        await api.deleteChannel(channel.id);
+                        await load();
+                      }}
+                    >
+                      Delete
+                    </button>
                   </>
                 )}
               </div>
@@ -155,7 +166,7 @@ export default function ChannelsView({ me }) {
                   className="btn secondary small"
                   type="button"
                   onClick={async () => {
-                    await api.patchChannel(channel.id, { archived: false });
+                    await api.restoreChannel(channel.id);
                     await load();
                   }}
                 >

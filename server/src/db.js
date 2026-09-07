@@ -218,6 +218,8 @@ async function migrate() {
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS recurrence_series_id TEXT");
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS occurrence_date TEXT");
     await execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_id TEXT");
+    await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS completed_at TEXT");
+    await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS archived INTEGER NOT NULL DEFAULT 0");
   } else {
     const userCols = await query("PRAGMA table_info(users)");
     const userNames = new Set(userCols.map((c) => c.name));
@@ -248,6 +250,8 @@ async function migrate() {
       await execute("ALTER TABLE nodes ADD COLUMN recurrence_series_id TEXT");
     }
     if (!names.has("occurrence_date")) await execute("ALTER TABLE nodes ADD COLUMN occurrence_date TEXT");
+    if (!names.has("completed_at")) await execute("ALTER TABLE nodes ADD COLUMN completed_at TEXT");
+    if (!names.has("archived")) await execute("ALTER TABLE nodes ADD COLUMN archived INTEGER NOT NULL DEFAULT 0");
   }
 
   await execute("UPDATE users SET last_login_at = created_at WHERE last_login_at IS NULL");
