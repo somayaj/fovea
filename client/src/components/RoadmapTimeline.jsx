@@ -3,6 +3,7 @@ import { monthKeysForYear, monthLabel, taskMonthKey } from "../lib/roadmapBounds
 import { priorityMeta } from "../lib/priority.js";
 import { workstreamColor } from "../lib/foveaTheme.js";
 import { PriorityBadge } from "./ui.jsx";
+import SidebarHoverLabel from "./SidebarHoverLabel.jsx";
 import { cn } from "../lib/tw.js";
 
 function groupTasksByChannel(tasks, channels) {
@@ -99,9 +100,17 @@ export default function RoadmapTimeline({ year, channels = [], tasks = [], selec
 
           {rows.map((row) => (
             <Fragment key={row.id}>
-              <div className="roadmap-timeline-row-label">
+              <div className="roadmap-timeline-row-label group/rowtip relative">
                 <span className="roadmap-timeline-row-dot" style={{ backgroundColor: row.color }} aria-hidden="true" />
                 <span className="truncate">{row.name}</span>
+                <SidebarHoverLabel
+                  label={row.name}
+                  meta={
+                    row.tasks.length > 0
+                      ? `${row.tasks.length} task${row.tasks.length === 1 ? "" : "s"}`
+                      : null
+                  }
+                />
               </div>
               {monthKeys.map((monthKey) => {
                 const monthTasks = tasksForMonth(row.tasks, monthKey);

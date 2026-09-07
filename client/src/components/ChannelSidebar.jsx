@@ -353,25 +353,28 @@ function WorkstreamRow({ channel, index, isActive, onRename, onArchive, onDelete
           type="button"
           aria-label={`Rename ${channel.name}`}
           onClick={() => setEditing(true)}
-          className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
+          className="relative flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
         >
           <IconEdit size={12} />
+          <SidebarHoverLabel label="Rename" meta={channel.name} />
         </button>
         <button
           type="button"
           aria-label={`Archive ${channel.name}`}
           onClick={() => setConfirmArchive(true)}
-          className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
+          className="relative flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text"
         >
           <IconArchive size={12} />
+          <SidebarHoverLabel label="Archive" meta={channel.name} />
         </button>
         <button
           type="button"
           aria-label={`Delete ${channel.name}`}
           onClick={() => setConfirmDelete(true)}
-          className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-red-700"
+          className="relative flex h-6 w-6 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-red-700"
         >
           <IconTrash size={12} />
+          <SidebarHoverLabel label="Delete" meta={channel.name} />
         </button>
       </div>
       ) : null}

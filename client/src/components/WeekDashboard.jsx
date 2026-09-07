@@ -157,6 +157,15 @@ export default function WeekDashboard({
             ) : null}
 
             <div className={cn("mx-auto flex w-full max-w-3xl flex-col items-center", loading && "pointer-events-none opacity-60")}>
+              <WeekRecap
+                completedTasks={week.completedTasks}
+                completedCount={week.completedCount}
+                channels={week.channels}
+                weekOffset={weekOffset}
+                selectedId={selectedId}
+                onSelect={(task) => setSelectedId(task.id)}
+              />
+
               <p className="mb-5 max-w-md text-center text-sm leading-relaxed text-muted">
                 {week.reason}
               </p>
@@ -165,17 +174,6 @@ export default function WeekDashboard({
                 <p className="mb-4 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-muted">
                   {week.weekTaskCount.toLocaleString()} task{week.weekTaskCount === 1 ? "" : "s"} due this week
                 </p>
-              ) : null}
-
-              {week.completedCount > 0 ? (
-                <WeekRecap
-                  completedTasks={week.completedTasks}
-                  completedCount={week.completedCount}
-                  channels={week.channels}
-                  weekOffset={weekOffset}
-                  selectedId={selectedId}
-                  onSelect={(task) => setSelectedId(task.id)}
-                />
               ) : null}
 
               <div className="focus-hero-frame w-full">
@@ -247,6 +245,15 @@ export default function WeekDashboard({
           ) : null}
 
           <div className={cn(loading && "pointer-events-none opacity-60")}>
+            <WeekRecap
+              completedTasks={week.completedTasks}
+              completedCount={week.completedCount}
+              channels={week.channels}
+              weekOffset={weekOffset}
+              selectedId={selectedId}
+              onSelect={(task) => setSelectedId(task.id)}
+            />
+
             <FocusHero
               key={`${weekOffset}-${focus.id}`}
               weekOffset={weekOffset}
@@ -263,15 +270,6 @@ export default function WeekDashboard({
               onLoadMoreNeighbors={onLoadMoreNeighbors}
               selectedTaskId={selectedId}
               onTaskSelect={(task) => setSelectedId(task.id)}
-            />
-
-            <WeekRecap
-              completedTasks={week.completedTasks}
-              completedCount={week.completedCount}
-              channels={week.channels}
-              weekOffset={weekOffset}
-              selectedId={selectedId}
-              onSelect={(task) => setSelectedId(task.id)}
             />
           </div>
         </div>
