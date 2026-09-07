@@ -3149,24 +3149,27 @@
 }
 
 .week-recap-item {
-  min-width: 0;
+  flex: 0 0 auto;
 }
 
 .week-recap-icon-thumb {
   display: block;
-  width: 2rem;
-  height: 2rem;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--color-line) 70%, white);
-  border-radius: 0.4rem;
+  border-radius: 0.45rem;
   overflow: hidden;
   background: var(--color-surface);
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(42, 42, 40, 0.06);
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  appearance: none;
 }
 
-.week-recap-icon-thumb img {
+.week-recap-icon-thumb img,
+.week-recap-icon-thumb-img {
   display: block;
   width: 100%;
   height: 100%;

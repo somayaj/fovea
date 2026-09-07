@@ -87,7 +87,11 @@ export default function WeekRecap({
                 selectedId === task.id && "week-recap-icon-thumb--selected",
               )}
             >
-              <img src={taskPhotoUrl(task)} alt={taskPhotoAlt(task)} />
+              <img
+                src={taskPhotoUrl(task)}
+                alt={taskPhotoAlt(task)}
+                className="week-recap-icon-thumb-img"
+              />
             </button>
           </li>
         ))}
