@@ -1,5 +1,4 @@
-import TaskPhoto from "./TaskPhoto.jsx";
-import { priorityLabel } from "../lib/priority.js";
+import { taskPhotoAlt, taskPhotoUrl } from "../lib/taskPhoto.js";
 import { tw, cn } from "./ui.jsx";
 import { IconCheck } from "./icons.jsx";
 
@@ -9,11 +8,10 @@ function channelName(channels, id) {
   return channels?.find((channel) => channel.id === id)?.name;
 }
 
-function formatCompletedWhen(iso) {
-  if (!iso) return null;
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+function recapIconLabel(task, channels) {
+  const channel = channelName(channels, task.channel_id);
+  const parts = [task.title, channel ? `#${channel}` : null].filter(Boolean);
+  return parts.join(" · ");
 }
 
 export default function WeekRecap({
@@ -76,28 +74,23 @@ export default function WeekRecap({
       </div>
 
       <ul className="week-recap-list">
-        {completedTasks.map((task, index) => {
-          const channel = channelName(channels, task.channel_id);
-          const when = formatCompletedWhen(task.completed_at);
-          const meta = [channel ? `#${channel}` : null, when].filter(Boolean).join(" · ");
-
-          return (
-            <li key={task.id} className="week-recap-item">
-              <TaskPhoto
-                task={task}
-                channelName={channel}
-                size="sm"
-                rotate={(index % 3) - 1}
-                label={task.priority ? priorityLabel(task.priority) : undefined}
-                meta={meta || undefined}
-                selected={selectedId === task.id}
-                onClick={() => onSelect?.(task)}
-                className="week-recap-polaroid"
-                imageClassName="task-photo-map-img"
-              />
-            </li>
-          );
-        })}
+        {completedTasks.map((task) => (
+          <li key={task.id} className="week-recap-item">
+            <button
+              type="button"
+              onClick={() => onSelect?.(task)}
+              aria-label={recapIconLabel(task, channels)}
+              aria-pressed={selectedId === task.id}
+              title={recapIconLabel(task, channels)}
+              className={cn(
+                "week-recap-icon-thumb",
+                selectedId === task.id && "week-recap-icon-thumb--selected",
+              )}
+            >
+              <img src={taskPhotoUrl(task)} alt={taskPhotoAlt(task)} />
+            </button>
+          </li>
+        ))}
       </ul>
 
       {hasMoreCompleted || recapExpanded ? (

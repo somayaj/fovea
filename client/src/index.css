@@ -3140,10 +3140,9 @@
 }
 
 .week-recap-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 5rem);
-  gap: 0.45rem;
-  justify-content: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3151,43 +3150,39 @@
 
 .week-recap-item {
   min-width: 0;
-  width: 5rem;
 }
 
-.week-recap-polaroid.instant-photo {
-  width: 5rem;
-  padding: 3px 3px 8px;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 3px 10px rgba(60, 40, 20, 0.06);
-}
-
-.week-recap-polaroid.instant-photo:hover {
-  transform: rotate(var(--instant-rotate, 0deg)) scale(1.015);
-}
-
-.week-recap-polaroid .instant-photo-caption {
-  margin-top: 4px;
-  padding: 0 3px 1px;
-}
-
-.week-recap-polaroid .instant-photo-label {
-  font-size: 6px;
-  letter-spacing: 0.1em;
-}
-
-.week-recap-polaroid .instant-photo-title {
-  font-size: 7px;
-  line-height: 1.2;
-  -webkit-line-clamp: 2;
-}
-
-.week-recap-polaroid .instant-photo-meta {
-  font-size: 6px;
-  line-height: 1.15;
-  margin-top: 1px;
-  -webkit-line-clamp: 1;
+.week-recap-icon-thumb {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-line) 70%, white);
+  border-radius: 0.4rem;
   overflow: hidden;
+  background: var(--color-surface);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(42, 42, 40, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.week-recap-icon-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.week-recap-icon-thumb:hover {
+  transform: scale(1.08);
+  box-shadow: 0 2px 6px rgba(42, 42, 40, 0.1);
+}
+
+.week-recap-icon-thumb--selected {
+  border-color: var(--color-accent);
+  box-shadow:
+    0 0 0 1px var(--color-accent),
+    0 2px 6px rgba(42, 42, 40, 0.1);
 }
 
 .week-recap-actions {
