@@ -24,10 +24,12 @@ import {
 } from "../lib/mapRollup.js";
 import { treeLayout, MAP_COLUMN_WIDTH } from "../lib/treeLayout.js";
 import { buildWeekTaskOrder } from "../lib/weekOrder.js";
+import { weekOffsetForDueAt } from "../lib/weekBounds.js";
 import NodePanel from "../components/NodePanel.jsx";
 import TaskComposer from "../components/TaskComposer.jsx";
 import { IMAGES } from "../lib/images.js";
 import { useChannels } from "../context/ChannelsContext.jsx";
+import { useFocusWeek } from "../context/FocusWeekContext.jsx";
 import { MapSelectionContext } from "../context/MapSelectionContext.jsx";
 import { useViewportWidth } from "../hooks/useViewportWidth.js";
 import FocusPageShell from "../components/FocusPageShell.jsx";
@@ -126,6 +128,7 @@ function MapCanvas({ me }) {
   const [searchParams] = useSearchParams();
   const filterChannel = searchParams.get("channel");
   const { channels, total: channelTotal, channelsVersion, refresh: refreshChannels } = useChannels();
+  const { setFocusWeekFromTask } = useFocusWeek();
   const viewportWidth = useViewportWidth();
   const [activeChannelMeta, setActiveChannelMeta] = useState(null);
   const [channelPage, setChannelPage] = useState(0);
@@ -249,6 +252,11 @@ function MapCanvas({ me }) {
     }
     return pinnedNode;
   }, [treeNodes, boardNodes, selectedId, pinnedNode]);
+
+  const selectedWeekOffset = useMemo(
+    () => (selected?.type === "task" ? weekOffsetForDueAt(selected.due_at) : 0),
+    [selected?.type, selected?.due_at],
+  );
 
   const channelCount = useMemo(
     () => treeNodes.filter((n) => n.isChannelSummary).length,
@@ -379,7 +387,11 @@ function MapCanvas({ me }) {
     return { laidOut };
   }, [scopedTreeNodes, treeNodes, layoutChannels, filterChannel, isBoard, isWeek, weekOrderIds, viewportWidth, canvasWidth]);
 
-  const loadWeek = useCallback(async () => {
+  const loadWeek = useCallback(async (nextWeek) => {
+    if (nextWeek) {
+      setWeek(nextWeek);
+      return;
+    }
     try {
       const data = await api.week();
       setWeek(data);
@@ -387,6 +399,14 @@ function MapCanvas({ me }) {
       console.error(err);
     }
   }, []);
+
+  useEffect(() => {
+    if (!selected || selected.type !== "task") return;
+    setFocusWeekFromTask(selected);
+    api.week(selectedWeekOffset, { neighborLimit: 1, neighborOffset: 0 })
+      .then(setWeek)
+      .catch(console.error);
+  }, [selected?.id, selected?.due_at, selected?.type, selectedWeekOffset, setFocusWeekFromTask]);
 
   const loadMapView = useCallback(async () => {
     if (!projectId) return;
@@ -911,6 +931,7 @@ function MapCanvas({ me }) {
         channels={channels}
         weekFocusId={week?.focus?.id}
         weekFocusPinned={week?.focusPinned}
+        weekOffset={selectedWeekOffset}
         onWeekFocusChange={loadWeek}
         onChange={patchSelected}
         onClose={() => {

@@ -88,9 +88,24 @@ router.get("/admin/users", requireAdmin, async (_req, res) => {
   const users = await query(
     "SELECT id, email, name, avatar, google_sub, created_at, last_login_at FROM users ORDER BY COALESCE(last_login_at, created_at) DESC",
   );
+  const taskCounts = await query(
+    `SELECT p.user_id, COUNT(n.id) AS task_count
+     FROM projects p
+     LEFT JOIN nodes n ON n.project_id = p.id AND n.type = 'task'
+     GROUP BY p.user_id`,
+  );
+  const countByUser = new Map(
+    taskCounts.map((row) => [row.user_id, Number(row.task_count) || 0]),
+  );
+  const totalTasks = taskCounts.reduce((sum, row) => sum + (Number(row.task_count) || 0), 0);
+
   res.json({
     count: users.length,
-    users: users.map(summarizeUser),
+    totalTasks,
+    users: users.map((user) => ({
+      ...summarizeUser(user),
+      taskCount: countByUser.get(user.id) || 0,
+    })),
   });
 });
 

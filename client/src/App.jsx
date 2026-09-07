@@ -12,6 +12,7 @@ import PrivacyPage from "./pages/PrivacyPage.jsx";
 import RoadmapView from "./pages/RoadmapView.jsx";
 import WeekView from "./pages/WeekView.jsx";
 import { ROADMAP_ENABLED } from "./lib/features.js";
+import { ensureHttpsOrigin, isLocalHost } from "./lib/ensureHttps.js";
 
 function ChannelMapRedirect() {
   const { channelId } = useParams();
@@ -67,8 +68,28 @@ export default function App() {
   }, []);
 
   const logout = async () => {
-    await api.logout();
+    try {
+      await api.logout();
+    } catch {
+      // Still clear local session state if the request fails.
+    }
+
     setMe(null);
+    setAuthError("");
+
+    try {
+      const nextStatus = await api.status();
+      setStatus(nextStatus);
+    } catch {
+      const onLocalhost = isLocalHost(window.location.hostname);
+      setStatus({ google: !onLocalhost, devLogin: onLocalhost, user: null });
+    }
+
+    if (ensureHttpsOrigin("/")) return;
+
+    if (window.location.pathname !== "/" || window.location.search || window.location.hash) {
+      window.history.replaceState(null, "", "/");
+    }
   };
 
   return (

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import WeekDashboard from "../components/WeekDashboard.jsx";
 import FocusPageShell from "../components/FocusPageShell.jsx";
@@ -6,8 +7,13 @@ import { IconFocus } from "../components/icons.jsx";
 
 const NEIGHBOR_PAGE = 12;
 
+function parseWeekOffset(searchParams) {
+  return Number.parseInt(searchParams.get("week") ?? "0", 10) || 0;
+}
+
 export default function WeekView() {
-  const [weekOffset, setWeekOffset] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const weekOffset = parseWeekOffset(searchParams);
   const [week, setWeek] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -37,7 +43,6 @@ export default function WeekView() {
           neighbors: merged,
         };
       });
-      setWeekOffset(data.weekOffset ?? offset);
     } catch (err) {
       if (requestId !== requestRef.current) return;
       setError(err.message || "Could not load week");
@@ -50,13 +55,15 @@ export default function WeekView() {
   }, []);
 
   useEffect(() => {
-    loadWeek(0).catch(console.error);
-  }, [loadWeek]);
+    loadWeek(weekOffset).catch(console.error);
+  }, [loadWeek, weekOffset]);
 
   const handleWeekChange = (nextOffset) => {
     if (nextOffset === weekOffset) return;
-    setWeekOffset(nextOffset);
-    loadWeek(nextOffset).catch(console.error);
+    const next = new URLSearchParams(searchParams);
+    if (nextOffset === 0) next.delete("week");
+    else next.set("week", String(nextOffset));
+    setSearchParams(next, { replace: true });
   };
 
   const handleLoadMoreNeighbors = () => {

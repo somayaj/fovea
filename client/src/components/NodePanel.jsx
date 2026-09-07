@@ -330,7 +330,7 @@ export default function NodePanel({
                   className={cn(tw.btnSm, "w-full justify-center gap-1.5")}
                 >
                   <IconFocus size={13} />
-                  {focusBusy ? "Updating…" : "Make this week's focus"}
+                  {focusBusy ? "Updating…" : weekOffset === 0 ? "Make this week's focus" : "Make that week's focus"}
                 </button>
               )}
             </div>

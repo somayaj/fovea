@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
 import FocusPageShell from "../components/FocusPageShell.jsx";
 import NodePanel from "../components/NodePanel.jsx";
@@ -9,6 +9,7 @@ import { MonthPager } from "../components/MonthPager.jsx";
 import { PageHeader, SegmentedControl } from "../components/PageHeader.jsx";
 import { YearPager } from "../components/YearPager.jsx";
 import { useChannels } from "../context/ChannelsContext.jsx";
+import { useFocusWeek } from "../context/FocusWeekContext.jsx";
 import {
   calendarMonthFromOffset,
   emptyCalendarMonth,
@@ -17,6 +18,7 @@ import {
 } from "../lib/roadmapCalendar.js";
 import { displayYear } from "../lib/roadmapBounds.js";
 import { mergeBucketPage } from "../lib/roadmapTasks.js";
+import { weekOffsetForDueAt } from "../lib/weekBounds.js";
 import { IconCalendar, IconLayers } from "../components/icons.jsx";
 import { cn } from "../lib/tw.js";
 
@@ -28,6 +30,7 @@ const VIEW_MODES = [
 export default function RoadmapView({ me }) {
   const projectId = me.project?.id;
   const { channels } = useChannels();
+  const { setFocusWeekFromTask } = useFocusWeek();
   const [viewMode, setViewMode] = useState("year");
   const [yearOffset, setYearOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
@@ -43,6 +46,7 @@ export default function RoadmapView({ me }) {
 
   const year = displayYear(yearOffset);
   const calendarParts = calendarMonthFromOffset(monthOffset);
+  const taskWeekOffset = useMemo(() => weekOffsetForDueAt(selected?.due_at), [selected?.due_at]);
 
   const loadWeek = useCallback(async (nextWeek) => {
     if (nextWeek) {
@@ -51,12 +55,13 @@ export default function RoadmapView({ me }) {
     }
     if (!projectId) return;
     try {
-      const data = await api.week(0, { neighborLimit: 1, neighborOffset: 0 });
+      const offset = selected ? taskWeekOffset : 0;
+      const data = await api.week(offset, { neighborLimit: 1, neighborOffset: 0 });
       setWeek(data);
     } catch (err) {
       console.error(err);
     }
-  }, [projectId]);
+  }, [projectId, selected, taskWeekOffset]);
 
   const loadYear = useCallback(async () => {
     if (!projectId) return;
@@ -109,6 +114,10 @@ export default function RoadmapView({ me }) {
     if (!projectId) return;
     loadWeek().catch(console.error);
   }, [projectId, loadWeek]);
+
+  useEffect(() => {
+    if (selected) setFocusWeekFromTask(selected);
+  }, [selected, setFocusWeekFromTask]);
 
   useEffect(() => {
     if (viewMode === "year") {
@@ -242,7 +251,7 @@ export default function RoadmapView({ me }) {
           channels={channels}
           weekFocusId={week?.focus?.id}
           weekFocusPinned={week?.focusPinned}
-          weekOffset={0}
+          weekOffset={taskWeekOffset}
           onWeekFocusChange={loadWeek}
           onChange={patchSelected}
           onDelete={deleteSelected}

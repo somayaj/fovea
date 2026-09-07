@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import { useChannels } from "../context/ChannelsContext.jsx";
+import { useFocusWeek } from "../context/FocusWeekContext.jsx";
 import { workstreamColor } from "../lib/foveaTheme.js";
 import { chrome } from "../lib/chrome.js";
 import { cn, tw } from "../lib/tw.js";
@@ -22,7 +23,14 @@ import { ROADMAP_ENABLED } from "../lib/features.js";
 const VISIBLE_WORKSTREAMS = 10;
 
 const NAV = [
-  { to: "/", end: true, label: "Focus", icon: IconFocus, hint: "This week" },
+  {
+    id: "focus",
+    end: true,
+    label: "Focus",
+    icon: IconFocus,
+    hint: "This week",
+    matchActive: (_, location) => location.pathname === "/",
+  },
   {
     to: "/map",
     end: true,
@@ -311,6 +319,7 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { focusPath } = useFocusWeek();
   const activeChannelId = location.pathname === "/map" ? searchParams.get("channel") : null;
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
@@ -380,17 +389,22 @@ export default function ChannelSidebar({ collapsed = false, onRequestExpand, isA
 
   const hiddenWorkstreamCount = Math.max(0, total - VISIBLE_WORKSTREAMS);
 
+  const navItems = useMemo(
+    () => [
+      ...NAV.map((item) => (item.id === "focus" ? { ...item, to: focusPath } : item)),
+      ...(isAdmin
+        ? [{ to: "/admin", label: "Admin", icon: IconUsers, hint: "Signed-in users" }]
+        : []),
+    ],
+    [focusPath, isAdmin],
+  );
+
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", collapsed ? "overflow-visible" : "overflow-hidden")}>
       <div className={cn("shrink-0 pb-1.5 pt-2.5", collapsed ? "px-1.5" : "px-3")}>
         {!collapsed ? <SectionLabel>Navigate</SectionLabel> : null}
         <nav className="space-y-0.5">
-          {[
-            ...NAV,
-            ...(isAdmin
-              ? [{ to: "/admin", label: "Admin", icon: IconUsers, hint: "Signed-in users" }]
-              : []),
-          ].map((item) => (
+          {navItems.map((item) => (
             <NavItem key={item.label} item={item} location={location} collapsed={collapsed} />
           ))}
         </nav>
