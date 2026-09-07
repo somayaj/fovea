@@ -3077,6 +3077,16 @@
   box-shadow: 0 8px 24px rgba(42, 42, 40, 0.04);
 }
 
+.week-recap--empty {
+  background: color-mix(in srgb, var(--color-muted) 5%, #fffdf8);
+  padding-bottom: 1rem;
+}
+
+.week-recap-icon--muted {
+  background: color-mix(in srgb, var(--color-muted) 10%, white);
+  color: var(--color-muted);
+}
+
 .week-recap-header {
   display: flex;
   align-items: flex-start;
