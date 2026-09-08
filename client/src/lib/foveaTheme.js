@@ -15,7 +15,7 @@ import {
 /** Active palette — `ember` by default. */
 export const PALETTE = THEME_PRESETS[DEFAULT_THEME_ID].palette;
 
-export function getThemePalette(themeId) {
+export function getThemePalette(themeId = getStoredThemeId()) {
   return getThemePreset(themeId).palette;
 }
 
@@ -63,19 +63,19 @@ export function applyFoveaTheme(themeId = getStoredThemeId()) {
   root.dataset.foveaNeutral = preset.neutral ? "true" : "false";
   root.dataset.sidebarDark = sidebar.dark ? "true" : "false";
   root.dataset.headerDark = header.dark ? "true" : "false";
-  root.style.setProperty("--color-paper", palette.bg);
-  root.style.setProperty("--color-accent", palette.center);
-  root.style.setProperty("--color-map-accent", palette.center);
-  root.style.setProperty("--color-accent-soft", palette.accentSoft);
-  root.style.setProperty("--color-line", palette.line);
-  root.style.setProperty("--color-muted", palette.muted);
-  root.style.setProperty("--color-surface", palette.surface);
-  root.style.setProperty("--color-on-accent", palette.onAccent);
+  root.style.setProperty("--fovea-paper", palette.bg);
+  root.style.setProperty("--fovea-accent", palette.center);
+  root.style.setProperty("--fovea-map-accent", palette.center);
+  root.style.setProperty("--fovea-accent-soft", palette.accentSoft);
+  root.style.setProperty("--fovea-line", palette.line);
+  root.style.setProperty("--fovea-muted", palette.muted);
+  root.style.setProperty("--fovea-surface", palette.surface);
+  root.style.setProperty("--fovea-on-accent", palette.onAccent);
   root.style.setProperty("--theme-center-glow", palette.centerGlow);
-  root.style.setProperty("--color-wall", palette.wall || palette.accentSoft);
-  root.style.setProperty("--color-brand", palette.brand || palette.icon);
-  root.style.setProperty("--color-brand-dark", palette.brandDark || palette.centerDark);
-  root.style.setProperty("--color-brand-soft", palette.brandSoft || palette.accentSoft);
+  root.style.setProperty("--fovea-wall", palette.wall || palette.accentSoft);
+  root.style.setProperty("--fovea-brand", palette.brand || palette.icon);
+  root.style.setProperty("--fovea-brand-dark", palette.brandDark || palette.centerDark);
+  root.style.setProperty("--fovea-brand-soft", palette.brandSoft || palette.accentSoft);
   root.style.setProperty("--collage-photo-filter", preset.collage.photoFilter);
   root.style.setProperty("--collage-surface-mix", preset.collage.surfaceMix);
   applyPriorityTokens(root, getThemePriorities());
@@ -107,7 +107,7 @@ export function setFoveaTheme(themeId) {
   return applyFoveaTheme(themeId);
 }
 
-export { DEFAULT_THEME_ID, THEME_PRESETS, getStoredThemeId, getThemePreset, getHeaderTokens, getSidebarTokens, getThemePriorities, listThemePresets, SEMANTIC_PRIORITIES };
+export { DEFAULT_THEME_ID, THEME_PRESETS, getStoredThemeId, getThemePreset, getHeaderTokens, getSidebarTokens, getThemePriorities, listThemePresets, resolveThemeId, SEMANTIC_PRIORITIES };
 
 export function workstreamColor(name, index = 0, palette = PALETTE) {
   const colors = branchColors(palette);

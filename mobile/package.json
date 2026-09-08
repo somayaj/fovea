@@ -1,0 +1,25 @@
+{
+  "name": "fovea-mobile",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Fovea React Native shell — same web UX in Expo WebView",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo start --ios",
+    "android": "expo start --android"
+  },
+  "dependencies": {
+    "expo": "~52.0.47",
+    "expo-asset": "~11.0.5",
+    "expo-constants": "~17.0.8",
+    "expo-status-bar": "~2.0.1",
+    "react": "18.3.1",
+    "react-native": "0.76.9",
+    "react-native-safe-area-context": "4.12.0",
+    "react-native-webview": "13.12.5"
+  },
+  "devDependencies": {
+    "babel-preset-expo": "~12.0.0"
+  }
+}

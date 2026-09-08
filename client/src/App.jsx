@@ -13,6 +13,7 @@ import RoadmapView from "./pages/RoadmapView.jsx";
 import WeekView from "./pages/WeekView.jsx";
 import { ROADMAP_ENABLED } from "./lib/features.js";
 import { ensureHttpsOrigin, isLocalHost } from "./lib/ensureHttps.js";
+import { clearMobileShell } from "./lib/mobileShell.js";
 
 function currentPath() {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -81,6 +82,7 @@ export default function App() {
 
     setMe(null);
     setAuthError("");
+    clearMobileShell();
 
     try {
       const nextStatus = await api.status();
@@ -98,7 +100,7 @@ export default function App() {
   };
 
   return (
-    <ThemeProvider>
+    <ThemeProvider accountThemeId={me?.user?.themeId ?? null}>
       <Routes>
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/license" element={<LicensePage />} />

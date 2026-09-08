@@ -1,18 +1,34 @@
 @import "tailwindcss";
 
+/* Runtime theme tokens — updated by applyFoveaTheme() in foveaTheme.js */
+:root {
+  --fovea-wall: #ebe3d4;
+  --fovea-brand: #3d3228;
+  --fovea-brand-dark: #2a221c;
+  --fovea-brand-soft: #f0e8dc;
+  --fovea-accent: #7a5c42;
+  --fovea-accent-soft: #f0e8dc;
+  --fovea-map-accent: #7a5c42;
+  --fovea-paper: #f9f6ee;
+  --fovea-line: #e5d9c8;
+  --fovea-muted: #8a7b6b;
+  --fovea-surface: #fdfaf4;
+  --fovea-on-accent: #ffffff;
+}
+
 @theme {
-  --color-wall: #ebe3d4;
-  --color-brand: #3d3228;
-  --color-brand-dark: #2a221c;
-  --color-brand-soft: #f0e8dc;
-  --color-accent: #7a5c42;
-  --color-accent-soft: #f0e8dc;
-  --color-map-accent: #7a5c42;
-  --color-paper: #f9f6ee;
-  --color-line: #e5d9c8;
-  --color-muted: #8a7b6b;
-  --color-surface: #fdfaf4;
-  --color-on-accent: #ffffff;
+  --color-wall: var(--fovea-wall);
+  --color-brand: var(--fovea-brand);
+  --color-brand-dark: var(--fovea-brand-dark);
+  --color-brand-soft: var(--fovea-brand-soft);
+  --color-accent: var(--fovea-accent);
+  --color-accent-soft: var(--fovea-accent-soft);
+  --color-map-accent: var(--fovea-map-accent);
+  --color-paper: var(--fovea-paper);
+  --color-line: var(--fovea-line);
+  --color-muted: var(--fovea-muted);
+  --color-surface: var(--fovea-surface);
+  --color-on-accent: var(--fovea-on-accent);
   --color-sidebar: var(--sidebar-bg, #f8f2e8);
   --color-sidebar-surface: var(--sidebar-surface, #fdf8f2);
   --color-sidebar-border: var(--sidebar-border, #ead9c8);
@@ -769,6 +785,76 @@
 }
 
 @layer base {
+  html.fovea-mobile-shell,
+  html[data-fovea-mobile-shell="true"] {
+    -webkit-text-size-adjust: 100%;
+  }
+
+html.fovea-mobile-shell body,
+html[data-fovea-mobile-shell="true"] body {
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+html.fovea-mobile-shell .mobile-tab-bar,
+html[data-fovea-mobile-shell="true"] .mobile-tab-bar {
+  display: block;
+}
+
+/* Mobile — bottom tab bar */
+.mobile-main-with-tab-bar {
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-tab-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 45;
+  border-top: 1px solid color-mix(in srgb, var(--color-line) 85%, white);
+  background: color-mix(in srgb, var(--color-surface) 94%, white);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -4px 20px rgba(42, 42, 40, 0.06);
+}
+
+.mobile-tab-bar-list {
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  height: 3.5rem;
+}
+
+.mobile-tab-bar-item {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.25rem 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--color-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.mobile-tab-bar-item--active {
+  color: var(--color-accent);
+}
+
+.mobile-tab-bar-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
   html,
   body,
   #root {

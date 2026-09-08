@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -20,9 +20,9 @@ import IdeaPanel from "../components/IdeaPanel.jsx";
 import MindMapBackdrop from "../components/MindMapBackdrop.jsx";
 import { useChannels } from "../context/ChannelsContext.jsx";
 import FocusPageShell from "../components/FocusPageShell.jsx";
-import { tw, cn } from "../lib/tw.js";
-import { PageHeader, EmptyPanel, HeaderButton } from "../components/PageHeader.jsx";
-import { IconBrainstorm, IconPlus } from "../components/icons.jsx";
+import { tw } from "../lib/tw.js";
+import { PageHeader, EmptyPanel, HeaderButton, HeaderOutlineButton } from "../components/PageHeader.jsx";
+import { IconBrainstorm, IconLayers, IconPlus } from "../components/icons.jsx";
 
 const edgeTypes = { mindmap: MindMapEdge };
 
@@ -72,6 +72,7 @@ function BrainstormCanvas({ me }) {
   const projectId = me.project?.id;
   const { screenToFlowPosition } = useReactFlow();
   const { channels, refresh: refreshChannels } = useChannels();
+  const ignorePaneClickRef = useRef(false);
 
   const [ideas, setIdeas] = useState([]);
   const [rawEdges, setRawEdges] = useState([]);
@@ -81,10 +82,49 @@ function BrainstormCanvas({ me }) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [fitResetKey, setFitResetKey] = useState(0);
 
+  const bumpFitView = useCallback(() => {
+    setFitResetKey((key) => key + 1);
+  }, []);
+
+  const resetBrainstormView = useCallback(() => {
+    setSelectedId(null);
+    bumpFitView();
+  }, [bumpFitView]);
+
   useEffect(() => {
-    const onRefit = () => setFitResetKey((key) => key + 1);
+    const onRefit = () => bumpFitView();
+    const onReset = () => resetBrainstormView();
     window.addEventListener("fovea:refit-view", onRefit);
-    return () => window.removeEventListener("fovea:refit-view", onRefit);
+    window.addEventListener("fovea:reset-brainstorm", onReset);
+    return () => {
+      window.removeEventListener("fovea:refit-view", onRefit);
+      window.removeEventListener("fovea:reset-brainstorm", onReset);
+    };
+  }, [bumpFitView, resetBrainstormView]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "]" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || e.target?.isContentEditable) return;
+      e.preventDefault();
+      resetBrainstormView();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [resetBrainstormView]);
+
+  const handleNodeClick = useCallback((_event, node) => {
+    ignorePaneClickRef.current = true;
+    setSelectedId(node.id);
+    window.setTimeout(() => {
+      ignorePaneClickRef.current = false;
+    }, 0);
+  }, []);
+
+  const handlePaneClick = useCallback(() => {
+    if (ignorePaneClickRef.current) return;
+    setSelectedId(null);
   }, []);
 
   const selected = useMemo(
@@ -199,10 +239,19 @@ function BrainstormCanvas({ me }) {
         title="Ideas"
         description="A free-form space for rough thoughts. Promote to a task when ready."
         actions={
-          <HeaderButton onClick={addIdea}>
-            <IconPlus size={13} />
-            Idea
-          </HeaderButton>
+          <>
+            <HeaderOutlineButton
+              onClick={resetBrainstormView}
+              title="Show all ideas and reset view (])"
+            >
+              <IconLayers size={13} />
+              Reset view
+            </HeaderOutlineButton>
+            <HeaderButton onClick={addIdea}>
+              <IconPlus size={13} />
+              Idea
+            </HeaderButton>
+          </>
         }
       />
 
@@ -241,8 +290,8 @@ function BrainstormCanvas({ me }) {
               edgeTypes={edgeTypes}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
-              onNodeClick={(_event, node) => setSelectedId(node.id)}
-              onPaneClick={() => setSelectedId(null)}
+              onNodeClick={handleNodeClick}
+              onPaneClick={handlePaneClick}
               onNodeDragStop={(_event, node) => {
                 persistPosition(node.id, node.position.x, node.position.y).catch(console.error);
               }}

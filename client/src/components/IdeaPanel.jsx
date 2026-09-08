@@ -114,29 +114,29 @@ export default function IdeaPanel({ idea, channels, onChange, onPromote, onDelet
     />
   );
 
+  const desktopColumn = (
+    <aside className="relative hidden h-full min-h-0 overflow-hidden border-l border-line/70 bg-surface lg:block">
+      <div className="h-full overflow-y-auto">
+        {editorBody}
+      </div>
+    </aside>
+  );
+
+  if (!idea) return desktopColumn;
+
   return (
-    <div className="relative h-full min-h-0">
-      {idea ? (
-        <div
-          className="fixed inset-0 z-40 bg-stone-900/30 lg:hidden"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      ) : null}
-
-      {idea ? (
-        <aside className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-2xl border-t border-line/70 bg-surface shadow-md lg:hidden">
-          <div className="max-h-[85vh] overflow-y-auto">
-            {editorBody}
-          </div>
-        </aside>
-      ) : null}
-
-      <aside className="relative hidden h-full min-h-0 overflow-hidden border-l border-line/70 bg-surface lg:block">
-        <div className="h-full overflow-y-auto">
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-stone-900/30 lg:hidden"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-2xl border-t border-line/70 bg-surface shadow-md lg:hidden">
+        <div className="max-h-[85vh] overflow-y-auto pb-[env(safe-area-inset-bottom,0px)]">
           {editorBody}
         </div>
       </aside>
-    </div>
+      {desktopColumn}
+    </>
   );
 }

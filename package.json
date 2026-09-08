@@ -6,10 +6,12 @@
   "license": "MIT",
   "workspaces": [
     "client",
-    "server"
+    "server",
+    "mobile"
   ],
   "scripts": {
     "dev": "concurrently -n server,client -c cyan,magenta \"npm run dev -w fovea-server\" \"npm run dev -w fovea-client\"",
+    "dev:mobile": "concurrently -n server,client,expo -c cyan,magenta,green \"npm run dev -w fovea-server\" \"npm run dev -w fovea-client\" \"npm run start -w fovea-mobile\"",
     "install:all": "npm install",
     "build": "npm run build -w fovea-client",
     "start": "node server/src/index.js"

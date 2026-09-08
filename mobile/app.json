@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Fovea",
+    "slug": "fovea",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#f9f6ee"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "sh.fovea.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f9f6ee"
+      },
+      "package": "sh.fovea.app"
+    }
+  }
+}

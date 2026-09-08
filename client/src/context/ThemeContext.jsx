@@ -5,12 +5,13 @@ import {
   getStoredThemeId,
   getThemePreset,
   listThemePresets,
+  resolveThemeId,
   setFoveaTheme,
 } from "../lib/foveaTheme.js";
 
 const ThemeContext = createContext(null);
 
-export function ThemeProvider({ children }) {
+export function ThemeProvider({ children, accountThemeId = null }) {
   const [themeId, setThemeId] = useState(() => getStoredThemeId());
 
   useEffect(() => {
@@ -18,8 +19,16 @@ export function ThemeProvider({ children }) {
   }, [themeId]);
 
   useEffect(() => {
+    if (!accountThemeId) return;
+    const resolved = resolveThemeId(accountThemeId);
+    setThemeId(resolved);
+    setFoveaTheme(resolved);
+  }, [accountThemeId]);
+
+  useEffect(() => {
+    if (accountThemeId) return;
     api.saveTheme(getStoredThemeId()).catch(() => {});
-  }, []);
+  }, [accountThemeId]);
 
   const setTheme = useCallback((nextId) => {
     setThemeId(nextId);

@@ -30,7 +30,7 @@ export default function FocusAmbient({ variant = "page", className = "" }) {
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} aria-hidden="true">
       {isCanvas ? (
-        <div className="absolute inset-0 bg-paper" />
+        <div className="absolute inset-0" style={{ background: palette.bg }} />
       ) : (
         <>
           <div
