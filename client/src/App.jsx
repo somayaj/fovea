@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
-import { api } from "./api.js";
+import { api, SESSION_EXPIRED_EVENT } from "./api.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import AppShell from "./pages/AppShell.jsx";
 import BrainstormView from "./pages/BrainstormView.jsx";
@@ -67,16 +67,13 @@ export default function App() {
     setReady(true);
   };
 
-  useEffect(() => {
-    if (ensureHttpsOrigin(currentPath())) return;
-    refresh();
-  }, []);
-
-  const logout = async () => {
-    try {
-      await api.logout();
-    } catch {
-      // Still clear local session state if the request fails.
+  const returnToLogin = useCallback(async ({ callLogout = false } = {}) => {
+    if (callLogout) {
+      try {
+        await api.logout();
+      } catch {
+        // Session may already be gone.
+      }
     }
 
     setMe(null);
@@ -95,7 +92,22 @@ export default function App() {
     if (window.location.pathname !== "/" || window.location.search || window.location.hash) {
       window.history.replaceState(null, "", "/");
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (ensureHttpsOrigin(currentPath())) return;
+    refresh();
+  }, []);
+
+  useEffect(() => {
+    const onSessionExpired = () => {
+      returnToLogin();
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+  }, [returnToLogin]);
+
+  const logout = () => returnToLogin({ callLogout: true });
 
   return (
     <ThemeProvider>

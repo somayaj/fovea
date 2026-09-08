@@ -1,3 +1,10 @@
+export const SESSION_EXPIRED_EVENT = "fovea:session-expired";
+
+function notifySessionExpired() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+}
+
 async function request(path, options = {}) {
   const res = await fetch(path, {
     credentials: "include",
@@ -10,6 +17,7 @@ async function request(path, options = {}) {
   const text = await res.text();
   const data = text ? JSON.parse(text) : {};
   if (!res.ok) {
+    if (res.status === 401) notifySessionExpired();
     const error = new Error(data.error || res.statusText);
     error.status = res.status;
     throw error;
