@@ -14,9 +14,12 @@
     "dev:mobile": "concurrently -n server,client,expo -c cyan,magenta,green \"npm run dev -w fovea-server\" \"npm run dev -w fovea-client\" \"npm run start -w fovea-mobile\"",
     "install:all": "npm install",
     "build": "npm run build -w fovea-client",
-    "start": "node server/src/index.js"
+    "start": "node server/src/index.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "concurrently": "^9.1.2"
   }
 }
