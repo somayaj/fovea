@@ -167,6 +167,7 @@ function MapCanvas({ me }) {
   const [boardSearchResults, setBoardSearchResults] = useState([]);
   const [boardSearchLoading, setBoardSearchLoading] = useState(false);
   const boardLoadMoreRef = useRef(null);
+  const boardNodesLengthRef = useRef(0);
   const BOARD_PAGE_SIZE = 50;
   const [selectedId, setSelectedId] = useState(null);
   const [pinnedNode, setPinnedNode] = useState(null);
@@ -442,23 +443,26 @@ function MapCanvas({ me }) {
     async ({ append = false } = {}) => {
       if (!projectId) return;
       if (append) setBoardLoadingMore(true);
-      else setBoardNodes([]);
       try {
-        const offset = append ? boardNodes.length : 0;
+        const offset = append ? boardNodesLengthRef.current : 0;
         const data = await api.tasks(projectId, {
           limit: BOARD_PAGE_SIZE,
           offset,
           channel: filterChannel || undefined,
         });
         const next = data.nodes || [];
-        setBoardNodes((prev) => (append ? [...prev, ...next] : next));
+        setBoardNodes((prev) => {
+          const merged = append ? [...prev, ...next] : next;
+          boardNodesLengthRef.current = merged.length;
+          return merged;
+        });
         setBoardTotal(data.total || 0);
         setBoardHasMore(Boolean(data.hasMore));
       } finally {
         setBoardLoadingMore(false);
       }
     },
-    [projectId, filterChannel, boardNodes.length],
+    [projectId, filterChannel],
   );
 
   useEffect(() => {
