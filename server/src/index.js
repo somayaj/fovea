@@ -167,6 +167,8 @@ const start = async () => {
     path: "/",
   };
 
+  const SESSION_MAX_AGE_MS = 15 * 60 * 1000;
+
   app.use(
     session({
       store: sessionStore,
@@ -174,9 +176,10 @@ const start = async () => {
       secret: process.env.SESSION_SECRET || "fovea-dev-secret",
       resave: false,
       saveUninitialized: false,
+      rolling: true,
       cookie: {
         ...SESSION_COOKIE_OPTIONS,
-        maxAge: 14 * 24 * 60 * 60 * 1000,
+        maxAge: SESSION_MAX_AGE_MS,
       },
     }),
   );
