@@ -17,7 +17,7 @@ export function PageHeader({ icon, eyebrow, title, description, actions, toolbar
           className,
         )}
       >
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             {eyebrow ? (
               <div className="flex items-center gap-2">
@@ -36,10 +36,17 @@ export function PageHeader({ icon, eyebrow, title, description, actions, toolbar
             ) : null}
             <h1 className={cn("page-header-title", dark && "page-header-title--chrome")}>{title}</h1>
           </div>
-          {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+          {actions ? (
+            <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">{actions}</div>
+          ) : null}
         </div>
         {description ? (
-          <p className={cn("mt-2 text-sm leading-relaxed", dark ? headerChrome.muted : "text-muted")}>
+          <p
+            className={cn(
+              "mt-2 hidden text-sm leading-relaxed sm:block",
+              dark ? headerChrome.muted : "text-muted",
+            )}
+          >
             {description}
           </p>
         ) : null}

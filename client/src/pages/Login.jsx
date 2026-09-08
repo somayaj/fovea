@@ -24,12 +24,12 @@ export default function Login({ status, authError, onDevLogin }) {
   };
 
   return (
-    <div className="login-shell relative flex min-h-full bg-paper">
+    <div className="login-shell relative flex min-h-full min-h-dvh flex-col overflow-x-hidden bg-paper">
       <FocusAmbient variant="page" />
       <div className="relative z-[1] flex min-w-0 flex-1 flex-col lg:flex-row">
-        <section className="relative flex flex-1 flex-col justify-center px-6 py-10 lg:px-12 lg:py-14">
+        <section className="flex flex-1 flex-col justify-center px-5 py-6 sm:px-6 sm:py-8 lg:px-12 lg:py-14">
           <div className="mx-auto w-full max-w-3xl">
-            <div className="login-hero-brand">
+            <div className="login-hero-brand hidden lg:block">
               <FoveaLogo
                 size="lg"
                 layout="brand"
@@ -37,14 +37,16 @@ export default function Login({ status, authError, onDevLogin }) {
                 subtitleProminent
               />
             </div>
-            <h1 className="mt-6 text-[clamp(1.875rem,4.5vw,2.75rem)] font-semibold leading-[1.12] tracking-tight text-brand">
+            <h1
+              className="mt-0 text-center text-[clamp(1.625rem,6vw,2.75rem)] font-semibold leading-[1.12] tracking-tight text-brand lg:mt-6 lg:text-left"
+            >
               Focus on the <span className="text-accent">right task</span> this week.
             </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted lg:text-base">
+            <p className="mt-4 max-w-2xl text-center text-sm leading-relaxed text-muted lg:text-left lg:text-base">
               Your top task front and center — everything due this week stays visible around it.
             </p>
 
-            <LoginHeroCollage className="mt-8" />
+            <LoginHeroCollage className="mt-6 lg:mt-8" />
 
             <p className="login-hero-caption mt-4 text-center">
               This week&apos;s focus · Other tasks due this week
@@ -54,11 +56,11 @@ export default function Login({ status, authError, onDevLogin }) {
 
         <section
           className={cn(
-            "flex w-full shrink-0 items-center justify-center border-t border-line/80 bg-surface px-8 py-12 lg:w-[400px] lg:border-t-0 lg:border-l lg:py-0",
+            "flex w-full shrink-0 items-center justify-center border-t border-line/80 bg-surface px-5 py-8 sm:px-6 lg:w-[400px] lg:border-t-0 lg:border-l lg:px-8 lg:py-0",
           )}
         >
-          <div className="w-full max-w-[320px]">
-            <div className="mb-8 lg:hidden">
+          <div className="mx-auto w-full max-w-[320px]">
+            <div className="mb-6 flex justify-center lg:mb-8 lg:justify-start">
               <FoveaLogo size="sm" subtitle="Your week, one clear priority." subtitleProminent />
             </div>
 
@@ -112,7 +114,6 @@ export default function Login({ status, authError, onDevLogin }) {
           </div>
         </section>
       </div>
-      <LegalFooter className="relative z-[1] border-t border-line/80 px-6 py-4 lg:hidden" />
     </div>
   );
 }

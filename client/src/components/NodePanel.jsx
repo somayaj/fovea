@@ -371,59 +371,65 @@ export default function NodePanel({
     />
   );
 
+  const desktopColumn = (
+    <aside className="relative hidden h-full min-h-0 overflow-hidden border-l border-line/70 bg-surface lg:block">
+      <div className="h-full overflow-y-auto">
+        {editorBody}
+      </div>
+    </aside>
+  );
+
+  const imageNoticeModal = imageNotice ? (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-stone-900/35 p-4 backdrop-blur-[2px]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="image-notice-title"
+      onClick={() => setImageNotice(null)}
+    >
+      <div
+        className="w-full max-w-sm rounded-xl border border-line/80 bg-surface p-5 shadow-xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <p className={tw.label}>Photo</p>
+        <h3 id="image-notice-title" className="mt-1 text-base font-semibold text-stone-900">
+          {imageNotice.title}
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-stone-600">{imageNotice.message}</p>
+        <button
+          type="button"
+          onClick={() => setImageNotice(null)}
+          className={cn(tw.btn, "mt-5 w-full")}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  ) : null;
+
+  if (!node) {
+    return (
+      <>
+        {desktopColumn}
+        {imageNoticeModal}
+      </>
+    );
+  }
+
   return (
-    <div className="relative h-full min-h-0">
-      {node ? (
-        <div
-          className="fixed inset-0 z-40 bg-stone-900/30 lg:hidden"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      ) : null}
-
-      {/* Mobile bottom sheet */}
-      {node ? (
-        <aside className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-2xl border-t border-line/70 bg-surface shadow-md lg:hidden">
-          <div className="max-h-[85vh] overflow-y-auto">
-            {editorBody}
-          </div>
-        </aside>
-      ) : null}
-
-      {/* Desktop column — always one grid cell */}
-      <aside className="relative hidden h-full min-h-0 overflow-hidden border-l border-line/70 bg-surface lg:block">
-        <div className="h-full overflow-y-auto">
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-stone-900/30 lg:hidden"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-2xl border-t border-line/70 bg-surface shadow-md lg:hidden">
+        <div className="max-h-[85vh] overflow-y-auto pb-[env(safe-area-inset-bottom,0px)]">
           {editorBody}
         </div>
       </aside>
-
-      {imageNotice ? (
-        <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-stone-900/35 p-4 backdrop-blur-[2px]"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="image-notice-title"
-          onClick={() => setImageNotice(null)}
-        >
-          <div
-            className="w-full max-w-sm rounded-xl border border-line/80 bg-surface p-5 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <p className={tw.label}>Photo</p>
-            <h3 id="image-notice-title" className="mt-1 text-base font-semibold text-stone-900">
-              {imageNotice.title}
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-stone-600">{imageNotice.message}</p>
-            <button
-              type="button"
-              onClick={() => setImageNotice(null)}
-              className={cn(tw.btn, "mt-5 w-full")}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </div>
+      {desktopColumn}
+      {imageNoticeModal}
+    </>
   );
 }

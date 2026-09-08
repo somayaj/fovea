@@ -283,6 +283,58 @@
     filter: drop-shadow(0 3px 10px rgba(60, 40, 20, 0.1));
   }
 
+  @media (max-width: 640px) {
+    .page-header {
+      padding-inline: 1rem;
+      padding-block: 0.75rem;
+    }
+
+    .page-header-title {
+      font-size: 1.5rem;
+      transform: none;
+      transform-origin: left center;
+    }
+
+    .page-header-toolbar {
+      margin-top: 0.75rem;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .login-shell {
+      overflow-x: hidden;
+    }
+
+    .login-hero-brand {
+      padding-left: 0;
+      border-left: none;
+    }
+
+    .login-hero-brand-tagline {
+      padding-left: 0;
+      transform: none;
+      text-align: center;
+      font-size: 1.35rem;
+    }
+
+    .login-collage-scene {
+      border-radius: 0.875rem;
+    }
+
+    .login-collage-focus-ring--center {
+      top: 51%;
+      width: 36%;
+      min-width: 5.25rem;
+      max-width: 7.5rem;
+    }
+
+    .login-hero-caption {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+    }
+  }
+
   .focus-collage-empty-piece {
     opacity: 0.72;
   }
