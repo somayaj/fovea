@@ -15,7 +15,16 @@ async function request(path, options = {}) {
     ...options,
   });
   const text = await res.text();
-  const data = text ? JSON.parse(text) : {};
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    if (!res.ok) {
+      const error = new Error(res.status === 413 ? "Image is too large to save." : res.statusText);
+      error.status = res.status;
+      throw error;
+    }
+  }
   if (!res.ok) {
     if (res.status === 401) notifySessionExpired();
     const error = new Error(data.error || res.statusText);
