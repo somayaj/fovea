@@ -1,6 +1,6 @@
 import { execute, queryOne } from "./db.js";
 import { weekBounds, dateForWeekOffset } from "./week.js";
-import { WEEK_TASK_COLUMNS } from "./taskColumns.js";
+import { WEEK_TASK_COLUMNS, weekTaskColumns } from "./taskColumns.js";
 import { ACTIVE_TASK_AND } from "./taskFilters.js";
 
 const PRIORITY_ORDER = `CASE priority WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' THEN 2 WHEN 'p3' THEN 3 ELSE 9 END`;
@@ -44,7 +44,7 @@ export async function getCurrentWeekFocus(projectId, weekOffset = 0) {
 
 export async function getManualWeekFocus(projectId, weekStartIso) {
   return queryOne(
-    `SELECT ${WEEK_TASK_COLUMNS} FROM nodes n
+    `SELECT ${weekTaskColumns("n")} FROM nodes n
      JOIN projects p ON p.id = n.project_id
      WHERE p.id = ? AND p.week_focus_week_start = ? AND p.week_focus_task_id = n.id
        AND n.type = 'task' AND n.completed_at IS NULL AND n.archived = 0`,
