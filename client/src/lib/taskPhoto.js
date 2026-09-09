@@ -8,9 +8,15 @@ const LOW_PRIORITY = new Set(["p3"]);
  * @param {object} task
  * @param {{ role?: "focus" | "linked" | "related" | "default" }} [options]
  */
+function hasCustomPhotoFlag(task) {
+  const flag = task?.has_custom_photo ?? task?.hasCustomPhoto;
+  return flag === true || flag === 1 || flag === "1";
+}
+
 export function taskPhotoUrl(task, { role = "default" } = {}) {
   const custom = task?.image_url?.trim();
   if (custom) return custom;
+  if (task?.id && hasCustomPhotoFlag(task)) return `/api/nodes/${task.id}/photo`;
 
   const priority = task?.priority || "p2";
 
@@ -39,7 +45,7 @@ export function taskPhotoUrl(task, { role = "default" } = {}) {
 
 /** Whether this task uses a user-uploaded image instead of stock. */
 export function taskHasCustomPhoto(task) {
-  return Boolean(task?.image_url?.trim());
+  return Boolean(task?.image_url?.trim() || hasCustomPhotoFlag(task));
 }
 
 /** Match collage role for a task on the focus board. */

@@ -18,6 +18,7 @@ function taskFromNodeData(data) {
     type: data.type,
     priority: data.priority,
     image_url: data.image_url,
+    has_custom_photo: data.has_custom_photo ?? data.hasCustomPhoto,
   };
 }
 
