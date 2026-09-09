@@ -151,7 +151,10 @@ async function pickCenterId(projectId, scope, filterChannel, weekFocusId) {
 }
 
 async function fetchNode(projectId, nodeId) {
-  return queryOne("SELECT * FROM nodes WHERE project_id = ? AND id = ?", [projectId, nodeId]);
+  return queryOne(
+    `SELECT ${MAP_TASK_COLUMNS} FROM nodes WHERE project_id = ? AND id = ?`,
+    [projectId, nodeId],
+  );
 }
 
 async function channelLabel(channels, channelId) {
@@ -180,7 +183,7 @@ async function buildChannelScopeTree(projectId, centerId, scope, channels) {
   const branchOverflow = scope.expanded ? 0 : Math.max(0, total - MAX_BRANCHES);
 
   const branches = await query(
-    `SELECT * FROM nodes
+    `SELECT ${MAP_TASK_COLUMNS} FROM nodes
      WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${channelFilter.sql}
      ORDER BY ${PRIORITY_ORDER}, created_at
      LIMIT ?`,
@@ -485,7 +488,7 @@ async function buildRootScopeTree(projectId, centerId, scope, channels, filterCh
 
   const leaders = await query(
     `WITH scoped AS (
-       SELECT * FROM nodes
+       SELECT ${MAP_TASK_COLUMNS} FROM nodes
        WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${sql}
      ),
      ranked AS (
@@ -533,7 +536,7 @@ async function buildRootScopeTree(projectId, centerId, scope, channels, filterCh
 
     const leaves = await query(
       `WITH scoped AS (
-         SELECT * FROM nodes
+         SELECT ${MAP_TASK_COLUMNS} FROM nodes
          WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${sql}
        ),
        ranked AS (

@@ -49,14 +49,28 @@ function weekRangeSql(column, startDate, endDate) {
   };
 }
 
-async function countWeekTasks(projectId, startDate, endDate) {
-  const weekFilter = weekRangeSql("due_at", startDate, endDate);
+async function countWeekAndCompleted(projectId, startDate, endDate, { skipRecap = false } = {}) {
+  const due = weekRangeSql("due_at", startDate, endDate);
+  const done = weekRangeSql("completed_at", startDate, endDate);
   const row = await queryOne(
-    `SELECT COUNT(*) AS count FROM nodes
-     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND ${weekFilter.sql}`,
-    [projectId, ...weekFilter.params],
+    skipRecap
+      ? `SELECT
+           (SELECT COUNT(*) FROM nodes
+            WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND ${due.sql}) AS week_count,
+           0 AS completed_count`
+      : `SELECT
+           (SELECT COUNT(*) FROM nodes
+            WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND ${due.sql}) AS week_count,
+           (SELECT COUNT(*) FROM nodes
+            WHERE project_id = ? AND type = 'task' AND ${done.sql}) AS completed_count`,
+    skipRecap
+      ? [projectId, ...due.params]
+      : [projectId, ...due.params, projectId, ...done.params],
   );
-  return Number(row?.count) || 0;
+  return {
+    weekTaskCount: Number(row?.week_count) || 0,
+    completedCount: Number(row?.completed_count) || 0,
+  };
 }
 
 async function countNeighbors(projectId, focus, startDate, endDate) {
@@ -182,14 +196,14 @@ export async function buildWeekViewPaginated(
   const { startDate, endDate } = weekDateRange(bounds);
 
   const skipRecap = recapLimit === 0;
-  const [weekTaskCount, completedCount, completedTasks, focusResult] = await Promise.all([
-    countWeekTasks(projectId, startDate, endDate),
-    skipRecap ? 0 : countCompletedInWeek(projectId, startDate, endDate),
+  const [counts, completedTasks, focusResult] = await Promise.all([
+    countWeekAndCompleted(projectId, startDate, endDate, { skipRecap }),
     skipRecap
       ? []
       : fetchCompletedInWeek(projectId, startDate, endDate, recapLimit, recapOffset),
     getCurrentWeekFocus(projectId, weekOffset),
   ]);
+  const { weekTaskCount, completedCount } = counts;
   const hasMoreCompleted = recapOffset + completedTasks.length < completedCount;
   const { focus, pinned } = focusResult;
 
