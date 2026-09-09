@@ -6,7 +6,6 @@ import { isAdminUser, requireAdmin, revealUser, summarizeUser } from "./admin.js
 import { normalizeThemeId } from "./themes.js";
 import {
   buildMapView,
-  isUnsortedChannelFilter,
   MAP_CHANNEL_TASK_PAGE_SIZE,
   MAP_TASK_COLUMNS,
   taskPageForRank,
@@ -226,16 +225,8 @@ router.get("/projects/:id/map/view", async (req, res) => {
     taskPage,
   });
 
-  const activeChannel =
-    filterChannel && isUnsortedChannelFilter(filterChannel)
-      ? { id: null, name: "Unsorted" }
-      : filterChannel
-        ? await getChannel(project.id, filterChannel)
-        : null;
-
   res.json({
     project,
-    activeChannel,
     ...view,
   });
 });

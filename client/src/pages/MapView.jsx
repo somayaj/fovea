@@ -179,6 +179,7 @@ function MapCanvas({ me }) {
   );
   const [viewMode, setViewMode] = useState("map");
   const [week, setWeek] = useState(null);
+  const [mapWeekFocusId, setMapWeekFocusId] = useState(null);
   const [mapScope, setMapScope] = useState(scopeOverview());
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -264,7 +265,7 @@ function MapCanvas({ me }) {
     [treeNodes],
   );
 
-  const weekFocusId = week?.focus?.id ?? null;
+  const weekFocusId = week?.focus?.id ?? mapWeekFocusId;
   const { orderedIds: weekOrderIds, rankById: weekRankById, linkedIds: weekLinkedIds } = useMemo(
     () => buildWeekTaskOrder(week),
     [week],
@@ -394,7 +395,7 @@ function MapCanvas({ me }) {
       return;
     }
     try {
-      const data = await api.week();
+      const data = await api.week(0, { neighborLimit: 12, completedLimit: 0 });
       setWeek(data);
     } catch (err) {
       console.error(err);
@@ -402,12 +403,13 @@ function MapCanvas({ me }) {
   }, []);
 
   useEffect(() => {
-    if (!selected || selected.type !== "task") return;
-    setFocusWeekFromTask(selected);
-    api.week(selectedWeekOffset, { neighborLimit: 1, neighborOffset: 0 })
+    if (!isWeek) return;
+    if (selected?.type === "task") setFocusWeekFromTask(selected);
+    const offset = selected?.type === "task" ? selectedWeekOffset : 0;
+    api.week(offset, { neighborLimit: 12, completedLimit: 0 })
       .then(setWeek)
       .catch(console.error);
-  }, [selected?.id, selected?.due_at, selected?.type, selectedWeekOffset, setFocusWeekFromTask]);
+  }, [isWeek, selected?.id, selected?.type, selectedWeekOffset, setFocusWeekFromTask]);
 
   const loadMapView = useCallback(async () => {
     if (!projectId) return;
@@ -426,7 +428,7 @@ function MapCanvas({ me }) {
       setChannelPagination(viewData.channelPagination || null);
       setTaskPagination(viewData.taskPagination || null);
       setActiveChannelMeta(viewData.activeChannel || null);
-      loadWeek().catch(console.error);
+      setMapWeekFocusId(viewData.weekFocusId || null);
     } catch (err) {
       console.error(err);
       const message =
@@ -437,7 +439,7 @@ function MapCanvas({ me }) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, mapScope, filterChannel, channelPage, taskPage, loadWeek]);
+  }, [projectId, mapScope, filterChannel, channelPage, taskPage]);
 
   const loadBoard = useCallback(
     async ({ append = false } = {}) => {
