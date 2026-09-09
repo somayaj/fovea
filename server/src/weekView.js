@@ -10,10 +10,6 @@ import { getCurrentWeekFocus } from "./weekFocus.js";
 import { ACTIVE_TASK_AND } from "./taskFilters.js";
 import { WEEK_TASK_COLUMNS } from "./taskColumns.js";
 
-const WEEK_TASK_COLUMNS_N = WEEK_TASK_COLUMNS.split(", ")
-  .map((column) => `n.${column}`)
-  .join(", ");
-
 async function listChannelsForIds(projectId, ids) {
   const unique = [...new Set(ids.filter(Boolean))];
   if (!unique.length) return [];
@@ -29,7 +25,7 @@ export const MAX_NEIGHBOR_LIMIT = 48;
 export const RECAP_DEFAULT_LIMIT = 24;
 export const RECAP_MAX_LIMIT = 100;
 
-const PRIORITY_ORDER_N = `CASE n.priority WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' THEN 2 WHEN 'p3' THEN 3 ELSE 9 END`;
+const PRIORITY_ORDER = `CASE priority WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' THEN 2 WHEN 'p3' THEN 3 ELSE 9 END`;
 
 function formatLocalDateKey(date) {
   const y = date.getFullYear();
@@ -77,42 +73,31 @@ async function countNeighbors(projectId, focus, startDate, endDate) {
 
 async function fetchNeighbors(projectId, focus, startDate, endDate, limit, offset) {
   if (!focus) return [];
-  const weekFilter = weekRangeSql("n.due_at", startDate, endDate);
-  const rows = await query(
-    `SELECT ${WEEK_TASK_COLUMNS_N},
-       CASE
-         WHEN e.id IS NOT NULL THEN 'linked'
-         WHEN n.channel_id IS NOT NULL AND n.channel_id = ? THEN 'related'
-         ELSE 'week'
-       END AS neighbor_kind
-     FROM nodes n
-     LEFT JOIN edges e ON e.project_id = ? AND (
-       (e.source_id = ? AND e.target_id = n.id) OR (e.target_id = ? AND e.source_id = n.id)
-     )
-     WHERE n.project_id = ? AND n.type = 'task'
-       AND (n.completed_at IS NULL OR n.completed_at = '') AND (n.archived IS NULL OR n.archived = 0)
-       AND n.id != ?
+  const weekFilter = weekRangeSql("due_at", startDate, endDate);
+  return query(
+    `SELECT ${WEEK_TASK_COLUMNS} FROM nodes
+     WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ?
        AND ${weekFilter.sql}
-     ORDER BY
-       CASE WHEN e.id IS NOT NULL THEN 0
-            WHEN n.channel_id IS NOT NULL AND n.channel_id = ? THEN 1
-            ELSE 2 END,
-       ${PRIORITY_ORDER_N}, n.due_at, n.title
+     ORDER BY ${PRIORITY_ORDER}, due_at, title
      LIMIT ? OFFSET ?`,
-    [
-      focus.channel_id,
-      projectId,
-      focus.id,
-      focus.id,
-      projectId,
-      focus.id,
-      ...weekFilter.params,
-      focus.channel_id,
-      limit,
-      offset,
-    ],
+    [projectId, focus.id, ...weekFilter.params, limit, offset],
   );
-  return rows.map(({ neighbor_kind, ...node }) => ({ ...node, neighborKind: neighbor_kind }));
+}
+
+function withNeighborKind(neighbors, focus, edges) {
+  const linked = new Set();
+  for (const edge of edges) {
+    if (edge.source_id === focus.id) linked.add(edge.target_id);
+    if (edge.target_id === focus.id) linked.add(edge.source_id);
+  }
+  return neighbors.map((node) => ({
+    ...node,
+    neighborKind: linked.has(node.id)
+      ? "linked"
+      : node.channel_id && node.channel_id === focus.channel_id
+        ? "related"
+        : "week",
+  }));
 }
 
 async function fetchCompletedInWeek(projectId, startDate, endDate, limit, offset) {
@@ -238,17 +223,20 @@ export async function buildWeekViewPaginated(
     };
   }
 
-  const [neighborTotal, neighbors] = await Promise.all([
+  const [neighborTotal, rawNeighbors] = await Promise.all([
     countNeighbors(projectId, focus, startDate, endDate),
     fetchNeighbors(projectId, focus, startDate, endDate, limit, offset),
   ]);
-  const channels = await listChannelsForIds(projectId, [
-    focus.channel_id,
-    ...neighbors.map((node) => node.channel_id),
-    ...completedTasks.map((task) => task.channel_id),
+  const nodeIds = [focus.id, ...rawNeighbors.map((n) => n.id)];
+  const [channels, edges] = await Promise.all([
+    listChannelsForIds(projectId, [
+      focus.channel_id,
+      ...rawNeighbors.map((node) => node.channel_id),
+      ...completedTasks.map((task) => task.channel_id),
+    ]),
+    fetchEdges(projectId, nodeIds),
   ]);
-  const nodeIds = [focus.id, ...neighbors.map((n) => n.id)];
-  const edges = await fetchEdges(projectId, nodeIds);
+  const neighbors = withNeighborKind(rawNeighbors, focus, edges);
   const nodes = radialLayout(focus.id, [focus, ...neighbors]);
   const laidOutFocus = nodes.find((n) => n.id === focus.id) || focus;
 
@@ -275,6 +263,46 @@ export async function buildWeekViewPaginated(
     edges,
     fallback: false,
     reason: buildReason({ focus, isCurrentWeek, channels, weekTaskCount, pinned }),
+  };
+}
+
+export async function buildWeekRecap(
+  projectId,
+  { weekOffset = 0, completedLimit, completedOffset = 0 } = {},
+) {
+  const parsedCompleted = Number(completedLimit);
+  const recapLimit =
+    completedLimit == null || Number.isNaN(parsedCompleted)
+      ? RECAP_DEFAULT_LIMIT
+      : Math.min(Math.max(parsedCompleted, 0), RECAP_MAX_LIMIT);
+  const recapOffset = Math.max(Number(completedOffset) || 0, 0);
+  const bounds = weekBounds(dateForWeekOffset(weekOffset));
+  const { startDate, endDate } = weekDateRange(bounds);
+  if (recapLimit === 0) {
+    return {
+      completedCount: 0,
+      completedTasks: [],
+      completedLimit: 0,
+      completedOffset: recapOffset,
+      hasMoreCompleted: false,
+      channels: [],
+    };
+  }
+  const [completedCount, completedTasks] = await Promise.all([
+    countCompletedInWeek(projectId, startDate, endDate),
+    fetchCompletedInWeek(projectId, startDate, endDate, recapLimit, recapOffset),
+  ]);
+  const channels = await listChannelsForIds(
+    projectId,
+    completedTasks.map((task) => task.channel_id),
+  );
+  return {
+    completedCount,
+    completedTasks,
+    completedLimit: recapLimit,
+    completedOffset: recapOffset,
+    hasMoreCompleted: recapOffset + completedTasks.length < completedCount,
+    channels,
   };
 }
 

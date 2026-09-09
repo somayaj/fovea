@@ -36,7 +36,7 @@ export default function WeekView() {
   const [recapLoading, setRecapLoading] = useState(false);
   const requestRef = useRef(0);
 
-  const loadWeek = useCallback(async (offset, { append = false, neighborOffset = 0, completedLimit = RECAP_DEFAULT_LIMIT } = {}) => {
+  const loadWeek = useCallback(async (offset, { append = false, neighborOffset = 0, completedLimit = 0 } = {}) => {
     const requestId = ++requestRef.current;
     if (!append) setLoading(true);
     else setLoadingMore(true);
@@ -59,6 +59,9 @@ export default function WeekView() {
         return {
           ...data,
           neighbors: merged,
+          completedTasks: prev.completedTasks,
+          completedCount: prev.completedCount,
+          hasMoreCompleted: prev.hasMoreCompleted,
         };
       });
     } catch (err) {
@@ -72,10 +75,36 @@ export default function WeekView() {
     }
   }, []);
 
+  const loadRecap = useCallback(async (offset, completedLimit) => {
+    setRecapLoading(true);
+    try {
+      const recap = await api.weekRecap(offset, { completedLimit });
+      setWeek((prev) => {
+        if (!prev) return prev;
+        const seen = new Set((prev.channels || []).map((channel) => channel.id));
+        const extra = (recap.channels || []).filter((channel) => !seen.has(channel.id));
+        return {
+          ...prev,
+          completedTasks: recap.completedTasks,
+          completedCount: recap.completedCount,
+          hasMoreCompleted: recap.hasMoreCompleted,
+          completedLimit: recap.completedLimit,
+          channels: [...(prev.channels || []), ...extra],
+        };
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRecapLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     setRecapLimit(RECAP_DEFAULT_LIMIT);
-    loadWeek(weekOffset, { completedLimit: RECAP_DEFAULT_LIMIT }).catch(console.error);
-  }, [loadWeek, weekOffset]);
+    loadWeek(weekOffset, { completedLimit: 0 })
+      .then(() => loadRecap(weekOffset, RECAP_DEFAULT_LIMIT))
+      .catch(console.error);
+  }, [loadWeek, loadRecap, weekOffset]);
 
   const handleWeekChange = (nextOffset) => {
     if (nextOffset === weekOffset) return;
@@ -105,23 +134,13 @@ export default function WeekView() {
   }, []);
 
   const handleExpandRecap = async () => {
-    setRecapLoading(true);
     setRecapLimit(RECAP_EXPANDED_LIMIT);
-    try {
-      await loadWeek(weekOffset, { completedLimit: RECAP_EXPANDED_LIMIT });
-    } finally {
-      setRecapLoading(false);
-    }
+    await loadRecap(weekOffset, RECAP_EXPANDED_LIMIT);
   };
 
   const handleCollapseRecap = async () => {
-    setRecapLoading(true);
     setRecapLimit(RECAP_DEFAULT_LIMIT);
-    try {
-      await loadWeek(weekOffset, { completedLimit: RECAP_DEFAULT_LIMIT });
-    } finally {
-      setRecapLoading(false);
-    }
+    await loadRecap(weekOffset, RECAP_DEFAULT_LIMIT);
   };
 
   if (loading && !week) {

@@ -51,7 +51,9 @@ export default function App() {
       const nextStatus = await api.status();
       setStatus(nextStatus);
       setAuthError("");
-      if (nextStatus.user) {
+      if (nextStatus.me) {
+        setMe(nextStatus.me);
+      } else if (nextStatus.user) {
         const nextMe = await api.me();
         setMe(nextMe);
       } else {

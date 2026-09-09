@@ -89,6 +89,7 @@ export const api = {
     }),
   deleteChannel: (channelId) => request(`/api/channels/${channelId}`, { method: "DELETE" }),
   createNode: (body) => request("/api/nodes", { method: "POST", body: JSON.stringify(body) }),
+  getNode: (nodeId) => request(`/api/nodes/${nodeId}`),
   patchNode: (nodeId, body) =>
     request(`/api/nodes/${nodeId}`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteNode: (nodeId) => request(`/api/nodes/${nodeId}`, { method: "DELETE" }),
@@ -101,6 +102,15 @@ export const api = {
       offset: String(offset),
       neighborLimit: String(neighborLimit),
       neighborOffset: String(neighborOffset),
+      completedLimit: String(completedLimit),
+      completedOffset: String(completedOffset),
+    });
+    return request(`/api/week?${params}`);
+  },
+  weekRecap: (offset = 0, { completedLimit = 24, completedOffset = 0 } = {}) => {
+    const params = new URLSearchParams({
+      offset: String(offset),
+      recapOnly: "1",
       completedLimit: String(completedLimit),
       completedOffset: String(completedOffset),
     });
