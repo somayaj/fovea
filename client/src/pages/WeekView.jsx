@@ -13,6 +13,18 @@ function parseWeekOffset(searchParams) {
   return Number.parseInt(searchParams.get("week") ?? "0", 10) || 0;
 }
 
+function mergeNodeIntoWeek(week, node) {
+  if (!week || !node) return week;
+  const patch = (list) => (list || []).map((item) => (item.id === node.id ? { ...item, ...node } : item));
+  return {
+    ...week,
+    focus: week.focus?.id === node.id ? { ...week.focus, ...node } : week.focus,
+    neighbors: patch(week.neighbors),
+    nodes: patch(week.nodes),
+    completedTasks: patch(week.completedTasks),
+  };
+}
+
 export default function WeekView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const weekOffset = parseWeekOffset(searchParams);
@@ -84,6 +96,14 @@ export default function WeekView() {
     [loadWeek, weekOffset, recapLimit],
   );
 
+  const patchNodeInWeek = useCallback((node) => {
+    setWeek((prev) => mergeNodeIntoWeek(prev, node));
+  }, []);
+
+  const applyWeekData = useCallback((data) => {
+    if (data?.weekStart != null) setWeek(data);
+  }, []);
+
   const handleExpandRecap = async () => {
     setRecapLoading(true);
     setRecapLimit(RECAP_EXPANDED_LIMIT);
@@ -125,6 +145,8 @@ export default function WeekView() {
       onWeekChange={handleWeekChange}
       onLoadMoreNeighbors={handleLoadMoreNeighbors}
       onRefresh={refreshWeek}
+      onPatchNode={patchNodeInWeek}
+      onWeekData={applyWeekData}
       recapExpanded={recapLimit > RECAP_DEFAULT_LIMIT}
       recapLoading={recapLoading}
       onExpandRecap={handleExpandRecap}

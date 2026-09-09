@@ -1,5 +1,6 @@
 import { execute, queryOne } from "./db.js";
 import { weekBounds, dateForWeekOffset } from "./week.js";
+import { WEEK_TASK_COLUMNS } from "./mapView.js";
 
 export function weekStartIso(weekOffset = 0) {
   const bounds = weekBounds(dateForWeekOffset(weekOffset));
@@ -15,7 +16,7 @@ export async function getManualWeekFocus(projectId, weekStartIso) {
     return null;
   }
   return queryOne(
-    `SELECT * FROM nodes WHERE id = ? AND project_id = ? AND type = 'task'
+    `SELECT ${WEEK_TASK_COLUMNS} FROM nodes WHERE id = ? AND project_id = ? AND type = 'task'
        AND (completed_at IS NULL OR completed_at = '')`,
     [project.week_focus_task_id, projectId],
   );

@@ -43,7 +43,6 @@ import {
   onTaskCreated,
   onTaskDeleted,
   onTaskUpdated,
-  onTaskCompletionChanged,
 } from "./taskCounts.js";
 import { ACTIVE_TASK_AND, ACTIVE_NODE_AND } from "./taskFilters.js";
 
@@ -499,60 +498,55 @@ router.post("/nodes", async (req, res) => {
 });
 
 router.patch("/nodes/:nodeId", async (req, res) => {
-  const node = await queryOne("SELECT * FROM nodes WHERE id = ?", [req.params.nodeId]);
+  const node = await queryOne(
+    `SELECT n.* FROM nodes n
+     JOIN projects p ON p.id = n.project_id AND p.user_id = ?
+     WHERE n.id = ?`,
+    [req.user.id, req.params.nodeId],
+  );
   if (!node) return res.status(404).json({ error: "Node not found" });
-  const project = await userProject(req.user.id, node.project_id);
-  if (!project) return res.status(404).json({ error: "Node not found" });
 
   const next = { ...node };
-  if (req.body?.title != null) next.title = String(req.body.title).trim() || node.title;
-  if (req.body?.notes != null) next.notes = String(req.body.notes);
-  if (req.body?.x != null) next.x = Number(req.body.x);
-  if (req.body?.y != null) next.y = Number(req.body.y);
-  if (req.body?.estimateHours !== undefined) next.estimate_hours = req.body.estimateHours;
-  if (req.body?.dueAt !== undefined) next.due_at = req.body.dueAt;
+  const sets = [];
+  const values = [];
+  const setCol = (column, value) => {
+    if (Object.is(next[column], value)) return;
+    next[column] = value;
+    sets.push(`${column} = ?`);
+    values.push(value);
+  };
+
+  if (req.body?.title != null) setCol("title", String(req.body.title).trim() || node.title);
+  if (req.body?.notes != null) setCol("notes", String(req.body.notes));
+  if (req.body?.x != null) setCol("x", Number(req.body.x));
+  if (req.body?.y != null) setCol("y", Number(req.body.y));
+  if (req.body?.estimateHours !== undefined) setCol("estimate_hours", req.body.estimateHours);
+  if (req.body?.dueAt !== undefined) setCol("due_at", req.body.dueAt);
   if (req.body?.type && ["idea", "task"].includes(req.body.type)) {
-    next.type = req.body.type;
+    setCol("type", req.body.type);
   }
   if (req.body?.promote === "task") {
-    next.type = "task";
-    next.priority = next.priority || req.body.priority || "p2";
+    setCol("type", "task");
+    if (!next.priority) setCol("priority", req.body.priority || "p2");
   }
-  if (req.body?.priority !== undefined) next.priority = req.body.priority;
-  if (req.body?.channelId !== undefined) next.channel_id = req.body.channelId || null;
-  if (req.body?.imageUrl !== undefined) next.image_url = req.body.imageUrl?.trim() || null;
-  if (req.body?.category !== undefined) next.category = req.body.category?.trim() || null;
+  if (req.body?.priority !== undefined) setCol("priority", req.body.priority);
+  if (req.body?.channelId !== undefined) setCol("channel_id", req.body.channelId || null);
+  if (req.body?.imageUrl !== undefined) setCol("image_url", req.body.imageUrl?.trim() || null);
+  if (req.body?.category !== undefined) setCol("category", req.body.category?.trim() || null);
   if (req.body?.completed !== undefined) {
-    next.completed_at = req.body.completed ? nowIso() : null;
+    setCol("completed_at", req.body.completed ? nowIso() : null);
   }
-  if (next.type === "task" && !next.priority) next.priority = "p2";
+  if (next.type === "task" && !next.priority) setCol("priority", "p2");
 
-  await execute(
-    `UPDATE nodes SET title = ?, notes = ?, x = ?, y = ?, type = ?,
-      channel_id = ?, priority = ?, estimate_hours = ?, due_at = ?, image_url = ?, category = ?, completed_at = ?
-     WHERE id = ?`,
-    [
-      next.title,
-      next.notes,
-      next.x,
-      next.y,
-      next.type,
-      next.channel_id,
-      next.priority,
-      next.estimate_hours,
-      next.due_at,
-      next.image_url,
-      next.category,
-      next.completed_at ?? null,
-      next.id,
-    ],
-  );
-  await onTaskUpdated(node, next);
-  await onTaskCompletionChanged(node, next);
-  if (next.completed_at && !node.completed_at) {
-    await clearWeekFocusIfTask(project.id, next.id);
+  if (sets.length) {
+    values.push(next.id);
+    await execute(`UPDATE nodes SET ${sets.join(", ")} WHERE id = ?`, values);
+    await onTaskUpdated(node, next);
+    if (next.completed_at && !node.completed_at) {
+      await clearWeekFocusIfTask(node.project_id, next.id);
+    }
   }
-  res.json({ node: await queryOne("SELECT * FROM nodes WHERE id = ?", [next.id]) });
+  res.json({ node: next });
 });
 
 router.delete("/nodes/:nodeId", async (req, res) => {
@@ -639,7 +633,6 @@ router.get("/week", async (req, res) => {
 
   res.json({
     project,
-    channels: await listChannels(project.id, { includeArchived: false }),
     ...raw,
   });
 });
@@ -665,7 +658,6 @@ router.put("/week/focus", async (req, res) => {
   const view = await buildWeekViewPaginated(project.id, { weekOffset });
   res.json({
     project,
-    channels: await listChannels(project.id, { includeArchived: false }),
     ...view,
   });
 });
@@ -680,7 +672,6 @@ router.delete("/week/focus", async (req, res) => {
   const view = await buildWeekViewPaginated(project.id, { weekOffset });
   res.json({
     project,
-    channels: await listChannels(project.id, { includeArchived: false }),
     ...view,
   });
 });
