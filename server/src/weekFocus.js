@@ -52,7 +52,7 @@ export async function getManualWeekFocus(projectId, weekStartIso) {
   }
   return queryOne(
     `SELECT ${WEEK_TASK_COLUMNS} FROM nodes WHERE id = ? AND project_id = ? AND type = 'task'
-       AND (completed_at IS NULL OR completed_at = '')`,
+       AND completed_at IS NULL AND archived = 0`,
     [project.week_focus_task_id, projectId],
   );
 }

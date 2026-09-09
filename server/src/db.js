@@ -271,6 +271,11 @@ async function migrate() {
   await execute(
     "CREATE INDEX IF NOT EXISTS idx_edges_project_target ON edges(project_id, target_id)",
   );
+  await execute("UPDATE nodes SET completed_at = NULL WHERE completed_at = ''");
+  await execute("UPDATE nodes SET archived = 0 WHERE archived IS NULL");
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_nodes_active_due ON nodes(project_id, due_at) WHERE type = 'task' AND completed_at IS NULL AND archived = 0",
+  );
 
 }
 

@@ -8,8 +8,9 @@ import cors from "cors";
 import passport from "passport";
 import dotenv from "dotenv";
 import { configurePassport, createDevUser, publicUser } from "./auth.js";
+import { isAdminUser } from "./admin.js";
 import api from "./routes.js";
-import { initDb, isPostgres } from "./db.js";
+import { initDb, isPostgres, queryOne } from "./db.js";
 import {
   canonicalAppOrigin,
   ensureHttpsOrigin,
@@ -186,12 +187,24 @@ const start = async () => {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  app.get("/auth/status", (req, res) => {
-    res.json({
+  app.get("/auth/status", async (req, res) => {
+    const payload = {
       google: googleReady,
       devLogin: allowDevLogin(req),
       user: publicUser(req.user),
-    });
+    };
+    if (req.user) {
+      const project = await queryOne("SELECT * FROM projects WHERE user_id = ?", [req.user.id]);
+      payload.me = {
+        user: {
+          ...publicUser(req.user),
+          isAdmin: isAdminUser(req.user),
+          themeId: req.user.theme_id || null,
+        },
+        project,
+      };
+    }
+    res.json(payload);
   });
 
   if (googleReady) {

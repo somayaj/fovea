@@ -17,7 +17,7 @@ import {
   deleteChannelWithTasks,
   restoreChannelWithTasks,
 } from "./channelArchive.js";
-import { buildWeekViewPaginated } from "./weekView.js";
+import { buildWeekRecap, buildWeekViewPaginated } from "./weekView.js";
 import {
   buildRoadmapBucket,
   buildRoadmapYear,
@@ -488,6 +488,17 @@ router.post("/nodes", async (req, res) => {
   res.status(201).json({ node });
 });
 
+router.get("/nodes/:nodeId", async (req, res) => {
+  const node = await queryOne(
+    `SELECT n.* FROM nodes n
+     JOIN projects p ON p.id = n.project_id AND p.user_id = ?
+     WHERE n.id = ?`,
+    [req.user.id, req.params.nodeId],
+  );
+  if (!node) return res.status(404).json({ error: "Node not found" });
+  res.json({ node });
+});
+
 router.patch("/nodes/:nodeId", async (req, res) => {
   const node = await queryOne(
     `SELECT n.* FROM nodes n
@@ -613,6 +624,15 @@ router.get("/week", async (req, res) => {
   const neighborOffset = req.query.neighborOffset;
   const completedLimit = req.query.completedLimit;
   const completedOffset = req.query.completedOffset;
+
+  if (req.query.recapOnly === "1" || req.query.recapOnly === "true") {
+    const recap = await buildWeekRecap(project.id, {
+      weekOffset,
+      completedLimit,
+      completedOffset,
+    });
+    return res.json({ project, ...recap });
+  }
 
   const raw = await buildWeekViewPaginated(project.id, {
     weekOffset,

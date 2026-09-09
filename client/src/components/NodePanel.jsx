@@ -33,19 +33,37 @@ export default function NodePanel({
   onClose,
 }) {
   const [draft, setDraft] = useState(null);
+  const [detail, setDetail] = useState(null);
   const [focusBusy, setFocusBusy] = useState(false);
   const [seriesBusy, setSeriesBusy] = useState(false);
   const [seriesInfo, setSeriesInfo] = useState(null);
   const [imageNotice, setImageNotice] = useState(null);
   const timer = useRef(null);
+  const view = detail?.id === node?.id ? { ...node, ...detail } : node;
 
   useEffect(() => {
     setImageNotice(null);
+    setDetail(null);
+    if (!node?.id) return;
+    let cancelled = false;
+    api.getNode(node.id)
+      .then((data) => {
+        if (!cancelled && data?.node) setDetail(data.node);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [node?.id]);
 
   useEffect(() => {
     setDraft(node ? { title: node.title, notes: node.notes || "" } : null);
   }, [node?.id, node?.title, node?.notes]);
+
+  useEffect(() => {
+    if (!detail?.notes) return;
+    setDraft((current) => (current && !current.notes ? { ...current, notes: detail.notes } : current));
+  }, [detail]);
 
   useEffect(() => {
     const seriesId = node?.recurrence_series_id;
@@ -178,7 +196,7 @@ export default function NodePanel({
 
       <div className="space-y-4 px-5 py-4">
         <TaskPhoto
-          task={node}
+          task={view}
           channelName={channelLabel}
           photoRole={photoRole}
           size="lg"
@@ -191,7 +209,7 @@ export default function NodePanel({
           <input
             id="imageUrl"
             type="url"
-            value={node.image_url || ""}
+            value={view.image_url || ""}
             onChange={(e) => flush({ imageUrl: e.target.value || null })}
             placeholder="Paste an image URL…"
             className={tw.input}
@@ -201,7 +219,7 @@ export default function NodePanel({
               Upload image
               <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
             </label>
-            {node.image_url ? (
+            {view.image_url ? (
               <button
                 type="button"
                 className={tw.btnSm}

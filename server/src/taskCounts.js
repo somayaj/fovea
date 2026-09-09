@@ -4,8 +4,8 @@ export async function countUnsortedTasks(projectId) {
   const row = await queryOne(
     `SELECT COUNT(*) AS count FROM nodes
      WHERE project_id = ? AND type = 'task'
-       AND (completed_at IS NULL OR completed_at = '')
-       AND (archived IS NULL OR archived = 0)
+       AND completed_at IS NULL
+       AND archived = 0
        AND channel_id IS NULL`,
     [projectId],
   );
@@ -65,8 +65,8 @@ export async function backfillChannelTaskCounts(projectId) {
        SELECT COUNT(*) FROM nodes n
        WHERE n.channel_id = channels.id AND n.project_id = channels.project_id
          AND n.type = 'task'
-         AND (n.completed_at IS NULL OR n.completed_at = '')
-         AND (n.archived IS NULL OR n.archived = 0)
+         AND n.completed_at IS NULL
+         AND n.archived = 0
      )
      WHERE project_id = ?`,
     [projectId],
