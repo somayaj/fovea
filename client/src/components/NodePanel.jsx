@@ -9,6 +9,7 @@ import { EmptyPanel } from "./PageHeader.jsx";
 import { IconTrash, IconFocus, IconCheck } from "./icons.jsx";
 import { FoveaMark } from "./FoveaLogo.jsx";
 import { REPEAT_OPTIONS } from "../lib/recurrence.js";
+import { fileToTaskImageUrl, isHttpPhotoUrl } from "../lib/taskPhoto.js";
 import { tw, cn } from "../lib/tw.js";
 
 const MAX_TASK_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -54,7 +55,7 @@ export default function NodePanel({
   useEffect(() => {
     setImageNotice(null);
     setDetail(null);
-    localPhoto.current = null;
+    if (localPhoto.current?.id !== node?.id) localPhoto.current = null;
     if (!node?.id) return;
     let cancelled = false;
     api.getNode(node.id)
@@ -105,7 +106,7 @@ export default function NodePanel({
     };
   }, [node?.recurrence_series_id]);
 
-  const flush = (patch) => {
+  const flush = async (patch) => {
     if (!node) return;
     if (Object.prototype.hasOwnProperty.call(patch, "imageUrl")) {
       const image_url = patch.imageUrl || null;
@@ -117,7 +118,22 @@ export default function NodePanel({
         has_custom_photo: image_url ? 1 : 0,
       }));
     }
-    onChange(patch);
+    try {
+      await onChange(patch);
+    } catch (err) {
+      if (Object.prototype.hasOwnProperty.call(patch, "imageUrl")) {
+        localPhoto.current = null;
+        setDetail((current) => (
+          current?.id === node.id
+            ? { ...current, image_url: node.image_url || null, has_custom_photo: node.image_url ? 1 : 0 }
+            : current
+        ));
+        setImageNotice({
+          title: "Could not save photo",
+          message: err.message || "Try a smaller JPEG or PNG, or paste an image URL.",
+        });
+      }
+    }
   };
 
   const queueText = (field, value) => {
@@ -140,10 +156,15 @@ export default function NodePanel({
       return;
     }
     setImageNotice(null);
-    const reader = new FileReader();
-    reader.onload = () => flush({ imageUrl: reader.result });
-    reader.readAsDataURL(file);
     event.target.value = "";
+    fileToTaskImageUrl(file)
+      .then((imageUrl) => flush({ imageUrl }))
+      .catch((err) => {
+        setImageNotice({
+          title: "Could not save photo",
+          message: err.message || "Try a smaller JPEG or PNG, or paste an image URL.",
+        });
+      });
   };
 
   const isWeekFocus = Boolean(node?.type === "task" && weekFocusId && node.id === weekFocusId);
@@ -240,8 +261,16 @@ export default function NodePanel({
           <input
             id="imageUrl"
             type="url"
-            value={view.image_url || ""}
-            onChange={(e) => flush({ imageUrl: e.target.value || null })}
+            value={isHttpPhotoUrl(view.image_url) ? view.image_url : ""}
+            onChange={(e) => {
+              const next = e.target.value.trim();
+              if (!next) {
+                if (!isHttpPhotoUrl(view.image_url)) return;
+                flush({ imageUrl: null });
+                return;
+              }
+              flush({ imageUrl: next });
+            }}
             placeholder="Paste an image URL…"
             className={tw.input}
           />
