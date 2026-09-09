@@ -488,6 +488,24 @@ router.post("/nodes", async (req, res) => {
   res.status(201).json({ node });
 });
 
+router.get("/nodes/:nodeId/photo", async (req, res) => {
+  const node = await queryOne(
+    `SELECT n.image_url FROM nodes n
+     JOIN projects p ON p.id = n.project_id AND p.user_id = ?
+     WHERE n.id = ?`,
+    [req.user.id, req.params.nodeId],
+  );
+  const url = String(node?.image_url || "").trim();
+  if (!url) return res.status(404).json({ error: "No photo" });
+  if (/^https?:\/\//i.test(url)) return res.redirect(url);
+  const match = url.match(/^data:([^;,]+);base64,(.+)$/s);
+  if (!match) return res.status(404).json({ error: "No photo" });
+  const buffer = Buffer.from(match[2], "base64");
+  res.setHeader("Content-Type", match[1] || "image/jpeg");
+  res.setHeader("Cache-Control", "private, max-age=3600");
+  return res.send(buffer);
+});
+
 router.get("/nodes/:nodeId", async (req, res) => {
   const node = await queryOne(
     `SELECT n.* FROM nodes n
