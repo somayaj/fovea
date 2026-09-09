@@ -465,9 +465,10 @@ router.post("/nodes", async (req, res) => {
     created_at: nowIso(),
   };
   node.has_custom_photo = node.image_url ? 1 : 0;
+  node.photo_rev = node.image_url ? 1 : 0;
   await execute(
-    `INSERT INTO nodes (id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at, has_custom_photo)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO nodes (id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at, has_custom_photo, photo_rev)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       node.id,
       node.project_id,
@@ -484,6 +485,7 @@ router.post("/nodes", async (req, res) => {
       node.category,
       node.created_at,
       node.has_custom_photo,
+      node.photo_rev,
     ],
   );
   await onTaskCreated(node);
@@ -558,6 +560,7 @@ router.patch("/nodes/:nodeId", async (req, res) => {
     const imageUrl = req.body.imageUrl?.trim() || null;
     setCol("image_url", imageUrl);
     setCol("has_custom_photo", imageUrl ? 1 : 0);
+    setCol("photo_rev", (Number(node.photo_rev) || 0) + 1);
   }
   if (req.body?.category !== undefined) setCol("category", req.body.category?.trim() || null);
   if (req.body?.completed !== undefined) {

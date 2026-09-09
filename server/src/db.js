@@ -221,6 +221,7 @@ async function migrate() {
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS completed_at TEXT");
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS archived INTEGER NOT NULL DEFAULT 0");
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS has_custom_photo INTEGER NOT NULL DEFAULT 0");
+    await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS photo_rev INTEGER NOT NULL DEFAULT 0");
   } else {
     const userCols = await query("PRAGMA table_info(users)");
     const userNames = new Set(userCols.map((c) => c.name));
@@ -255,6 +256,9 @@ async function migrate() {
     if (!names.has("archived")) await execute("ALTER TABLE nodes ADD COLUMN archived INTEGER NOT NULL DEFAULT 0");
     if (!names.has("has_custom_photo")) {
       await execute("ALTER TABLE nodes ADD COLUMN has_custom_photo INTEGER NOT NULL DEFAULT 0");
+    }
+    if (!names.has("photo_rev")) {
+      await execute("ALTER TABLE nodes ADD COLUMN photo_rev INTEGER NOT NULL DEFAULT 0");
     }
   }
 

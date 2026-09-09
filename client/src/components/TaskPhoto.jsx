@@ -41,6 +41,7 @@ export default function TaskPhoto({
     >
       {showImage ? (
         <img
+          key={src}
           src={src}
           alt={taskPhotoAlt(task)}
           className={cn(
@@ -79,6 +80,7 @@ export function TaskPhotoThumb({ task, channelName, className = "" }) {
   return (
     <div className={cn("task-image overflow-hidden", className)}>
       <img
+        key={taskPhotoUrl(task)}
         src={taskPhotoUrl(task)}
         alt={taskPhotoAlt(task)}
         className="task-photo-img h-full w-full object-cover"
