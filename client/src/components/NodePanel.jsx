@@ -9,7 +9,7 @@ import { EmptyPanel } from "./PageHeader.jsx";
 import { IconTrash, IconFocus, IconCheck } from "./icons.jsx";
 import { FoveaMark } from "./FoveaLogo.jsx";
 import { REPEAT_OPTIONS } from "../lib/recurrence.js";
-import { fileToTaskImageUrl, isHttpPhotoUrl } from "../lib/taskPhoto.js";
+import { fileToTaskImageUrl, isHttpPhotoUrl, taskHasCustomPhoto } from "../lib/taskPhoto.js";
 import { tw, cn } from "../lib/tw.js";
 
 const MAX_TASK_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -44,12 +44,7 @@ export default function NodePanel({
   const view = (() => {
     if (!node) return node;
     if (detail?.id !== node.id) return node;
-    const merged = { ...node, ...detail };
-    if (Object.prototype.hasOwnProperty.call(node, "image_url")) {
-      merged.image_url = node.image_url;
-      merged.has_custom_photo = node.image_url ? 1 : 0;
-    }
-    return merged;
+    return { ...node, ...detail };
   })();
 
   useEffect(() => {
@@ -67,6 +62,7 @@ export default function NodePanel({
             ...data.node,
             image_url: pending.image_url,
             has_custom_photo: pending.image_url ? 1 : 0,
+            photo_rev: pending.photo_rev ?? data.node.photo_rev,
           });
           return;
         }
@@ -110,12 +106,14 @@ export default function NodePanel({
     if (!node) return;
     if (Object.prototype.hasOwnProperty.call(patch, "imageUrl")) {
       const image_url = patch.imageUrl || null;
-      localPhoto.current = { id: node.id, image_url };
+      const photo_rev = (Number(node.photo_rev) || 0) + 1;
+      localPhoto.current = { id: node.id, image_url, photo_rev };
       setDetail((current) => ({
         ...(current?.id === node.id ? current : node),
         id: node.id,
         image_url,
         has_custom_photo: image_url ? 1 : 0,
+        photo_rev,
       }));
     }
     try {
@@ -125,7 +123,12 @@ export default function NodePanel({
         localPhoto.current = null;
         setDetail((current) => (
           current?.id === node.id
-            ? { ...current, image_url: node.image_url || null, has_custom_photo: node.image_url ? 1 : 0 }
+            ? {
+                ...current,
+                image_url: node.image_url || null,
+                has_custom_photo: node.has_custom_photo ?? 0,
+                photo_rev: node.photo_rev,
+              }
             : current
         ));
         setImageNotice({
@@ -279,7 +282,7 @@ export default function NodePanel({
               Upload image
               <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
             </label>
-            {view.image_url ? (
+            {taskHasCustomPhoto(view) ? (
               <button
                 type="button"
                 className={tw.btnSm}

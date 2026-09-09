@@ -13,10 +13,17 @@ function hasCustomPhotoFlag(task) {
   return flag === true || flag === 1 || flag === "1";
 }
 
+function photoRev(task) {
+  const value = Number(task?.photo_rev ?? task?.photoRev ?? 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
 export function taskPhotoUrl(task, { role = "default" } = {}) {
   const custom = task?.image_url?.trim();
   if (custom) return custom;
-  if (task?.id && hasCustomPhotoFlag(task)) return `/api/nodes/${task.id}/photo`;
+  if (task?.id && hasCustomPhotoFlag(task)) {
+    return `/api/nodes/${task.id}/photo?v=${photoRev(task)}`;
+  }
 
   const priority = task?.priority || "p2";
 
