@@ -39,16 +39,37 @@ export default function NodePanel({
   const [seriesInfo, setSeriesInfo] = useState(null);
   const [imageNotice, setImageNotice] = useState(null);
   const timer = useRef(null);
-  const view = detail?.id === node?.id ? { ...node, ...detail } : node;
+  const localPhoto = useRef(null);
+  const view = (() => {
+    if (!node) return node;
+    if (detail?.id !== node.id) return node;
+    const merged = { ...node, ...detail };
+    if (Object.prototype.hasOwnProperty.call(node, "image_url")) {
+      merged.image_url = node.image_url;
+      merged.has_custom_photo = node.image_url ? 1 : 0;
+    }
+    return merged;
+  })();
 
   useEffect(() => {
     setImageNotice(null);
     setDetail(null);
+    localPhoto.current = null;
     if (!node?.id) return;
     let cancelled = false;
     api.getNode(node.id)
       .then((data) => {
-        if (!cancelled && data?.node) setDetail(data.node);
+        if (cancelled || !data?.node) return;
+        const pending = localPhoto.current;
+        if (pending && pending.id === data.node.id) {
+          setDetail({
+            ...data.node,
+            image_url: pending.image_url,
+            has_custom_photo: pending.image_url ? 1 : 0,
+          });
+          return;
+        }
+        setDetail(data.node);
       })
       .catch(() => {});
     return () => {
@@ -86,6 +107,16 @@ export default function NodePanel({
 
   const flush = (patch) => {
     if (!node) return;
+    if (Object.prototype.hasOwnProperty.call(patch, "imageUrl")) {
+      const image_url = patch.imageUrl || null;
+      localPhoto.current = { id: node.id, image_url };
+      setDetail((current) => ({
+        ...(current?.id === node.id ? current : node),
+        id: node.id,
+        image_url,
+        has_custom_photo: image_url ? 1 : 0,
+      }));
+    }
     onChange(patch);
   };
 
