@@ -259,6 +259,18 @@ async function migrate() {
   await execute(
     "CREATE INDEX IF NOT EXISTS idx_nodes_recurrence ON nodes(recurrence_series_id)",
   );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id)",
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_nodes_project_type_completed ON nodes(project_id, type, completed_at)",
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_edges_project_source ON edges(project_id, source_id)",
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_edges_project_target ON edges(project_id, target_id)",
+  );
 
 }
 

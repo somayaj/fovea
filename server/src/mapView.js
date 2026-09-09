@@ -18,6 +18,9 @@ const PRIORITY_RANK_PARAM = `CASE ? WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' 
 export const MAP_TASK_COLUMNS =
   "id, project_id, type, title, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, recurrence_series_id, created_at, completed_at";
 
+/** Week cards need notes for the task panel without SELECT *. */
+export const WEEK_TASK_COLUMNS = `${MAP_TASK_COLUMNS}, notes`;
+
 /** 0-based rank of a task within its workstream (priority, then created_at). */
 export async function taskRankInChannel(projectId, task) {
   const channelSql = task.channel_id ? "AND channel_id = ?" : "AND channel_id IS NULL";
