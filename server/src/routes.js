@@ -11,6 +11,7 @@ import {
   taskPageForRank,
   taskRankInChannel,
 } from "./mapView.js";
+import { NODE_CORE_COLUMNS, nodeColumns, WEEK_TASK_COLUMNS } from "./taskColumns.js";
 import { channelNameMap, getChannel, listChannelsPaginated } from "./channels.js";
 import {
   archiveChannelWithTasks,
@@ -60,7 +61,7 @@ async function listChannels(projectId, { includeArchived = true } = {}) {
 }
 
 async function listNodes(projectId) {
-  return query("SELECT * FROM nodes WHERE project_id = ?", [projectId]);
+  return query(`SELECT ${NODE_CORE_COLUMNS} FROM nodes WHERE project_id = ?`, [projectId]);
 }
 
 async function listEdges(projectId) {
@@ -277,8 +278,7 @@ router.get("/projects/:id/search", async (req, res) => {
   const compactLike = `%${q.replace(/,/g, "")}%`;
   const prefix = `${q}%`;
   const nodes = await query(
-    `SELECT id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at, completed_at
-     FROM nodes
+    `SELECT ${WEEK_TASK_COLUMNS} FROM nodes
      WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
        AND (
          LOWER(title) LIKE LOWER(?)
@@ -464,9 +464,10 @@ router.post("/nodes", async (req, res) => {
     category: req.body?.category?.trim() || null,
     created_at: nowIso(),
   };
+  node.has_custom_photo = node.image_url ? 1 : 0;
   await execute(
-    `INSERT INTO nodes (id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO nodes (id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at, has_custom_photo)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       node.id,
       node.project_id,
@@ -482,10 +483,12 @@ router.post("/nodes", async (req, res) => {
       node.image_url,
       node.category,
       node.created_at,
+      node.has_custom_photo,
     ],
   );
   await onTaskCreated(node);
-  res.status(201).json({ node });
+  const { image_url: _imageUrl, ...publicNode } = node;
+  res.status(201).json({ node: publicNode });
 });
 
 router.get("/nodes/:nodeId/photo", async (req, res) => {
@@ -508,7 +511,7 @@ router.get("/nodes/:nodeId/photo", async (req, res) => {
 
 router.get("/nodes/:nodeId", async (req, res) => {
   const node = await queryOne(
-    `SELECT n.* FROM nodes n
+    `SELECT ${nodeColumns("n")} FROM nodes n
      JOIN projects p ON p.id = n.project_id AND p.user_id = ?
      WHERE n.id = ?`,
     [req.user.id, req.params.nodeId],
@@ -519,7 +522,7 @@ router.get("/nodes/:nodeId", async (req, res) => {
 
 router.patch("/nodes/:nodeId", async (req, res) => {
   const node = await queryOne(
-    `SELECT n.* FROM nodes n
+    `SELECT ${nodeColumns("n")} FROM nodes n
      JOIN projects p ON p.id = n.project_id AND p.user_id = ?
      WHERE n.id = ?`,
     [req.user.id, req.params.nodeId],
@@ -551,7 +554,11 @@ router.patch("/nodes/:nodeId", async (req, res) => {
   }
   if (req.body?.priority !== undefined) setCol("priority", req.body.priority);
   if (req.body?.channelId !== undefined) setCol("channel_id", req.body.channelId || null);
-  if (req.body?.imageUrl !== undefined) setCol("image_url", req.body.imageUrl?.trim() || null);
+  if (req.body?.imageUrl !== undefined) {
+    const imageUrl = req.body.imageUrl?.trim() || null;
+    setCol("image_url", imageUrl);
+    setCol("has_custom_photo", imageUrl ? 1 : 0);
+  }
   if (req.body?.category !== undefined) setCol("category", req.body.category?.trim() || null);
   if (req.body?.completed !== undefined) {
     setCol("completed_at", req.body.completed ? nowIso() : null);
@@ -566,7 +573,8 @@ router.patch("/nodes/:nodeId", async (req, res) => {
       await clearWeekFocusIfTask(node.project_id, next.id);
     }
   }
-  res.json({ node: next });
+  const { image_url: _imageUrl, ...publicNode } = next;
+  res.json({ node: publicNode });
 });
 
 router.delete("/nodes/:nodeId", async (req, res) => {

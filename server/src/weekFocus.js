@@ -43,17 +43,12 @@ export async function getCurrentWeekFocus(projectId, weekOffset = 0) {
 }
 
 export async function getManualWeekFocus(projectId, weekStartIso) {
-  const project = await queryOne(
-    `SELECT week_focus_task_id, week_focus_week_start FROM projects WHERE id = ?`,
-    [projectId],
-  );
-  if (!project?.week_focus_task_id || project.week_focus_week_start !== weekStartIso) {
-    return null;
-  }
   return queryOne(
-    `SELECT ${WEEK_TASK_COLUMNS} FROM nodes WHERE id = ? AND project_id = ? AND type = 'task'
-       AND completed_at IS NULL AND archived = 0`,
-    [project.week_focus_task_id, projectId],
+    `SELECT ${WEEK_TASK_COLUMNS} FROM nodes n
+     JOIN projects p ON p.id = n.project_id
+     WHERE p.id = ? AND p.week_focus_week_start = ? AND p.week_focus_task_id = n.id
+       AND n.type = 'task' AND n.completed_at IS NULL AND n.archived = 0`,
+    [projectId, weekStartIso],
   );
 }
 
