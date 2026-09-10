@@ -98,6 +98,13 @@ export default function App() {
 
   useEffect(() => {
     if (ensureHttpsOrigin(currentPath())) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "google") {
+      setAuthError("Google sign-in was cancelled or failed.");
+      params.delete("error");
+      const qs = params.toString();
+      window.history.replaceState(null, "", qs ? `/?${qs}` : "/");
+    }
     refresh();
   }, []);
 
@@ -120,7 +127,7 @@ export default function App() {
           path="/*"
           element={
             !ready ? null : !me ? (
-              <Login status={status} authError={authError} onDevLogin={refresh} />
+              <Login status={status} authError={authError} onSignedIn={refresh} />
             ) : (
               <AuthenticatedApp me={me} onLogout={logout} />
             )

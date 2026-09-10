@@ -45,6 +45,51 @@ function afterAuthRedirect(req) {
   return configuredClientOrigin() || LOCAL_CLIENT_ORIGIN;
 }
 
+function popupOpenerOrigin(req, stored) {
+  const allowed = [
+    afterAuthRedirect(req),
+    LOCAL_CLIENT_ORIGIN,
+    "https://fovea.sh",
+    "https://www.fovea.sh",
+  ];
+  const candidate = stripSlash(stored || "");
+  return allowed.includes(candidate) ? candidate : afterAuthRedirect(req);
+}
+
+function sendOAuthPopupResult(res, { ok, error, openerOrigin }) {
+  const message = JSON.stringify({
+    type: "fovea:google-auth",
+    ok: Boolean(ok),
+    error: error ? String(error) : null,
+  });
+  const target = JSON.stringify(openerOrigin);
+  const fallback = JSON.stringify(
+    ok ? `${openerOrigin}/` : `${openerOrigin}/?error=google`,
+  );
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Fovea</title></head>
+<body>
+<p>You can close this window.</p>
+<script>
+(function () {
+  var msg = ${message};
+  var origin = ${target};
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage(msg, origin);
+      window.close();
+      return;
+    }
+  } catch (err) {}
+  window.location.replace(${fallback});
+})();
+</script>
+</body>
+</html>`);
+}
+
 function isLoopbackAddress(addr) {
   return addr === "127.0.0.1" || addr === "::1" || addr === ":ffff:127.0.0.1";
 }
@@ -208,13 +253,31 @@ const start = async () => {
   });
 
   if (googleReady) {
-    app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+    app.get("/auth/google", (req, res, next) => {
+      req.session.oauthPopup = req.query.popup === "1";
+      req.session.oauthOpenerOrigin = req.session.oauthPopup ? afterAuthRedirect(req) : "";
+      req.session.save((err) => {
+        if (err) return next(err);
+        passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+      });
+    });
     app.get("/auth/google/callback", (req, res, next) => {
-      passport.authenticate("google", {
-        failureRedirect: `${afterAuthRedirect(req)}/?error=google`,
+      const popup = Boolean(req.session.oauthPopup);
+      const openerOrigin = popupOpenerOrigin(req, req.session.oauthOpenerOrigin);
+      req.session.oauthPopup = false;
+      req.session.oauthOpenerOrigin = "";
+      passport.authenticate("google", (err, user) => {
+        const fail = () => {
+          if (popup) return sendOAuthPopupResult(res, { ok: false, error: "google", openerOrigin });
+          return res.redirect(`${afterAuthRedirect(req)}/?error=google`);
+        };
+        if (err || !user) return fail();
+        req.login(user, (loginErr) => {
+          if (loginErr) return fail();
+          if (popup) return sendOAuthPopupResult(res, { ok: true, openerOrigin });
+          return res.redirect(afterAuthRedirect(req));
+        });
       })(req, res, next);
-    }, (req, res) => {
-      res.redirect(afterAuthRedirect(req));
     });
   }
 
