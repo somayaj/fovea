@@ -4,9 +4,21 @@ import FoveaLogo from "../components/FoveaLogo.jsx";
 import FocusAmbient from "../components/FocusAmbient.jsx";
 import LoginHeroCollage from "../components/LoginHeroCollage.jsx";
 import LegalFooter from "../components/LegalFooter.jsx";
+import { isLocalHost } from "../lib/ensureHttps.js";
 import { tw, cn } from "../lib/tw.js";
 
-export default function Login({ status, authError, onDevLogin }) {
+const GOOGLE_AUTH_MESSAGE = "fovea:google-auth";
+
+function isTrustedAuthOrigin(origin) {
+  if (origin === window.location.origin) return true;
+  try {
+    return isLocalHost(window.location.hostname) && isLocalHost(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+}
+
+export default function Login({ status, authError, onSignedIn }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -15,12 +27,61 @@ export default function Login({ status, authError, onDevLogin }) {
     setError("");
     try {
       await api.devLogin();
-      await onDevLogin();
+      await onSignedIn();
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
     }
+  };
+
+  const continueGoogle = () => {
+    setError("");
+    setBusy(true);
+    const width = 480;
+    const height = 700;
+    const left = Math.round(window.screenX + Math.max(0, (window.outerWidth - width) / 2));
+    const top = Math.round(window.screenY + Math.max(0, (window.outerHeight - height) / 2));
+    const popup = window.open(
+      "/auth/google?popup=1",
+      "fovea-google-auth",
+      `width=${width},height=${height},left=${left},top=${top}`,
+    );
+    if (!popup) {
+      window.location.href = "/auth/google";
+      return;
+    }
+
+    let done = false;
+    const finish = async ({ failed = false } = {}) => {
+      if (done) return;
+      done = true;
+      window.removeEventListener("message", onMessage);
+      clearInterval(poll);
+      if (failed) {
+        setError("Google sign-in was cancelled or failed.");
+        setBusy(false);
+        return;
+      }
+      try {
+        await onSignedIn();
+      } finally {
+        setBusy(false);
+      }
+    };
+
+    const onMessage = (event) => {
+      if (!isTrustedAuthOrigin(event.origin)) return;
+      if (event.data?.type !== GOOGLE_AUTH_MESSAGE) return;
+      finish({ failed: !event.data.ok });
+    };
+
+    const poll = setInterval(() => {
+      if (!popup.closed) return;
+      finish();
+    }, 400);
+
+    window.addEventListener("message", onMessage);
   };
 
   return (
@@ -85,9 +146,14 @@ export default function Login({ status, authError, onDevLogin }) {
             <div className="mt-8 flex flex-col gap-3">
               {!status && !authError ? <p className="text-sm text-muted">Connecting…</p> : null}
               {status?.google ? (
-                <a className={cn(tw.btn, "w-full justify-center")} href="/auth/google">
-                  Continue with Google
-                </a>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={continueGoogle}
+                  className={cn(tw.btn, "w-full justify-center disabled:opacity-50")}
+                >
+                  {busy ? "Signing in…" : "Continue with Google"}
+                </button>
               ) : null}
               {status?.devLogin ? (
                 <button

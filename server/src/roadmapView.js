@@ -180,7 +180,7 @@ async function fetchDayCounts(projectId, { year, monthKey }) {
 
 async function fetchDayPreviewTasks(projectId, monthKey, previewPerDay) {
   return query(
-    `SELECT id, project_id, type, title, channel_id, priority, estimate_hours, due_at, image_url, category, created_at, day
+    `SELECT id, project_id, type, title, channel_id, priority, estimate_hours, due_at, has_custom_photo, photo_rev, category, created_at, day
      FROM (
        SELECT ${MAP_TASK_COLUMNS}, ${DUE_DAY_EXPR} AS day,
          ROW_NUMBER() OVER (

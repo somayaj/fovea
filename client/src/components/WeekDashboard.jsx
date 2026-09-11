@@ -53,6 +53,8 @@ export default function WeekDashboard({
   onWeekChange,
   onLoadMoreNeighbors,
   onRefresh,
+  onPatchNode,
+  onWeekData,
   recapExpanded = false,
   recapLoading = false,
   onExpandRecap,
@@ -82,8 +84,16 @@ export default function WeekDashboard({
 
   const patchSelected = async (body) => {
     if (!selected) return;
-    await api.patchNode(selected.id, body);
-    await onRefresh?.();
+    const { node } = await api.patchNode(selected.id, body);
+    const reshapesWeek =
+      body.dueAt !== undefined ||
+      body.completed !== undefined ||
+      body.channelId !== undefined ||
+      body.priority !== undefined ||
+      body.promote !== undefined ||
+      body.type !== undefined;
+    if (reshapesWeek) await onRefresh?.();
+    else if (node) onPatchNode?.(node);
   };
 
   const deleteSelected = async () => {
@@ -304,7 +314,7 @@ export default function WeekDashboard({
           weekFocusId={focus?.id}
           weekFocusPinned={week?.focusPinned}
           weekOffset={weekOffset}
-          onWeekFocusChange={onRefresh}
+          onWeekFocusChange={onWeekData || onRefresh}
           onChange={patchSelected}
           onDelete={deleteSelected}
           onClose={() => setSelectedId(null)}

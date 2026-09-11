@@ -1,7 +1,11 @@
 import { query, queryOne } from "./db.js";
-import { countChannels, getChannel, listChannelsPaginated } from "./channels.js";
+import { getChannel, listChannelsPaginated } from "./channels.js";
 import { countUnsortedTasks } from "./taskCounts.js";
 import { ACTIVE_TASK_AND, ACTIVE_NODE_AND } from "./taskFilters.js";
+import { MAP_TASK_COLUMNS } from "./taskColumns.js";
+import { getCurrentWeekFocus } from "./weekFocus.js";
+
+export { MAP_TASK_COLUMNS, WEEK_TASK_COLUMNS } from "./taskColumns.js";
 
 export const MAX_BRANCHES = 6;
 export const MAX_LEAVES = 4;
@@ -13,10 +17,6 @@ export const MAP_CHANNEL_TASK_PAGE_SIZE = 24;
 
 const PRIORITY_ORDER = `CASE priority WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' THEN 2 WHEN 'p3' THEN 3 ELSE 9 END`;
 const PRIORITY_RANK_PARAM = `CASE ? WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' THEN 2 WHEN 'p3' THEN 3 ELSE 9 END`;
-
-/** Columns needed for map cards — avoids loading notes blobs at scale. */
-export const MAP_TASK_COLUMNS =
-  "id, project_id, type, title, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, recurrence_series_id, created_at, completed_at";
 
 /** 0-based rank of a task within its workstream (priority, then created_at). */
 export async function taskRankInChannel(projectId, task) {
@@ -110,6 +110,25 @@ async function fetchTopTasksForChannel(projectId, channelId, limit) {
   );
 }
 
+async function fetchTopTasksForChannels(projectId, channelIds, limit) {
+  if (!channelIds.length) return [];
+  const placeholders = channelIds.map(() => "?").join(", ");
+  return query(
+    `WITH ranked AS (
+       SELECT ${MAP_TASK_COLUMNS},
+         ROW_NUMBER() OVER (
+           PARTITION BY channel_id
+           ORDER BY ${PRIORITY_ORDER}, created_at
+         ) AS rn
+       FROM nodes
+       WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
+         AND channel_id IN (${placeholders})
+     )
+     SELECT * FROM ranked WHERE rn <= ?`,
+    [projectId, ...channelIds, limit],
+  );
+}
+
 async function pickCenterId(projectId, scope, filterChannel, weekFocusId) {
   const { sql, params } = scopeFilter(scope, filterChannel);
 
@@ -132,7 +151,10 @@ async function pickCenterId(projectId, scope, filterChannel, weekFocusId) {
 }
 
 async function fetchNode(projectId, nodeId) {
-  return queryOne("SELECT * FROM nodes WHERE project_id = ? AND id = ?", [projectId, nodeId]);
+  return queryOne(
+    `SELECT ${MAP_TASK_COLUMNS} FROM nodes WHERE project_id = ? AND id = ?`,
+    [projectId, nodeId],
+  );
 }
 
 async function channelLabel(channels, channelId) {
@@ -161,7 +183,7 @@ async function buildChannelScopeTree(projectId, centerId, scope, channels) {
   const branchOverflow = scope.expanded ? 0 : Math.max(0, total - MAX_BRANCHES);
 
   const branches = await query(
-    `SELECT * FROM nodes
+    `SELECT ${MAP_TASK_COLUMNS} FROM nodes
      WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${channelFilter.sql}
      ORDER BY ${PRIORITY_ORDER}, created_at
      LIMIT ?`,
@@ -231,30 +253,42 @@ async function buildOverviewScopeTree(projectId, { filterChannel, channelPage = 
   const treeNodes = [];
 
   if (filterChannel) {
-    if (!isUnsortedChannelFilter(filterChannel)) {
-      const channel = await getChannel(projectId, filterChannel);
-      if (!channel || channel.archived) return treeNodes;
+    const channelId = resolveFilterChannelId(filterChannel);
+    if (channelId) {
+      const channel = await getChannel(projectId, channelId);
+      if (!channel || channel.archived) return { treeNodes, channelPagination: null };
+      const groupSize = Number(channel.tasks) || 0;
+      treeNodes.push({
+        id: channelSummaryId(channelId),
+        type: "task",
+        tier: "branch",
+        branchIndex: 0,
+        parentId: null,
+        isChannelSummary: true,
+        title: channel.name,
+        channelHint: groupSize > 0 ? `${groupSize.toLocaleString()} task${groupSize === 1 ? "" : "s"}` : "No tasks yet",
+        groupSize,
+        summaryChannelId: channelId,
+        summaryChannelLabel: channel.name,
+      });
+      return { treeNodes, channelPagination: null };
     }
 
-    const channelId = resolveFilterChannelId(filterChannel);
-    const groupSize = channelId
-      ? (await getChannel(projectId, channelId))?.tasks ?? 0
-      : await countUnsortedTasks(projectId);
-    const label = channelId ? (await getChannel(projectId, channelId))?.name || "Channel" : "Unsorted";
+    const groupSize = await countUnsortedTasks(projectId);
     treeNodes.push({
-      id: channelSummaryId(channelId),
+      id: channelSummaryId(null),
       type: "task",
       tier: "branch",
       branchIndex: 0,
       parentId: null,
       isChannelSummary: true,
-      title: label,
+      title: "Unsorted",
       channelHint: groupSize > 0 ? `${groupSize.toLocaleString()} task${groupSize === 1 ? "" : "s"}` : "No tasks yet",
       groupSize,
-      summaryChannelId: channelId,
-      summaryChannelLabel: label,
+      summaryChannelId: null,
+      summaryChannelLabel: "Unsorted",
     });
-    return treeNodes;
+    return { treeNodes, channelPagination: null };
   }
 
   const offset = channelPage * channelLimit;
@@ -315,7 +349,16 @@ async function buildOverviewScopeTree(projectId, { filterChannel, channelPage = 
     );
   }
 
-  return treeNodes;
+  return {
+    treeNodes,
+    channelPagination: {
+      page: channelPage,
+      limit: channelLimit,
+      offset,
+      total,
+      hasMore,
+    },
+  };
 }
 
 function appendChannelRollups(treeNodes, summaries) {
@@ -410,10 +453,8 @@ async function attachOverviewChildren(
   const includeUnsorted = summaryByKey.has("__none__");
 
   const taskBatches = await Promise.all([
-    ...channelIds.map((channelId) =>
-      fetchTopTasksForChannel(projectId, channelId, maxTasksPerChannel).then((tasks) =>
-        tasks.map((child) => ({ child, summary: summaryByKey.get(channelKey(channelId)) })),
-      ),
+    fetchTopTasksForChannels(projectId, channelIds, maxTasksPerChannel).then((tasks) =>
+      tasks.map((child) => ({ child, summary: summaryByKey.get(channelKey(child.channel_id)) })),
     ),
     ...(includeUnsorted
       ? [
@@ -447,7 +488,7 @@ async function buildRootScopeTree(projectId, centerId, scope, channels, filterCh
 
   const leaders = await query(
     `WITH scoped AS (
-       SELECT * FROM nodes
+       SELECT ${MAP_TASK_COLUMNS} FROM nodes
        WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${sql}
      ),
      ranked AS (
@@ -495,7 +536,7 @@ async function buildRootScopeTree(projectId, centerId, scope, channels, filterCh
 
     const leaves = await query(
       `WITH scoped AS (
-         SELECT * FROM nodes
+         SELECT ${MAP_TASK_COLUMNS} FROM nodes
          WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND} AND id != ? ${sql}
        ),
        ranked AS (
@@ -639,31 +680,25 @@ export async function buildMapView(
         }
       : scope || { type: "overview" };
 
-  const totalTasks = await countTasks(projectId, effectiveScope, filterChannel);
-
-  const treeNodes = await buildOverviewScopeTree(projectId, {
-    filterChannel,
-    channelPage,
-    channelLimit,
-  });
+  const [totalTasks, overview, focusResult] = await Promise.all([
+    countTasks(projectId, effectiveScope, filterChannel),
+    buildOverviewScopeTree(projectId, {
+      filterChannel,
+      channelPage,
+      channelLimit,
+    }),
+    getCurrentWeekFocus(projectId),
+  ]);
+  const { treeNodes, channelPagination } = overview;
   const { taskPagination } = await attachOverviewChildren(treeNodes, projectId, {
     filterChannel,
     taskPage,
   });
   const visibleCount = treeNodes.filter((n) => !n.isRollup).length;
-
-  let channelPagination = null;
-  if (!filterChannel) {
-    const total = await countChannels(projectId);
-    const offset = channelPage * channelLimit;
-    channelPagination = {
-      page: channelPage,
-      limit: channelLimit,
-      offset,
-      total,
-      hasMore: offset + channelLimit < total,
-    };
-  }
+  const activeChannel =
+    filterChannel && isUnsortedChannelFilter(filterChannel)
+      ? { id: null, name: "Unsorted" }
+      : channelMeta;
 
   return {
     centerId: null,
@@ -673,5 +708,7 @@ export async function buildMapView(
     scope: effectiveScope,
     channelPagination,
     taskPagination,
+    weekFocusId: focusResult.focus?.id || null,
+    activeChannel,
   };
 }

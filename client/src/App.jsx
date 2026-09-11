@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
-import { api } from "./api.js";
+import { api, SESSION_EXPIRED_EVENT } from "./api.js";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import AppShell from "./pages/AppShell.jsx";
 import BrainstormView from "./pages/BrainstormView.jsx";
@@ -52,7 +52,9 @@ export default function App() {
       const nextStatus = await api.status();
       setStatus(nextStatus);
       setAuthError("");
-      if (nextStatus.user) {
+      if (nextStatus.me) {
+        setMe(nextStatus.me);
+      } else if (nextStatus.user) {
         const nextMe = await api.me();
         setMe(nextMe);
       } else {
@@ -67,16 +69,13 @@ export default function App() {
     setReady(true);
   };
 
-  useEffect(() => {
-    if (ensureHttpsOrigin(currentPath())) return;
-    refresh();
-  }, []);
-
-  const logout = async () => {
-    try {
-      await api.logout();
-    } catch {
-      // Still clear local session state if the request fails.
+  const returnToLogin = useCallback(async ({ callLogout = false } = {}) => {
+    if (callLogout) {
+      try {
+        await api.logout();
+      } catch {
+        // Session may already be gone.
+      }
     }
 
     setMe(null);
@@ -96,7 +95,29 @@ export default function App() {
     if (window.location.pathname !== "/" || window.location.search || window.location.hash) {
       window.history.replaceState(null, "", "/");
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (ensureHttpsOrigin(currentPath())) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "google") {
+      setAuthError("Google sign-in was cancelled or failed.");
+      params.delete("error");
+      const qs = params.toString();
+      window.history.replaceState(null, "", qs ? `/?${qs}` : "/");
+    }
+    refresh();
+  }, []);
+
+  useEffect(() => {
+    const onSessionExpired = () => {
+      returnToLogin();
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+  }, [returnToLogin]);
+
+  const logout = () => returnToLogin({ callLogout: true });
 
   return (
     <ThemeProvider accountThemeId={me?.user?.themeId ?? null}>
@@ -107,7 +128,7 @@ export default function App() {
           path="/*"
           element={
             !ready ? null : !me ? (
-              <Login status={status} authError={authError} onDevLogin={refresh} />
+              <Login status={status} authError={authError} onSignedIn={refresh} />
             ) : (
               <AuthenticatedApp me={me} onLogout={logout} />
             )

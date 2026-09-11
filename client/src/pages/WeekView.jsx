@@ -13,6 +13,18 @@ function parseWeekOffset(searchParams) {
   return Number.parseInt(searchParams.get("week") ?? "0", 10) || 0;
 }
 
+function mergeNodeIntoWeek(week, node) {
+  if (!week || !node) return week;
+  const patch = (list) => (list || []).map((item) => (item.id === node.id ? { ...item, ...node } : item));
+  return {
+    ...week,
+    focus: week.focus?.id === node.id ? { ...week.focus, ...node } : week.focus,
+    neighbors: patch(week.neighbors),
+    nodes: patch(week.nodes),
+    completedTasks: patch(week.completedTasks),
+  };
+}
+
 export default function WeekView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const weekOffset = parseWeekOffset(searchParams);
@@ -24,7 +36,7 @@ export default function WeekView() {
   const [recapLoading, setRecapLoading] = useState(false);
   const requestRef = useRef(0);
 
-  const loadWeek = useCallback(async (offset, { append = false, neighborOffset = 0, completedLimit = RECAP_DEFAULT_LIMIT } = {}) => {
+  const loadWeek = useCallback(async (offset, { append = false, neighborOffset = 0, completedLimit = 0 } = {}) => {
     const requestId = ++requestRef.current;
     if (!append) setLoading(true);
     else setLoadingMore(true);
@@ -47,6 +59,9 @@ export default function WeekView() {
         return {
           ...data,
           neighbors: merged,
+          completedTasks: prev.completedTasks,
+          completedCount: prev.completedCount,
+          hasMoreCompleted: prev.hasMoreCompleted,
         };
       });
     } catch (err) {
@@ -60,10 +75,36 @@ export default function WeekView() {
     }
   }, []);
 
+  const loadRecap = useCallback(async (offset, completedLimit) => {
+    setRecapLoading(true);
+    try {
+      const recap = await api.weekRecap(offset, { completedLimit });
+      setWeek((prev) => {
+        if (!prev) return prev;
+        const seen = new Set((prev.channels || []).map((channel) => channel.id));
+        const extra = (recap.channels || []).filter((channel) => !seen.has(channel.id));
+        return {
+          ...prev,
+          completedTasks: recap.completedTasks,
+          completedCount: recap.completedCount,
+          hasMoreCompleted: recap.hasMoreCompleted,
+          completedLimit: recap.completedLimit,
+          channels: [...(prev.channels || []), ...extra],
+        };
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRecapLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     setRecapLimit(RECAP_DEFAULT_LIMIT);
-    loadWeek(weekOffset, { completedLimit: RECAP_DEFAULT_LIMIT }).catch(console.error);
-  }, [loadWeek, weekOffset]);
+    loadWeek(weekOffset, { completedLimit: 0 })
+      .then(() => loadRecap(weekOffset, RECAP_DEFAULT_LIMIT))
+      .catch(console.error);
+  }, [loadWeek, loadRecap, weekOffset]);
 
   const handleWeekChange = (nextOffset) => {
     if (nextOffset === weekOffset) return;
@@ -84,24 +125,22 @@ export default function WeekView() {
     [loadWeek, weekOffset, recapLimit],
   );
 
+  const patchNodeInWeek = useCallback((node) => {
+    setWeek((prev) => mergeNodeIntoWeek(prev, node));
+  }, []);
+
+  const applyWeekData = useCallback((data) => {
+    if (data?.weekStart != null) setWeek(data);
+  }, []);
+
   const handleExpandRecap = async () => {
-    setRecapLoading(true);
     setRecapLimit(RECAP_EXPANDED_LIMIT);
-    try {
-      await loadWeek(weekOffset, { completedLimit: RECAP_EXPANDED_LIMIT });
-    } finally {
-      setRecapLoading(false);
-    }
+    await loadRecap(weekOffset, RECAP_EXPANDED_LIMIT);
   };
 
   const handleCollapseRecap = async () => {
-    setRecapLoading(true);
     setRecapLimit(RECAP_DEFAULT_LIMIT);
-    try {
-      await loadWeek(weekOffset, { completedLimit: RECAP_DEFAULT_LIMIT });
-    } finally {
-      setRecapLoading(false);
-    }
+    await loadRecap(weekOffset, RECAP_DEFAULT_LIMIT);
   };
 
   if (loading && !week) {
@@ -125,6 +164,8 @@ export default function WeekView() {
       onWeekChange={handleWeekChange}
       onLoadMoreNeighbors={handleLoadMoreNeighbors}
       onRefresh={refreshWeek}
+      onPatchNode={patchNodeInWeek}
+      onWeekData={applyWeekData}
       recapExpanded={recapLimit > RECAP_DEFAULT_LIMIT}
       recapLoading={recapLoading}
       onExpandRecap={handleExpandRecap}

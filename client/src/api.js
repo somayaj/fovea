@@ -1,3 +1,10 @@
+export const SESSION_EXPIRED_EVENT = "fovea:session-expired";
+
+function notifySessionExpired() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+}
+
 async function request(path, options = {}) {
   const res = await fetch(path, {
     credentials: "include",
@@ -8,8 +15,18 @@ async function request(path, options = {}) {
     ...options,
   });
   const text = await res.text();
-  const data = text ? JSON.parse(text) : {};
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    if (!res.ok) {
+      const error = new Error(res.status === 413 ? "Image is too large to save." : res.statusText);
+      error.status = res.status;
+      throw error;
+    }
+  }
   if (!res.ok) {
+    if (res.status === 401) notifySessionExpired();
     const error = new Error(data.error || res.statusText);
     error.status = res.status;
     throw error;
@@ -81,6 +98,7 @@ export const api = {
     }),
   deleteChannel: (channelId) => request(`/api/channels/${channelId}`, { method: "DELETE" }),
   createNode: (body) => request("/api/nodes", { method: "POST", body: JSON.stringify(body) }),
+  getNode: (nodeId) => request(`/api/nodes/${nodeId}`),
   patchNode: (nodeId, body) =>
     request(`/api/nodes/${nodeId}`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteNode: (nodeId) => request(`/api/nodes/${nodeId}`, { method: "DELETE" }),
@@ -93,6 +111,15 @@ export const api = {
       offset: String(offset),
       neighborLimit: String(neighborLimit),
       neighborOffset: String(neighborOffset),
+      completedLimit: String(completedLimit),
+      completedOffset: String(completedOffset),
+    });
+    return request(`/api/week?${params}`);
+  },
+  weekRecap: (offset = 0, { completedLimit = 24, completedOffset = 0 } = {}) => {
+    const params = new URLSearchParams({
+      offset: String(offset),
+      recapOnly: "1",
       completedLimit: String(completedLimit),
       completedOffset: String(completedOffset),
     });

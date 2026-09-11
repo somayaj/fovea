@@ -9,6 +9,7 @@ import { EmptyPanel } from "./PageHeader.jsx";
 import { IconTrash, IconFocus, IconCheck } from "./icons.jsx";
 import { FoveaMark } from "./FoveaLogo.jsx";
 import { REPEAT_OPTIONS } from "../lib/recurrence.js";
+import { fileToTaskImageUrl, isHttpPhotoUrl, taskHasCustomPhoto } from "../lib/taskPhoto.js";
 import { tw, cn } from "../lib/tw.js";
 
 const MAX_TASK_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -33,19 +34,54 @@ export default function NodePanel({
   onClose,
 }) {
   const [draft, setDraft] = useState(null);
+  const [detail, setDetail] = useState(null);
   const [focusBusy, setFocusBusy] = useState(false);
   const [seriesBusy, setSeriesBusy] = useState(false);
   const [seriesInfo, setSeriesInfo] = useState(null);
   const [imageNotice, setImageNotice] = useState(null);
   const timer = useRef(null);
+  const localPhoto = useRef(null);
+  const view = (() => {
+    if (!node) return node;
+    if (detail?.id !== node.id) return node;
+    return { ...node, ...detail };
+  })();
 
   useEffect(() => {
     setImageNotice(null);
+    setDetail(null);
+    if (localPhoto.current?.id !== node?.id) localPhoto.current = null;
+    if (!node?.id) return;
+    let cancelled = false;
+    api.getNode(node.id)
+      .then((data) => {
+        if (cancelled || !data?.node) return;
+        const pending = localPhoto.current;
+        if (pending && pending.id === data.node.id) {
+          setDetail({
+            ...data.node,
+            image_url: pending.image_url,
+            has_custom_photo: pending.image_url ? 1 : 0,
+            photo_rev: pending.photo_rev ?? data.node.photo_rev,
+          });
+          return;
+        }
+        setDetail(data.node);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [node?.id]);
 
   useEffect(() => {
     setDraft(node ? { title: node.title, notes: node.notes || "" } : null);
   }, [node?.id, node?.title, node?.notes]);
+
+  useEffect(() => {
+    if (!detail?.notes) return;
+    setDraft((current) => (current && !current.notes ? { ...current, notes: detail.notes } : current));
+  }, [detail]);
 
   useEffect(() => {
     const seriesId = node?.recurrence_series_id;
@@ -66,9 +102,41 @@ export default function NodePanel({
     };
   }, [node?.recurrence_series_id]);
 
-  const flush = (patch) => {
+  const flush = async (patch) => {
     if (!node) return;
-    onChange(patch);
+    if (Object.prototype.hasOwnProperty.call(patch, "imageUrl")) {
+      const image_url = patch.imageUrl || null;
+      const photo_rev = (Number(node.photo_rev) || 0) + 1;
+      localPhoto.current = { id: node.id, image_url, photo_rev };
+      setDetail((current) => ({
+        ...(current?.id === node.id ? current : node),
+        id: node.id,
+        image_url,
+        has_custom_photo: image_url ? 1 : 0,
+        photo_rev,
+      }));
+    }
+    try {
+      await onChange(patch);
+    } catch (err) {
+      if (Object.prototype.hasOwnProperty.call(patch, "imageUrl")) {
+        localPhoto.current = null;
+        setDetail((current) => (
+          current?.id === node.id
+            ? {
+                ...current,
+                image_url: node.image_url || null,
+                has_custom_photo: node.has_custom_photo ?? 0,
+                photo_rev: node.photo_rev,
+              }
+            : current
+        ));
+        setImageNotice({
+          title: "Could not save photo",
+          message: err.message || "Try a smaller JPEG or PNG, or paste an image URL.",
+        });
+      }
+    }
   };
 
   const queueText = (field, value) => {
@@ -91,10 +159,15 @@ export default function NodePanel({
       return;
     }
     setImageNotice(null);
-    const reader = new FileReader();
-    reader.onload = () => flush({ imageUrl: reader.result });
-    reader.readAsDataURL(file);
     event.target.value = "";
+    fileToTaskImageUrl(file)
+      .then((imageUrl) => flush({ imageUrl }))
+      .catch((err) => {
+        setImageNotice({
+          title: "Could not save photo",
+          message: err.message || "Try a smaller JPEG or PNG, or paste an image URL.",
+        });
+      });
   };
 
   const isWeekFocus = Boolean(node?.type === "task" && weekFocusId && node.id === weekFocusId);
@@ -178,7 +251,7 @@ export default function NodePanel({
 
       <div className="space-y-4 px-5 py-4">
         <TaskPhoto
-          task={node}
+          task={view}
           channelName={channelLabel}
           photoRole={photoRole}
           size="lg"
@@ -191,8 +264,16 @@ export default function NodePanel({
           <input
             id="imageUrl"
             type="url"
-            value={node.image_url || ""}
-            onChange={(e) => flush({ imageUrl: e.target.value || null })}
+            value={isHttpPhotoUrl(view.image_url) ? view.image_url : ""}
+            onChange={(e) => {
+              const next = e.target.value.trim();
+              if (!next) {
+                if (!isHttpPhotoUrl(view.image_url)) return;
+                flush({ imageUrl: null });
+                return;
+              }
+              flush({ imageUrl: next });
+            }}
             placeholder="Paste an image URL…"
             className={tw.input}
           />
@@ -201,7 +282,7 @@ export default function NodePanel({
               Upload image
               <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
             </label>
-            {node.image_url ? (
+            {taskHasCustomPhoto(view) ? (
               <button
                 type="button"
                 className={tw.btnSm}

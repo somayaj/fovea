@@ -220,6 +220,8 @@ async function migrate() {
     await execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_id TEXT");
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS completed_at TEXT");
     await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS archived INTEGER NOT NULL DEFAULT 0");
+    await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS has_custom_photo INTEGER NOT NULL DEFAULT 0");
+    await execute("ALTER TABLE nodes ADD COLUMN IF NOT EXISTS photo_rev INTEGER NOT NULL DEFAULT 0");
   } else {
     const userCols = await query("PRAGMA table_info(users)");
     const userNames = new Set(userCols.map((c) => c.name));
@@ -252,12 +254,38 @@ async function migrate() {
     if (!names.has("occurrence_date")) await execute("ALTER TABLE nodes ADD COLUMN occurrence_date TEXT");
     if (!names.has("completed_at")) await execute("ALTER TABLE nodes ADD COLUMN completed_at TEXT");
     if (!names.has("archived")) await execute("ALTER TABLE nodes ADD COLUMN archived INTEGER NOT NULL DEFAULT 0");
+    if (!names.has("has_custom_photo")) {
+      await execute("ALTER TABLE nodes ADD COLUMN has_custom_photo INTEGER NOT NULL DEFAULT 0");
+    }
+    if (!names.has("photo_rev")) {
+      await execute("ALTER TABLE nodes ADD COLUMN photo_rev INTEGER NOT NULL DEFAULT 0");
+    }
   }
 
   await execute("UPDATE users SET last_login_at = created_at WHERE last_login_at IS NULL");
 
   await execute(
     "CREATE INDEX IF NOT EXISTS idx_nodes_recurrence ON nodes(recurrence_series_id)",
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id)",
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_nodes_project_type_completed ON nodes(project_id, type, completed_at)",
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_edges_project_source ON edges(project_id, source_id)",
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_edges_project_target ON edges(project_id, target_id)",
+  );
+  await execute("UPDATE nodes SET completed_at = NULL WHERE completed_at = ''");
+  await execute("UPDATE nodes SET archived = 0 WHERE archived IS NULL");
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_nodes_active_due ON nodes(project_id, due_at) WHERE type = 'task' AND completed_at IS NULL AND archived = 0",
+  );
+  await execute(
+    "UPDATE nodes SET has_custom_photo = 1 WHERE has_custom_photo = 0 AND image_url IS NOT NULL AND image_url != ''",
   );
 
 }

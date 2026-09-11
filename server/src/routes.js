@@ -6,19 +6,19 @@ import { isAdminUser, requireAdmin, revealUser, summarizeUser } from "./admin.js
 import { normalizeThemeId } from "./themes.js";
 import {
   buildMapView,
-  isUnsortedChannelFilter,
   MAP_CHANNEL_TASK_PAGE_SIZE,
   MAP_TASK_COLUMNS,
   taskPageForRank,
   taskRankInChannel,
 } from "./mapView.js";
+import { NODE_CORE_COLUMNS, nodeColumns, WEEK_TASK_COLUMNS } from "./taskColumns.js";
 import { channelNameMap, getChannel, listChannelsPaginated } from "./channels.js";
 import {
   archiveChannelWithTasks,
   deleteChannelWithTasks,
   restoreChannelWithTasks,
 } from "./channelArchive.js";
-import { buildWeekViewPaginated } from "./weekView.js";
+import { buildWeekRecap, buildWeekViewPaginated } from "./weekView.js";
 import {
   buildRoadmapBucket,
   buildRoadmapYear,
@@ -43,7 +43,6 @@ import {
   onTaskCreated,
   onTaskDeleted,
   onTaskUpdated,
-  onTaskCompletionChanged,
 } from "./taskCounts.js";
 import { ACTIVE_TASK_AND, ACTIVE_NODE_AND } from "./taskFilters.js";
 
@@ -62,7 +61,7 @@ async function listChannels(projectId, { includeArchived = true } = {}) {
 }
 
 async function listNodes(projectId) {
-  return query("SELECT * FROM nodes WHERE project_id = ?", [projectId]);
+  return query(`SELECT ${NODE_CORE_COLUMNS} FROM nodes WHERE project_id = ?`, [projectId]);
 }
 
 async function listEdges(projectId) {
@@ -227,16 +226,8 @@ router.get("/projects/:id/map/view", async (req, res) => {
     taskPage,
   });
 
-  const activeChannel =
-    filterChannel && isUnsortedChannelFilter(filterChannel)
-      ? { id: null, name: "Unsorted" }
-      : filterChannel
-        ? await getChannel(project.id, filterChannel)
-        : null;
-
   res.json({
     project,
-    activeChannel,
     ...view,
   });
 });
@@ -287,8 +278,7 @@ router.get("/projects/:id/search", async (req, res) => {
   const compactLike = `%${q.replace(/,/g, "")}%`;
   const prefix = `${q}%`;
   const nodes = await query(
-    `SELECT id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at, completed_at
-     FROM nodes
+    `SELECT ${WEEK_TASK_COLUMNS} FROM nodes
      WHERE project_id = ? AND type = 'task' ${ACTIVE_TASK_AND}
        AND (
          LOWER(title) LIKE LOWER(?)
@@ -474,9 +464,11 @@ router.post("/nodes", async (req, res) => {
     category: req.body?.category?.trim() || null,
     created_at: nowIso(),
   };
+  node.has_custom_photo = node.image_url ? 1 : 0;
+  node.photo_rev = node.image_url ? 1 : 0;
   await execute(
-    `INSERT INTO nodes (id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO nodes (id, project_id, type, title, notes, x, y, channel_id, priority, estimate_hours, due_at, image_url, category, created_at, has_custom_photo, photo_rev)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       node.id,
       node.project_id,
@@ -492,67 +484,100 @@ router.post("/nodes", async (req, res) => {
       node.image_url,
       node.category,
       node.created_at,
+      node.has_custom_photo,
+      node.photo_rev,
     ],
   );
   await onTaskCreated(node);
-  res.status(201).json({ node });
+  const { image_url: _imageUrl, ...publicNode } = node;
+  res.status(201).json({ node: publicNode });
+});
+
+router.get("/nodes/:nodeId/photo", async (req, res) => {
+  const node = await queryOne(
+    `SELECT n.image_url FROM nodes n
+     JOIN projects p ON p.id = n.project_id AND p.user_id = ?
+     WHERE n.id = ?`,
+    [req.user.id, req.params.nodeId],
+  );
+  const url = String(node?.image_url || "").trim();
+  if (!url) return res.status(404).json({ error: "No photo" });
+  if (/^https?:\/\//i.test(url)) return res.redirect(url);
+  const match = url.match(/^data:([^;,]+);base64,(.+)$/s);
+  if (!match) return res.status(404).json({ error: "No photo" });
+  const buffer = Buffer.from(match[2], "base64");
+  res.setHeader("Content-Type", match[1] || "image/jpeg");
+  res.setHeader("Cache-Control", "private, max-age=3600");
+  return res.send(buffer);
+});
+
+router.get("/nodes/:nodeId", async (req, res) => {
+  const node = await queryOne(
+    `SELECT ${nodeColumns("n")} FROM nodes n
+     JOIN projects p ON p.id = n.project_id AND p.user_id = ?
+     WHERE n.id = ?`,
+    [req.user.id, req.params.nodeId],
+  );
+  if (!node) return res.status(404).json({ error: "Node not found" });
+  res.json({ node });
 });
 
 router.patch("/nodes/:nodeId", async (req, res) => {
-  const node = await queryOne("SELECT * FROM nodes WHERE id = ?", [req.params.nodeId]);
+  const node = await queryOne(
+    `SELECT ${nodeColumns("n")} FROM nodes n
+     JOIN projects p ON p.id = n.project_id AND p.user_id = ?
+     WHERE n.id = ?`,
+    [req.user.id, req.params.nodeId],
+  );
   if (!node) return res.status(404).json({ error: "Node not found" });
-  const project = await userProject(req.user.id, node.project_id);
-  if (!project) return res.status(404).json({ error: "Node not found" });
 
   const next = { ...node };
-  if (req.body?.title != null) next.title = String(req.body.title).trim() || node.title;
-  if (req.body?.notes != null) next.notes = String(req.body.notes);
-  if (req.body?.x != null) next.x = Number(req.body.x);
-  if (req.body?.y != null) next.y = Number(req.body.y);
-  if (req.body?.estimateHours !== undefined) next.estimate_hours = req.body.estimateHours;
-  if (req.body?.dueAt !== undefined) next.due_at = req.body.dueAt;
+  const sets = [];
+  const values = [];
+  const setCol = (column, value) => {
+    if (Object.is(next[column], value)) return;
+    next[column] = value;
+    sets.push(`${column} = ?`);
+    values.push(value);
+  };
+
+  if (req.body?.title != null) setCol("title", String(req.body.title).trim() || node.title);
+  if (req.body?.notes != null) setCol("notes", String(req.body.notes));
+  if (req.body?.x != null) setCol("x", Number(req.body.x));
+  if (req.body?.y != null) setCol("y", Number(req.body.y));
+  if (req.body?.estimateHours !== undefined) setCol("estimate_hours", req.body.estimateHours);
+  if (req.body?.dueAt !== undefined) setCol("due_at", req.body.dueAt);
   if (req.body?.type && ["idea", "task"].includes(req.body.type)) {
-    next.type = req.body.type;
+    setCol("type", req.body.type);
   }
   if (req.body?.promote === "task") {
-    next.type = "task";
-    next.priority = next.priority || req.body.priority || "p2";
+    setCol("type", "task");
+    if (!next.priority) setCol("priority", req.body.priority || "p2");
   }
-  if (req.body?.priority !== undefined) next.priority = req.body.priority;
-  if (req.body?.channelId !== undefined) next.channel_id = req.body.channelId || null;
-  if (req.body?.imageUrl !== undefined) next.image_url = req.body.imageUrl?.trim() || null;
-  if (req.body?.category !== undefined) next.category = req.body.category?.trim() || null;
+  if (req.body?.priority !== undefined) setCol("priority", req.body.priority);
+  if (req.body?.channelId !== undefined) setCol("channel_id", req.body.channelId || null);
+  if (req.body?.imageUrl !== undefined) {
+    const imageUrl = req.body.imageUrl?.trim() || null;
+    setCol("image_url", imageUrl);
+    setCol("has_custom_photo", imageUrl ? 1 : 0);
+    setCol("photo_rev", (Number(node.photo_rev) || 0) + 1);
+  }
+  if (req.body?.category !== undefined) setCol("category", req.body.category?.trim() || null);
   if (req.body?.completed !== undefined) {
-    next.completed_at = req.body.completed ? nowIso() : null;
+    setCol("completed_at", req.body.completed ? nowIso() : null);
   }
-  if (next.type === "task" && !next.priority) next.priority = "p2";
+  if (next.type === "task" && !next.priority) setCol("priority", "p2");
 
-  await execute(
-    `UPDATE nodes SET title = ?, notes = ?, x = ?, y = ?, type = ?,
-      channel_id = ?, priority = ?, estimate_hours = ?, due_at = ?, image_url = ?, category = ?, completed_at = ?
-     WHERE id = ?`,
-    [
-      next.title,
-      next.notes,
-      next.x,
-      next.y,
-      next.type,
-      next.channel_id,
-      next.priority,
-      next.estimate_hours,
-      next.due_at,
-      next.image_url,
-      next.category,
-      next.completed_at ?? null,
-      next.id,
-    ],
-  );
-  await onTaskUpdated(node, next);
-  await onTaskCompletionChanged(node, next);
-  if (next.completed_at && !node.completed_at) {
-    await clearWeekFocusIfTask(project.id, next.id);
+  if (sets.length) {
+    values.push(next.id);
+    await execute(`UPDATE nodes SET ${sets.join(", ")} WHERE id = ?`, values);
+    await onTaskUpdated(node, next);
+    if (next.completed_at && !node.completed_at) {
+      await clearWeekFocusIfTask(node.project_id, next.id);
+    }
   }
-  res.json({ node: await queryOne("SELECT * FROM nodes WHERE id = ?", [next.id]) });
+  const { image_url: _imageUrl, ...publicNode } = next;
+  res.json({ node: publicNode });
 });
 
 router.delete("/nodes/:nodeId", async (req, res) => {
@@ -629,6 +654,15 @@ router.get("/week", async (req, res) => {
   const completedLimit = req.query.completedLimit;
   const completedOffset = req.query.completedOffset;
 
+  if (req.query.recapOnly === "1" || req.query.recapOnly === "true") {
+    const recap = await buildWeekRecap(project.id, {
+      weekOffset,
+      completedLimit,
+      completedOffset,
+    });
+    return res.json({ project, ...recap });
+  }
+
   const raw = await buildWeekViewPaginated(project.id, {
     weekOffset,
     neighborLimit,
@@ -639,7 +673,6 @@ router.get("/week", async (req, res) => {
 
   res.json({
     project,
-    channels: await listChannels(project.id, { includeArchived: false }),
     ...raw,
   });
 });
@@ -665,7 +698,6 @@ router.put("/week/focus", async (req, res) => {
   const view = await buildWeekViewPaginated(project.id, { weekOffset });
   res.json({
     project,
-    channels: await listChannels(project.id, { includeArchived: false }),
     ...view,
   });
 });
@@ -680,7 +712,6 @@ router.delete("/week/focus", async (req, res) => {
   const view = await buildWeekViewPaginated(project.id, { weekOffset });
   res.json({
     project,
-    channels: await listChannels(project.id, { includeArchived: false }),
     ...view,
   });
 });
