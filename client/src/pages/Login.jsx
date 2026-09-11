@@ -38,6 +38,13 @@ export default function Login({ status, authError, onSignedIn }) {
   const continueGoogle = () => {
     setError("");
     setBusy(true);
+    const useRedirect =
+      window.matchMedia("(max-width: 1023px)").matches ||
+      Boolean(window.fovea?.isMobileShell);
+    if (useRedirect) {
+      window.location.href = "/auth/google";
+      return;
+    }
     const width = 480;
     const height = 700;
     const left = Math.round(window.screenX + Math.max(0, (window.outerWidth - width) / 2));
@@ -85,11 +92,11 @@ export default function Login({ status, authError, onSignedIn }) {
   };
 
   return (
-    <div className="login-shell relative flex min-h-full bg-paper">
+    <div className="login-shell relative flex min-h-full min-h-dvh flex-col overflow-x-hidden bg-paper">
       <FocusAmbient variant="page" />
-      <div className="relative z-[1] flex min-w-0 flex-1 flex-col lg:flex-row">
-        <section className="relative flex flex-1 flex-col justify-center px-6 py-10 lg:px-12 lg:py-14">
-          <div className="mx-auto w-full max-w-3xl">
+      <div className="login-layout relative z-[1] min-w-0 flex-1">
+        <section className="login-hero">
+          <div className="login-hero-inner">
             <div className="login-hero-brand">
               <FoveaLogo
                 size="lg"
@@ -98,10 +105,10 @@ export default function Login({ status, authError, onSignedIn }) {
                 subtitleProminent
               />
             </div>
-            <h1 className="mt-6 text-[clamp(1.875rem,4.5vw,2.75rem)] font-semibold leading-[1.12] tracking-tight text-brand">
+            <h1 className="login-hero-title">
               Focus on the <span className="text-accent">right task</span> this week.
             </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted lg:text-base">
+            <p className="login-hero-copy">
               Your top task front and center — everything due this week stays visible around it.
             </p>
 
@@ -113,14 +120,11 @@ export default function Login({ status, authError, onSignedIn }) {
           </div>
         </section>
 
-        <section
-          className={cn(
-            "flex w-full shrink-0 items-center justify-center border-t border-line/80 bg-surface px-8 py-12 lg:w-[400px] lg:border-t-0 lg:border-l lg:py-0",
-          )}
-        >
-          <div className="w-full max-w-[320px]">
-            <div className="mb-8 lg:hidden">
-              <FoveaLogo size="sm" subtitle="Your week, one clear priority." subtitleProminent />
+        <section className="login-auth">
+          <div className="login-auth-inner">
+            <div className="login-auth-brand">
+              <FoveaLogo size="sm" />
+              <p className="login-auth-tagline">Your week, one clear priority.</p>
             </div>
 
             <p className={tw.labelAccent}>Sign in</p>
@@ -178,7 +182,6 @@ export default function Login({ status, authError, onSignedIn }) {
           </div>
         </section>
       </div>
-      <LegalFooter className="relative z-[1] border-t border-line/80 px-6 py-4 lg:hidden" />
     </div>
   );
 }

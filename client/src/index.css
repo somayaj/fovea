@@ -656,6 +656,109 @@
     }
   }
 
+  .login-layout {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .login-hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2.5rem 1.5rem 1.25rem;
+  }
+
+  .login-hero-inner {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 48rem;
+  }
+
+  .login-auth {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    padding: 1.75rem 1.5rem 2.5rem;
+    background: var(--color-surface);
+    border-top: 1px solid color-mix(in srgb, var(--color-line) 80%, transparent);
+  }
+
+  .login-auth-inner {
+    width: 100%;
+    max-width: 20rem;
+  }
+
+  .login-auth-brand {
+    display: none;
+  }
+
+  .login-auth-tagline {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--color-muted);
+  }
+
+  .login-hero-title {
+    margin-top: 1.5rem;
+    font-size: clamp(1.875rem, 4.5vw, 2.75rem);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+    color: var(--color-brand);
+  }
+
+  .login-hero-copy {
+    margin-top: 1rem;
+    max-width: 42rem;
+    font-size: 0.875rem;
+    line-height: 1.625;
+    color: var(--color-muted);
+  }
+
+  @media (max-width: 1023px) {
+    .login-hero-brand {
+      padding-left: 0;
+      border-left: none;
+    }
+
+    .login-hero-brand-tagline {
+      padding-left: 0;
+      transform: none;
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .login-layout {
+      flex-direction: row;
+      min-height: 100%;
+    }
+
+    .login-hero {
+      flex: 1;
+      padding: 3.5rem 3rem;
+    }
+
+    .login-hero-copy {
+      font-size: 1rem;
+    }
+
+    .login-auth {
+      flex: 0 0 400px;
+      align-self: stretch;
+      align-items: center;
+      width: 400px;
+      border-top: 0;
+      border-left: 1px solid color-mix(in srgb, var(--color-line) 80%, transparent);
+      padding: 0 2rem;
+    }
+  }
+
   .instant-photo {
     background: var(--color-surface);
     padding: 5px 5px 18px;
