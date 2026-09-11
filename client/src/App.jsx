@@ -59,8 +59,7 @@ export default function App() {
         setMe(null);
       }
     } catch {
-      const host = window.location.hostname;
-      const onLocalhost = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+      const onLocalhost = isLocalHost(window.location.hostname);
       setStatus({ google: false, devLogin: onLocalhost, user: null });
       setAuthError("Can't reach the server. Run npm run dev in the project folder.");
       setMe(null);

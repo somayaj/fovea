@@ -19,6 +19,10 @@
         "backgroundColor": "#f9f6ee"
       },
       "package": "sh.fovea.app"
-    }
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-status-bar"
+    ]
   }
 }
