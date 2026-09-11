@@ -5,6 +5,7 @@ import FocusAmbient from "../components/FocusAmbient.jsx";
 import LoginHeroCollage from "../components/LoginHeroCollage.jsx";
 import LegalFooter from "../components/LegalFooter.jsx";
 import { isLocalHost } from "../lib/ensureHttps.js";
+import { isMobileShell } from "../lib/mobileShell.js";
 import { tw, cn } from "../lib/tw.js";
 
 const GOOGLE_AUTH_MESSAGE = "fovea:google-auth";
@@ -38,6 +39,10 @@ export default function Login({ status, authError, onSignedIn }) {
   const continueGoogle = () => {
     setError("");
     setBusy(true);
+    if (isMobileShell()) {
+      window.location.href = "/auth/google";
+      return;
+    }
     const width = 480;
     const height = 700;
     const left = Math.round(window.screenX + Math.max(0, (window.outerWidth - width) / 2));

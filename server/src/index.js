@@ -38,7 +38,21 @@ function configuredClientOrigin() {
   return isProdEnv ? canonicalAppOrigin(null) || "" : LOCAL_CLIENT_ORIGIN;
 }
 
+function isAllowedReturnOrigin(origin) {
+  try {
+    const host = new URL(origin).hostname.toLowerCase();
+    if (isLocalHost(host)) return true;
+    if (host.endsWith(".trycloudflare.com") || host.endsWith(".loca.lt")) return true;
+    if (host === "fovea.sh" || host === "www.fovea.sh") return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function afterAuthRedirect(req) {
+  const stored = stripSlash(req.session?.oauthReturnOrigin || "");
+  if (stored && isAllowedReturnOrigin(stored)) return stored;
   if (isProdEnv) {
     return canonicalAppOrigin(req) || "https://fovea.sh";
   }
@@ -96,7 +110,6 @@ function isLoopbackAddress(addr) {
 
 function allowDevLogin(req) {
   if (isProdEnv) return false;
-  if (!isLocalHost(req.hostname)) return false;
   if (!isLoopbackAddress(req.socket?.remoteAddress)) return false;
   return process.env.DEV_LOGIN === "1" || !googleReady;
 }
@@ -256,6 +269,12 @@ const start = async () => {
     app.get("/auth/google", (req, res, next) => {
       req.session.oauthPopup = req.query.popup === "1";
       req.session.oauthOpenerOrigin = req.session.oauthPopup ? afterAuthRedirect(req) : "";
+      try {
+        const origin = stripSlash(new URL(req.get("referer") || "").origin);
+        if (isAllowedReturnOrigin(origin)) req.session.oauthReturnOrigin = origin;
+      } catch {
+        // Keep the default post-login redirect.
+      }
       req.session.save((err) => {
         if (err) return next(err);
         passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);

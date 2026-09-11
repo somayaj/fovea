@@ -53,6 +53,8 @@ export async function initDb() {
   if (isPostgres) await initPostgres();
   else await initSqlite();
   await migrate();
+  const { backfillAllChannelTaskCounts } = await import("./taskCounts.js");
+  await backfillAllChannelTaskCounts();
 }
 
 export async function query(sql, params) {
