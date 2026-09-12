@@ -75,7 +75,61 @@ function SidebarBrand({ collapsed, onToggle, inverted = false }) {
   );
 }
 
-function SidebarUser({ user, onLogout, collapsed, inverted = false }) {
+function SidebarUser({ user, onLogout, onDeleteAccount, collapsed, inverted = false }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const runDelete = async () => {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await onDeleteAccount();
+    } catch (err) {
+      setDeleteError(err.message || "Could not delete account.");
+      setDeleting(false);
+    }
+  };
+
+  if (confirmDelete) {
+    return (
+      <div className="shrink-0 border-t border-sidebar-border p-3">
+        <div className="rounded-xl border border-red-200/80 bg-sidebar-surface p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-red-700">
+            Delete account
+          </p>
+          <p className="mt-1.5 text-[11px] leading-relaxed text-sidebar-muted">
+            This permanently deletes your account, tasks, and workspace. This cannot be undone.
+          </p>
+          {deleteError ? (
+            <p className="mt-2 text-[11px] text-red-700">{deleteError}</p>
+          ) : null}
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => {
+                setConfirmDelete(false);
+                setDeleteError("");
+              }}
+              className="flex-1 rounded-md border border-sidebar-border bg-sidebar-surface px-2.5 py-1.5 text-xs font-medium text-sidebar-text transition-colors hover:bg-sidebar-hover disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={runDelete}
+              className="flex-1 rounded-md bg-red-700 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-800 disabled:opacity-50"
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (collapsed) {
     return (
       <div className="shrink-0 space-y-2 border-t border-sidebar-border p-2">
@@ -101,6 +155,16 @@ function SidebarUser({ user, onLogout, collapsed, inverted = false }) {
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
           </svg>
           <SidebarHoverLabel label="Sign out" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          className="group relative mx-auto flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-muted transition-colors hover:bg-red-50 hover:text-red-700"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+          </svg>
+          <SidebarHoverLabel label="Delete account" />
         </button>
       </div>
     );
@@ -136,11 +200,18 @@ function SidebarUser({ user, onLogout, collapsed, inverted = false }) {
           Sign out
         </button>
       </div>
+      <button
+        type="button"
+        onClick={() => setConfirmDelete(true)}
+        className="mt-2 w-full rounded-md px-2 py-1.5 text-left text-[11px] font-medium text-sidebar-muted transition-colors hover:bg-red-50 hover:text-red-700"
+      >
+        Delete account
+      </button>
     </div>
   );
 }
 
-export default function AppShell({ me, onLogout }) {
+export default function AppShell({ me, onLogout, onDeleteAccount }) {
   const user = me.user;
   const { preset } = useTheme();
   const darkSidebar = Boolean(preset.sidebar?.dark);
@@ -222,7 +293,13 @@ export default function AppShell({ me, onLogout }) {
             isAdmin={Boolean(user?.isAdmin)}
           />
           <ThemePicker collapsed={collapsed} />
-          <SidebarUser user={user} onLogout={onLogout} collapsed={collapsed} inverted={darkSidebar} />
+          <SidebarUser
+            user={user}
+            onLogout={onLogout}
+            onDeleteAccount={onDeleteAccount}
+            collapsed={collapsed}
+            inverted={darkSidebar}
+          />
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">

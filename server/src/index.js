@@ -7,7 +7,7 @@ import { createClient } from "redis";
 import cors from "cors";
 import passport from "passport";
 import dotenv from "dotenv";
-import { configurePassport, createDevUser, publicUser } from "./auth.js";
+import { configurePassport, createDevUser, deleteUserAccount, publicUser, requireAuth } from "./auth.js";
 import { isAdminUser } from "./admin.js";
 import api from "./routes.js";
 import { initDb, isPostgres, queryOne } from "./db.js";
@@ -301,6 +301,20 @@ const start = async () => {
         res.json({ ok: true });
       });
     });
+  });
+
+  app.delete("/auth/account", requireAuth, async (req, res) => {
+    try {
+      await deleteUserAccount(req.user.id);
+      req.logout(() => {
+        req.session.destroy(() => {
+          res.clearCookie("fovea.sid", SESSION_COOKIE_OPTIONS);
+          res.json({ ok: true });
+        });
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message || "Could not delete account" });
+    }
   });
 
   app.use("/api", api);
