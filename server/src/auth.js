@@ -3,7 +3,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { googleCallbackUrl } from "./appOrigin.js";
 import { ensureStarterProject } from "./seed.js";
-import { queryOne, execute, nowIso } from "./db.js";
+import { queryOne, execute, nowIso, withTransaction } from "./db.js";
 
 async function touchLastLogin(userId) {
   await execute("UPDATE users SET last_login_at = ? WHERE id = ?", [nowIso(), userId]);
@@ -97,6 +97,16 @@ export function configurePassport() {
       ),
     );
   }
+}
+
+export async function deleteUserAccount(userId) {
+  await withTransaction(async (tx) => {
+    await tx.execute(
+      "UPDATE projects SET week_focus_task_id = NULL, week_focus_week_start = NULL WHERE user_id = ?",
+      [userId],
+    );
+    await tx.execute("DELETE FROM users WHERE id = ?", [userId]);
+  });
 }
 
 export function requireAuth(req, res, next) {

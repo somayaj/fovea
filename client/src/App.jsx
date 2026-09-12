@@ -23,10 +23,10 @@ function ChannelMapRedirect() {
   return <Navigate to={`/map?channel=${channelId}`} replace />;
 }
 
-function AuthenticatedApp({ me, onLogout }) {
+function AuthenticatedApp({ me, onLogout, onDeleteAccount }) {
   return (
     <Routes>
-      <Route element={<AppShell me={me} onLogout={onLogout} />}>
+      <Route element={<AppShell me={me} onLogout={onLogout} onDeleteAccount={onDeleteAccount} />}>
         <Route path="/" element={<WeekView />} />
         <Route path="/admin" element={me.user?.isAdmin ? <AdminView /> : <Navigate to="/" replace />} />
         <Route path="/map" element={<MapView me={me} />} />
@@ -118,6 +118,11 @@ export default function App() {
 
   const logout = () => returnToLogin({ callLogout: true });
 
+  const deleteAccount = async () => {
+    await api.deleteAccount();
+    await returnToLogin();
+  };
+
   return (
     <ThemeProvider>
       <Routes>
@@ -129,7 +134,7 @@ export default function App() {
             !ready ? null : !me ? (
               <Login status={status} authError={authError} onSignedIn={refresh} />
             ) : (
-              <AuthenticatedApp me={me} onLogout={logout} />
+              <AuthenticatedApp me={me} onLogout={logout} onDeleteAccount={deleteAccount} />
             )
           }
         />

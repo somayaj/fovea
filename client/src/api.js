@@ -41,6 +41,7 @@ export const api = {
     request("/api/me/theme", { method: "PATCH", body: JSON.stringify({ themeId }) }),
   devLogin: () => request("/auth/dev", { method: "POST" }),
   logout: () => request("/auth/logout", { method: "POST" }),
+  deleteAccount: () => request("/auth/account", { method: "DELETE" }),
   map: (projectId) => request(`/api/projects/${projectId}/map`),
   mapView: (projectId, { scope, channel, weekFocus, channelPage, taskPage } = {}) => {
     const params = new URLSearchParams();

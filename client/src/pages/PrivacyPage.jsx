@@ -114,7 +114,9 @@ export default function PrivacyPage() {
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-brand">Retention and deletion</h2>
         <p>
-          We keep your account and workspace data while your account is active.
+          We keep your account and workspace data while your account is active. You can delete your
+          account in the app (menu → Delete account). That permanently removes your account, tasks,
+          and workspace from our servers.
         </p>
       </section>
 
@@ -122,6 +124,7 @@ export default function PrivacyPage() {
         <h2 className="text-base font-semibold text-brand">Your choices</h2>
         <ul className="list-disc space-y-2 pl-5">
           <li>You can sign out at any time, which clears your session cookie.</li>
+          <li>You can delete your account from the app menu. This cannot be undone.</li>
           <li>You can use browser extensions or settings to block analytics cookies.</li>
           <li>You can revoke Fovea&apos;s access in your Google Account security settings.</li>
         </ul>
