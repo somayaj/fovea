@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api.js";
 import FocusPageShell from "../components/FocusPageShell.jsx";
 import NodePanel from "../components/NodePanel.jsx";
@@ -7,7 +7,9 @@ import RoadmapDayPanel from "../components/RoadmapDayPanel.jsx";
 import RoadmapTimeline from "../components/RoadmapTimeline.jsx";
 import RoadmapYearCalendar from "../components/RoadmapYearCalendar.jsx";
 import { MonthPager } from "../components/MonthPager.jsx";
+import ExportPictureButton from "../components/ExportPictureButton.jsx";
 import { PageHeader, SegmentedControl } from "../components/PageHeader.jsx";
+import { pictureFilename } from "../lib/exportPicture.js";
 import { YearPager } from "../components/YearPager.jsx";
 import { useChannels } from "../context/ChannelsContext.jsx";
 import { useFocusWeek } from "../context/FocusWeekContext.jsx";
@@ -46,6 +48,7 @@ export default function RoadmapView({ me }) {
   const [dayLoading, setDayLoading] = useState(false);
   const [timeline, setTimeline] = useState({ channels: [], tasks: [] });
   const [error, setError] = useState("");
+  const pictureRef = useRef(null);
 
   const year = displayYear(yearOffset);
   const calendarParts = calendarMonthFromOffset(monthOffset);
@@ -191,6 +194,12 @@ export default function RoadmapView({ me }) {
             ? "Workstreams across the year — each bar is a task on its due date."
             : "Year at a glance — twelve mini calendars with heatmap density. Click a day or zoom into a month."
       }
+      actions={
+        <ExportPictureButton
+          targetRef={pictureRef}
+          filename={pictureFilename(`fovea-roadmap-${viewMode}`)}
+        />
+      }
       toolbar={
         <div className="flex flex-wrap items-center gap-3">
           <SegmentedControl value={viewMode} onChange={setViewMode} options={VIEW_MODES} />
@@ -226,7 +235,7 @@ export default function RoadmapView({ me }) {
           ) : null}
 
           <div className={cn("min-h-0 flex-1 overflow-y-auto", loading && "pointer-events-none opacity-60")}>
-            <div className="px-5 py-6 md:px-8 md:py-8">
+            <div ref={pictureRef} className="px-5 py-6 md:px-8 md:py-8">
               {viewMode === "month" ? (
                 <RoadmapCalendar
                   year={calendarParts.year}

@@ -258,3 +258,12 @@ export function IconTimeline(props) {
     </Icon>
   );
 }
+
+export function IconDownload(props) {
+  return (
+    <Icon {...defaults} {...props}>
+      <path d="M12 3v12M7 11l5 5 5-5" />
+      <path d="M5 21h14" />
+    </Icon>
+  );
+}
