@@ -31,6 +31,7 @@ export default function FocusHero({
   onLoadMoreNeighbors,
   selectedTaskId = null,
   onTaskSelect,
+  pictureRef = null,
 }) {
   const why = formatFocusReason(reason, fallback);
   const linkedSorted = sortByPriority(linked);
@@ -51,7 +52,7 @@ export default function FocusHero({
         </p>
       ) : null}
 
-      <div className="focus-hero-frame w-full">
+      <div ref={pictureRef} className="focus-hero-frame w-full">
         <FocusIllustration
           className="w-full"
           linked={linkedSorted}

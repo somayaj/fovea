@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import ExportPictureButton from "./ExportPictureButton.jsx";
 import FocusIllustration from "./FocusIllustration.jsx";
 import FocusHero from "./FocusHero.jsx";
 import FocusPageShell from "./FocusPageShell.jsx";
@@ -8,6 +9,7 @@ import NodePanel from "./NodePanel.jsx";
 import WeekRecap from "./WeekRecap.jsx";
 import { PageHeader, ActionLink } from "./PageHeader.jsx";
 import { WeekPager, weekEyebrow } from "./WeekPager.jsx";
+import { pictureFilename } from "../lib/exportPicture.js";
 import { taskPhotoRole } from "../lib/taskPhoto.js";
 import { tw, cn } from "./ui.jsx";
 import { IconFocus, IconHash, IconMap, IconPlus } from "./icons.jsx";
@@ -61,6 +63,7 @@ export default function WeekDashboard({
   onCollapseRecap,
 }) {
   const [selectedId, setSelectedId] = useState(null);
+  const pictureRef = useRef(null);
   const focus = week?.focus;
   const neighbors = week?.neighbors || [];
   const { linked, related } = groupNeighbors(focus?.id, neighbors, week?.edges);
@@ -132,6 +135,7 @@ export default function WeekDashboard({
       }
       actions={
         <>
+          <ExportPictureButton targetRef={pictureRef} filename={pictureFilename("fovea-focus")} />
           <ActionLink to="/map" icon={<IconMap size={13} />}>All tasks</ActionLink>
           {focus && focusChannel ? (
             <ActionLink to={`/map?channel=${focus.channel_id}`} icon={<IconHash size={13} />}>
@@ -195,7 +199,7 @@ export default function WeekDashboard({
                 </p>
               ) : null}
 
-              <div className="focus-hero-frame w-full">
+              <div ref={pictureRef} className="focus-hero-frame w-full">
                 <FocusIllustration className="w-full" />
               </div>
 
@@ -281,6 +285,7 @@ export default function WeekDashboard({
             <FocusHero
               key={`${weekOffset}-${focus.id}`}
               weekOffset={weekOffset}
+              pictureRef={pictureRef}
               focus={focus}
               linked={linked}
               related={related}

@@ -34,7 +34,9 @@ import { MapSelectionContext } from "../context/MapSelectionContext.jsx";
 import { useViewportWidth } from "../hooks/useViewportWidth.js";
 import FocusPageShell from "../components/FocusPageShell.jsx";
 import { tw, cn } from "../lib/tw.js";
+import ExportPictureButton from "../components/ExportPictureButton.jsx";
 import { PageHeader, SegmentedControl, HeaderButton, HeaderOutlineButton } from "../components/PageHeader.jsx";
+import { pictureFilename } from "../lib/exportPicture.js";
 import {
   IconBoard,
   IconChevronLeft,
@@ -687,6 +689,10 @@ function MapCanvas({ me }) {
                   Reset view
                 </HeaderOutlineButton>
               ) : null}
+              <ExportPictureButton
+                targetRef={canvasRef}
+                filename={pictureFilename(isBoard ? "fovea-board" : isWeek ? "fovea-week" : "fovea-map")}
+              />
               <HeaderButton onClick={() => setShowComposer((v) => !v)}>
                 <IconPlus size={13} />
                 Task
@@ -876,7 +882,7 @@ function MapCanvas({ me }) {
           ) : null}
 
           {!isBoard && filterChannel && taskPagination && (taskPagination.page > 0 || taskPagination.hasMore) ? (
-            <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+            <div data-export-hide="true" className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
               {taskPagination.page > 0 ? (
                 <button
                   type="button"
@@ -899,7 +905,7 @@ function MapCanvas({ me }) {
           ) : null}
 
           {!isBoard && !filterChannel && channelPagination?.hasMore ? (
-            <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+            <div data-export-hide="true" className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
               {channelPagination.page > 0 ? (
                 <button
                   type="button"
@@ -920,13 +926,15 @@ function MapCanvas({ me }) {
           ) : null}
 
           {!isEmpty && totalTasks < 4 && showMapGuide ? (
-            <MapGuide
-              onAddTask={() => setShowComposer(true)}
-              onDismiss={() => {
-                localStorage.setItem("fovea.mapGuide.dismissed", "1");
-                setShowMapGuide(false);
-              }}
-            />
+            <div data-export-hide="true">
+              <MapGuide
+                onAddTask={() => setShowComposer(true)}
+                onDismiss={() => {
+                  localStorage.setItem("fovea.mapGuide.dismissed", "1");
+                  setShowMapGuide(false);
+                }}
+              />
+            </div>
           ) : null}
         </div>
       </div>
